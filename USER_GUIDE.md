@@ -14,13 +14,23 @@ A metodologia faz sentido quando pelo menos duas destas condições são verdade
 
 A metodologia também faz sentido em projetos legados que estão sendo retomados após pausa longa, onde o conhecimento sobre por que certas escolhas foram feitas se perdeu. Nesse caso, a skill de gênese retroativa reconstrói parte desse conhecimento a partir do histórico Git e do código existente.
 
-## Instalação em três comandos
+## Instalação em três passos
 
-A instalação completa requer apenas três passos. Primeiro, copie a pasta `.agent-memory/` para a raiz do seu projeto, seja por download direto, clone do repositório, ou cópia manual. Segundo, abra uma sessão com seu agente preferido (Claude Code, Cursor, ou outro que reconheça `AGENT.md`) e diga "instale a metodologia neste projeto". A skill `memory-deploy` assume o controle, detecta se o projeto é greenfield ou legacy, executa o `deploy.py`, e conduz a personalização apropriada. Terceiro, faça o primeiro commit dos artefatos gerados com mensagem clara como "adopt agent memory methodology".
+A instalação tem três passos curtos. Primeiro, na raiz do seu projeto, traga a tool e rode o `deploy.py`:
 
-Para automação ou CI, o script pode ser invocado diretamente com `python .agent-memory/deploy.py --no-merge`. A flag `--no-merge` evita criar fila de merge pendente em ambientes onde não há agente para processá-la. Os templates ficam genéricos sem personalização.
+```bash
+git clone --depth 1 --branch v0.2.0 \
+  https://github.com/brunoleos/agent-memory.git .agent-memory
+python .agent-memory/deploy.py
+```
 
-A única dependência externa do projeto é PyYAML, que pode ser instalado via `pip install pyyaml`. Todas as outras ferramentas usam apenas a biblioteca padrão do Python 3.10 ou superior, garantindo portabilidade entre Linux, macOS e Windows sem necessidade de WSL ou outras camadas de compatibilidade.
+Isso monta `AGENT.md`, `CLAUDE.md`, `STATE.md`, `manifest/`, `decisions/`, `skills/`, `.gitattributes`, e adiciona automaticamente `.agent-memory/` ao `.gitignore` do projeto. A pasta `.agent-memory/` é volátil — ela não entra no histórico Git do seu projeto, e basta apagar e re-clonar para atualizar.
+
+Segundo, abra uma sessão com seu agente preferido (Claude Code, Cursor, ou outro que reconheça `AGENT.md`) e diga "instale a metodologia neste projeto". A skill `memory-deploy` assume o controle, detecta se o projeto é greenfield ou legacy, e conduz a personalização apropriada. Terceiro, faça o primeiro commit dos artefatos gerados com mensagem clara como "adopt agent memory methodology".
+
+Em CI ou automação sem intervenção humana, pode-se rodar apenas `python .agent-memory/deploy.py --no-merge` após o clone. A flag `--no-merge` evita criar fila de merge pendente em `AGENT.md`/`CLAUDE.md`; os templates ficam genéricos sem personalização.
+
+A única dependência externa do projeto é PyYAML (`pip install pyyaml`). Todas as outras ferramentas usam apenas a biblioteca padrão do Python 3.10 ou superior, garantindo portabilidade entre Linux, macOS e Windows sem necessidade de WSL ou outras camadas de compatibilidade.
 
 ## Os quatro artefatos no dia-a-dia
 
@@ -42,13 +52,22 @@ Antes de cada commit relevante, você diz ao agente "vou commitar" ou "atualize 
 
 ## Atualizações da metodologia
 
-A metodologia evolui ao longo do tempo, e cada projeto que a adota precisa de um caminho claro para receber essas evoluções sem perder customizações locais. O versionamento semântico em VERSION e o histórico em CHANGELOG.md tornam a evolução transparente, e o arquivo .installed-version registra qual versão está em uso em cada projeto consumidor.
+A metodologia evolui ao longo do tempo, e cada projeto que a adota precisa de um caminho claro para receber essas evoluções sem perder customizações locais. O versionamento semântico em `VERSION` e o histórico em `CHANGELOG.md` tornam a evolução transparente; cada release corresponde a uma tag `vX.Y.Z` em <https://github.com/brunoleos/agent-memory/releases>. A versão da metodologia em uso em um projeto é `cat .agent-memory/VERSION`.
 
-Para receber atualizações, configure o upstream em .agent-memory/.upstream com a fonte do pacote. O upstream pode ser um repositório Git remoto (formato git+URL), uma referência específica desse repositório (formato git+URL#tag), ou um caminho local para desenvolvimento da própria metodologia (formato local:caminho). O arquivo .upstream.example documenta as opções e pode ser copiado e editado.
+Como `.agent-memory/` é gitignored e nunca entra no histórico Git do projeto consumidor, atualizar é simplesmente apagar e re-clonar fixando uma tag nova:
 
-Com o upstream configurado, python .agent-memory/update.py --check verifica se há atualização disponível sem aplicá-la, mostrando a versão instalada e a versão upstream lado a lado. O comando python .agent-memory/update.py aplica a atualização: baixa o conteúdo do upstream, substitui a pasta .agent-memory/ preservando arquivos de configuração local, atualiza o marcador de versão, e re-roda o deploy.py para propagar mudanças aos artefatos do projeto. A lógica de merge para AGENT.md e CLAUDE.md é a mesma do deploy inicial, garantindo que customizações sejam preservadas.
+```bash
+rm -rf .agent-memory
+git clone --depth 1 --branch v0.2.0 \
+  https://github.com/brunoleos/agent-memory.git .agent-memory
+python .agent-memory/deploy.py
+```
 
-Para times que usam a metodologia em múltiplos projetos com sincronização, a recomendação é manter um repositório upstream único (próprio ou referenciado via Git) e configurar todos os projetos consumidores apontando para ele. Atualizações na metodologia ficam disponíveis para todos os projetos via update.py, e cada projeto decide quando aplicar conforme seu próprio cronograma.
+O `deploy.py` re-roda a lógica de merge para `AGENT.md` e `CLAUDE.md` (preservando customizações via fila de merge processada pela skill `memory-deploy`), atualiza skills e `.gitattributes`, garante a entrada de `.gitignore`, e reinstala o pre-commit hook. Tudo idempotente — rodar duas vezes é seguro.
+
+Para times que usam a metodologia em múltiplos projetos, a recomendação é fixar todos eles na mesma tag (mesmo número em todas as instalações), avançando todos juntos quando uma release nova justifica adoção. Cada projeto decide quando subir; o ciclo de update tem três comandos e nenhuma configuração persistente.
+
+Migrando de v0.1.0 (que versionava `.agent-memory/` no projeto): após rodar o `deploy.py` da v0.2.0, ele detecta que a pasta está rastreada pelo Git e imprime instruções para você sair do índice via `git rm -r --cached .agent-memory/`. Os arquivos continuam no disco; só saem do histórico futuro.
 
 ## Comandos importantes
 

@@ -1,6 +1,6 @@
 # `.agent-memory/`
 
-Pacote autocontido de memória persistente para agentes LLM. Cole esta pasta inteira na raiz do seu projeto e peça ao agente para instalar a metodologia.
+Pacote autocontido de memória persistente para agentes LLM. Clone a tool em `.agent-memory/` no seu projeto, rode `deploy.py`, e peça ao agente para configurar.
 
 ## O que é isso
 
@@ -15,19 +15,25 @@ Quatro artefatos versionados que dão a um agente LLM tudo que ele precisa para 
 
 ## Instalação
 
-A instalação tem dois passos. Primeiro, copie a pasta `.agent-memory/` para a raiz do seu projeto. Segundo, peça ao agente para instalar a metodologia com uma frase como "instale a metodologia neste projeto" ou "configure o agent-memory aqui".
+Na raiz do seu projeto, rode dois comandos:
 
 ```bash
-# 1. Cole esta pasta inteira na raiz do projeto
-cp -r path/to/agent-memory/.agent-memory ./
-
-# 2. Inicie uma sessão com o agente e peça:
-#    "instale a metodologia neste projeto"
+git clone --depth 1 --branch v0.2.0 \
+  https://github.com/brunoleos/agent-memory.git .agent-memory
+python .agent-memory/deploy.py
 ```
 
-A partir daí, a skill `memory-deploy` assume o controle. Ela detecta automaticamente se o seu projeto é greenfield (novo, pouco código) ou legacy (com história substancial e código de produção), executa o `deploy.py` para estabelecer a estrutura mecânica, e conduz a personalização apropriada para cada caso.
+O primeiro comando traz a tool. O segundo monta a estrutura no projeto (`AGENT.md`, `CLAUDE.md`, `STATE.md`, `manifest/`, `decisions/`, `skills/`, `.gitattributes`), instala o pre-commit hook, e adiciona `.agent-memory/` ao `.gitignore` do projeto. A pasta `.agent-memory/` em si nunca entra no histórico Git do seu projeto: ela é volátil e re-clonável.
 
-Para projetos greenfield, a skill conduz personalização em diálogo curto, fazendo perguntas específicas sobre identidade do projeto, stack, restrições não-negociáveis e foco inicial. Em alguns minutos você tem o `AGENT.md` e o `STATE.md` personalizados, prontos para o primeiro commit.
+Depois, abra uma sessão com seu agente preferido (Claude Code, Cursor, ou outro que reconheça `AGENT.md`) e peça:
+
+```
+instale a metodologia neste projeto
+```
+
+A skill `memory-deploy` detecta se o projeto é greenfield (novo, pouco código) ou legacy (com história substancial), conduz personalização em diálogo curto para greenfield, ou gênese retroativa em quatro fases para legacy.
+
+Para projetos greenfield, a skill faz perguntas específicas sobre identidade do projeto, stack, restrições não-negociáveis e foco inicial. Em alguns minutos você tem `AGENT.md` e `STATE.md` personalizados, prontos para o primeiro commit.
 
 Para projetos legacy, a skill conduz gênese retroativa em quatro fases sequenciais com revisão humana entre cada uma: AGENT.md a partir do código existente, ADRs candidatos a partir do git log, Manifest a partir dos entrypoints públicos, e STATE.md inicial com auditoria. Cada fase apresenta drafts para sua aprovação antes de gravar.
 
@@ -35,38 +41,36 @@ Para projetos legacy, a skill conduz gênese retroativa em quatro fases sequenci
 
 Quando o `AGENT.md` ou o `CLAUDE.md` já existem na raiz do projeto, o `deploy.py` não os sobrescreve. Em vez disso, ele preserva o conteúdo existente e registra os arquivos em uma fila de merge pendente (`.agent-memory/.merge-queue`), salvando uma cópia do template novo para referência (`.agent-memory/.pending-merge/<arquivo>.new`). A skill `memory-deploy` então mescla o conteúdo existente com o template novo, preservando customizações do usuário e adicionando apenas estrutura faltante.
 
-O `STATE.md` segue semântica diferente: como o conteúdo dele é volátil por construção, não há valor real em mesclar. Se já existe, é simplesmente pulado. As skills em `skills/` também são puladas se já existem.
+O `STATE.md` segue semântica diferente: como o conteúdo dele é volátil por construção, não há valor real em mesclar. Se já existe, é simplesmente pulado.
 
-A flag `--force` sobrescreve tudo sem merge, útil quando você quer descartar customizações e voltar aos templates limpos. A flag `--no-merge` pula arquivos existentes sem sobrescrever nem mesclar, restaurando o comportamento de "skip se existe", útil em CI onde a personalização não se aplica.
+As skills em `skills/` são sempre reescritas a cada deploy, porque elas são conteúdo de metodologia (não de usuário). Se você quiser uma skill customizada, copie-a para um nome diferente (`skills/memory-debrief` → `skills/my-debrief`) — a versão renomeada é preservada. O `.gitattributes` segue a mesma lógica via bloco com sentinelas: o que estiver fora do bloco é preservado, o bloco em si é refrescado.
+
+A flag `--force` sobrescreve tudo sem merge, útil quando você quer descartar customizações e voltar aos templates limpos. A flag `--no-merge` pula `AGENT.md` e `CLAUDE.md` se já existem (sem mesclar nem sobrescrever), útil em CI onde a personalização não se aplica.
 
 ## Versionamento e atualizações
 
-O pacote tem versionamento semântico em `VERSION` e changelog em `CHANGELOG.md`. Quando você instala em um projeto, a versão é registrada em `.agent-memory/.installed-version` (não versionado no Git), permitindo saber qual versão está em uso e gerenciar atualizações.
+O pacote tem versionamento semântico em `VERSION` e changelog em `CHANGELOG.md`. Cada release publicada em <https://github.com/brunoleos/agent-memory/releases> corresponde a uma tag `vX.Y.Z` e a uma seção do `CHANGELOG.md`. A versão da metodologia em uso é simplesmente `cat .agent-memory/VERSION`.
 
-Para atualizar a metodologia em um projeto, configure o upstream em `.agent-memory/.upstream` e rode `python .agent-memory/update.py`. O upstream pode ser um repositório Git remoto, uma tag específica desse repositório, ou um caminho local (útil durante desenvolvimento da própria metodologia).
+Para atualizar para uma versão nova, apague a `.agent-memory/`, re-clone fixando a tag desejada, e rode `deploy.py`:
 
 ```bash
-# Configure o upstream (faça uma vez por clone)
-echo "git+https://github.com/usuario/agent-memory.git" > .agent-memory/.upstream
-
-# Verifique se há atualização
-python .agent-memory/update.py --check
-
-# Aplique a atualização
-python .agent-memory/update.py
+rm -rf .agent-memory
+git clone --depth 1 --branch v0.2.0 \
+  https://github.com/brunoleos/agent-memory.git .agent-memory
+python .agent-memory/deploy.py
 ```
 
-O `update.py` baixa a versão mais recente do upstream, substitui o conteúdo de `.agent-memory/` preservando arquivos de configuração local (`.installed-version`, `.upstream`, fila de merge pendente), e re-roda o `deploy.py` com a lógica de merge para propagar mudanças aos artefatos do projeto sem perder customizações do `AGENT.md` ou do `CLAUDE.md`.
+Como `.agent-memory/` é gitignored, esse fluxo não toca no histórico Git do projeto. O `deploy.py` re-roda a lógica de merge para `AGENT.md` e `CLAUDE.md` (preservando suas customizações), atualiza skills e `.gitattributes`, garante a entrada em `.gitignore`, e reinstala o pre-commit hook. Tudo idempotente.
 
-O arquivo `.upstream.example` no pacote documenta as opções de configuração. O fluxo de update reusa toda a infraestrutura de merge do deploy, garantindo consistência semântica entre instalação inicial e atualizações subsequentes.
+Para fixar em outra tag, troque `v0.2.0` pela tag desejada (`git ls-remote --tags https://github.com/brunoleos/agent-memory.git` lista as disponíveis).
 
 ## Modo programático
 
-Se você precisa instalar a metodologia em CI ou em automação sem intervenção humana, o `deploy.py` pode ser invocado diretamente. Em ambientes onde personalização não se aplica, use `--no-merge` para evitar a fila de merge pendente.
+Em CI ou automação sem intervenção humana, o `deploy.py` pode ser invocado direto sem passar pela skill. Em ambientes onde personalização não se aplica, use `--no-merge` para evitar criar fila de merge pendente em `AGENT.md`/`CLAUDE.md`.
 
 ```bash
-python .agent-memory/deploy.py             # padrão: merge AGENT/CLAUDE
-python .agent-memory/deploy.py --no-merge  # pula arquivos existentes
+python .agent-memory/deploy.py             # padrão: merge AGENT/CLAUDE se existem
+python .agent-memory/deploy.py --no-merge  # pula AGENT/CLAUDE existentes (sem merge)
 python .agent-memory/deploy.py --force     # sobrescreve TUDO sem merge
 python .agent-memory/deploy.py --no-hooks  # pula instalação de git hooks
 ```
@@ -87,9 +91,7 @@ Todas as ferramentas estão escritas em Python 3.10 ou superior, sem dependênci
 ├── FUTURE_IMPROVEMENTS.md         # roadmap de extensões
 ├── CHANGELOG.md                   # histórico de versões
 ├── VERSION                        # versão semântica atual
-├── .upstream.example              # template de configuração de upstream
 ├── deploy.py                      # script mecânico (chamado pela skill ou direto)
-├── update.py                      # atualização a partir do upstream
 │
 ├── templates/                     # copiados para o project root no deploy
 │   ├── AGENT.md
@@ -116,19 +118,21 @@ Todas as ferramentas estão escritas em Python 3.10 ou superior, sem dependênci
     └── decisions/0002-cosine-similarity-default.md
 ```
 
-A pasta `.agent-memory/` permanece versionada no projeto após a instalação. Os tools são invocados de lá, as skills são carregadas pelos agentes a partir de lá, e a documentação de referência fica acessível.
+A pasta `.agent-memory/` é gitignored no projeto consumidor (o `deploy.py` adiciona a entrada automaticamente). Os tools são invocados de lá, as skills são carregadas pelos agentes a partir de lá, e a documentação fica acessível para consulta. Para atualizar o conteúdo desta pasta, basta apagar e re-clonar (ver "Versionamento e atualizações").
 
 ## Estrutura final no project root
 
-Depois da instalação:
+Depois da instalação, o seu repositório tem isto. Os artefatos versionados em Git são `AGENT.md`, `CLAUDE.md`, `STATE.md`, `manifest/`, `decisions/`, `skills/`, `.gitattributes`, e a entrada em `.gitignore`. A `.agent-memory/` é gitignored e re-clonável.
 
 ```
 seu-projeto/
-├── .agent-memory/                 # o pacote completo (continua aqui)
-├── AGENT.md                       # constituição (deployada de templates/)
+├── .agent-memory/                 # gitignored — toolbox volátil, re-clonável
+├── .gitignore                     # contém bloco com .agent-memory/
+├── .gitattributes                 # bloco com sentinelas (regras de merge)
+├── AGENT.md                       # constituição (de templates/)
 ├── CLAUDE.md                      # redirect para AGENT.md (Claude Code)
-├── STATE.md                       # foco da sessão (deployado de templates/)
-├── skills/                        # skills (deployadas de .agent-memory/skills/)
+├── STATE.md                       # foco da sessão (de templates/)
+├── skills/                        # skills (de .agent-memory/skills/)
 │   ├── memory-deploy/SKILL.md
 │   ├── memory-bootstrap/SKILL.md
 │   └── memory-debrief/SKILL.md

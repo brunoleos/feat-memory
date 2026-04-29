@@ -5,13 +5,15 @@ deploy.py — Deploy idempotente da metodologia em um projeto.
 Comportamento por arquivo:
     AGENT.md, CLAUDE.md  → merge inteligente se existem (skill memory-deploy)
     STATE.md             → pula se existe (conteúdo é volátil)
-    skills/              → pula se existem (preserva customizações)
+    skills/              → sempre atualizadas (conteúdo de metodologia)
+    .gitattributes       → bloco com sentinelas, refrescado a cada deploy
+    .gitignore           → bloco com sentinelas garantindo .agent-memory/
     pastas               → cria se não existem
 
 Uso:
     python deploy.py             # padrão: merge AGENT/CLAUDE
     python deploy.py --force     # sobrescreve TUDO sem merge
-    python deploy.py --no-merge  # pula se existe (sem merge)
+    python deploy.py --no-merge  # pula AGENT/CLAUDE se já existem (sem merge)
     python deploy.py --no-hooks  # pula instalação de git hooks
 
 Saída:
@@ -22,7 +24,6 @@ Saída:
 from __future__ import annotations
 
 import argparse
-import os
 import shutil
 import subprocess
 import sys
@@ -109,8 +110,34 @@ def deploy_state(root: Path, force: bool) -> None:
         print("  pulado: STATE.md (já existe; foco da sessão é volátil)")
 
 
+SENTINEL_BEGIN = "# >>> agent-memory >>>"
+SENTINEL_END = "# <<< agent-memory <<<"
+
+
+def _replace_sentinel_block(existing: str, payload: str) -> tuple[str, bool]:
+    """Substitui ou insere um bloco delimitado por sentinelas.
+
+    Retorna (novo_conteúdo, mudou). Se o bloco já existir e for idêntico,
+    mudou=False. Caso contrário, substitui (ou anexa, se ausente).
+    """
+    block = f"{SENTINEL_BEGIN}\n{payload.rstrip()}\n{SENTINEL_END}\n"
+
+    if SENTINEL_BEGIN in existing and SENTINEL_END in existing:
+        before, _, rest = existing.partition(SENTINEL_BEGIN)
+        _, _, after = rest.partition(SENTINEL_END)
+        # Remove eventual quebra de linha logo após SENTINEL_END
+        if after.startswith("\n"):
+            after = after[1:]
+        new_content = before + block + after
+    else:
+        sep = "" if not existing or existing.endswith("\n") else "\n"
+        new_content = existing + sep + ("\n" if existing else "") + block
+
+    return new_content, new_content != existing
+
+
 def deploy_gitattributes(root: Path) -> None:
-    """Deploy do .gitattributes e configuração do driver de merge."""
+    """Deploy do .gitattributes (bloco com sentinelas) + driver de merge."""
     print("Configuração de merge (.gitattributes):")
     src = TEMPLATES_DIR / ".gitattributes"
     dst = root / ".gitattributes"
@@ -118,30 +145,16 @@ def deploy_gitattributes(root: Path) -> None:
     if not src.exists():
         return
 
-    if not dst.exists():
-        shutil.copy2(src, dst)
-        print("  criado: .gitattributes")
+    payload = src.read_text(encoding="utf-8").strip() + "\n"
+    existing = dst.read_text(encoding="utf-8") if dst.exists() else ""
+    new_content, changed = _replace_sentinel_block(existing, payload)
+
+    if changed:
+        dst.write_text(new_content, encoding="utf-8")
+        verb = "atualizado" if existing else "criado"
+        print(f"  {verb}: .gitattributes (bloco agent-memory)")
     else:
-        # Anexa linhas que ainda não estão presentes
-        existing = dst.read_text(encoding="utf-8")
-        new_lines = src.read_text(encoding="utf-8").splitlines()
-        appended_lines = []
-
-        for line in new_lines:
-            stripped = line.strip()
-            if not stripped or stripped.startswith("#"):
-                continue
-            if line not in existing:
-                appended_lines.append(line)
-
-        if appended_lines:
-            with dst.open("a", encoding="utf-8") as f:
-                f.write("\n# Adicionado por .agent-memory/deploy.py\n")
-                for line in appended_lines:
-                    f.write(line + "\n")
-            print("  anexado a: .gitattributes (regras de merge)")
-        else:
-            print("  já contém: .gitattributes (regras presentes)")
+        print("  já contém: .gitattributes (bloco agent-memory atualizado)")
 
     # Configura driver `ours` no git local (idempotente)
     if (root / ".git").exists():
@@ -155,8 +168,54 @@ def deploy_gitattributes(root: Path) -> None:
             print("  AVISO: não foi possível configurar merge.ours.driver")
 
 
+def ensure_gitignore(root: Path) -> None:
+    """Garante que .agent-memory/ está no .gitignore do projeto consumidor."""
+    print("Gitignore (.agent-memory/ ignorada no projeto):")
+    dst = root / ".gitignore"
+    payload = ".agent-memory/\n"
+    existing = dst.read_text(encoding="utf-8") if dst.exists() else ""
+    new_content, changed = _replace_sentinel_block(existing, payload)
+
+    if changed:
+        dst.write_text(new_content, encoding="utf-8")
+        verb = "atualizado" if existing else "criado"
+        print(f"  {verb}: .gitignore (bloco agent-memory)")
+    else:
+        print("  já contém: .gitignore (bloco agent-memory presente)")
+
+
+def check_tracked_migration(root: Path) -> None:
+    """Avisa se .agent-memory/ está rastreada pelo Git (legado v0.1.0)."""
+    if not (root / ".git").exists():
+        return
+    try:
+        result = subprocess.run(
+            ["git", "ls-files", "--error-unmatch", ".agent-memory/"],
+            cwd=root, capture_output=True, text=True, check=False,
+        )
+    except FileNotFoundError:
+        return
+    if result.returncode != 0:
+        return
+
+    print()
+    print("=" * 60)
+    print("ATENÇÃO: migração de v0.1.0 → v0.2.0 detectada")
+    print("=" * 60)
+    print()
+    print("A pasta .agent-memory/ está rastreada pelo Git neste projeto.")
+    print("A partir de v0.2.0, ela deve ser gitignored. Para finalizar a")
+    print("migração, rode (uma única vez):")
+    print()
+    print("  git rm -r --cached .agent-memory/")
+    print('  git commit -m "chore: untrack .agent-memory/ (agent-memory v0.2.0)"')
+    print()
+    print("Os arquivos continuam no disco; só saem do índice do Git.")
+    print("=" * 60)
+
+
 def deploy_skills(root: Path, force: bool) -> None:
-    """Deploy de skills para /skills/ no project root."""
+    """Deploy de skills para /skills/ — sempre sobrescreve (conteúdo de metodologia)."""
     print("Skills:")
     skills_dst = root / "skills"
     skills_dst.mkdir(parents=True, exist_ok=True)
@@ -177,12 +236,11 @@ def deploy_skills(root: Path, force: bool) -> None:
             print(f"  pulado: {skill_name} (sem SKILL.md no source)")
             continue
 
-        if dst_file.exists() and not force:
-            print(f"  pulado: {skill_name} (já existe; use --force)")
-        else:
-            dst_dir.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(src_file, dst_file)
-            print(f"  deployada: {skill_name}")
+        dst_dir.mkdir(parents=True, exist_ok=True)
+        existed = dst_file.exists()
+        shutil.copy2(src_file, dst_file)
+        verb = "atualizada" if existed else "deployada"
+        print(f"  {verb}: {skill_name}")
 
 
 def create_directories(root: Path) -> None:
@@ -222,17 +280,6 @@ def install_hooks(root: Path) -> None:
             print(f"  AVISO: install_hooks.py retornou {result.returncode}")
     except Exception as e:
         print(f"  AVISO: falha ao instalar hooks: {e}")
-
-
-def write_installed_version(root: Path) -> None:
-    """Registra a versão instalada no project root."""
-    version_file = SCRIPT_DIR / "VERSION"
-    if not version_file.exists():
-        return
-
-    version = version_file.read_text(encoding="utf-8").strip()
-    installed_marker = SCRIPT_DIR / ".installed-version"
-    installed_marker.write_text(version + "\n", encoding="utf-8")
 
 
 def run_audit(root: Path, has_pending_merge: bool) -> None:
@@ -323,6 +370,9 @@ def main() -> int:
     deploy_gitattributes(root)
     print()
 
+    ensure_gitignore(root)
+    print()
+
     deploy_skills(root, args.force)
     print()
 
@@ -343,12 +393,12 @@ def main() -> int:
     run_audit(root, has_pending_merge=bool(merge_queue))
     print()
 
-    write_installed_version(root)
-
     print("=" * 38)
     print("Deploy concluído.")
     print("=" * 38)
     print()
+
+    check_tracked_migration(root)
 
     print_next_steps(root, merge_queue)
 
