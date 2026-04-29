@@ -70,14 +70,33 @@ def find_project_root() -> Path:
     return Path.cwd()
 
 
-ROOT = find_project_root()
-AGENT = ROOT / "AGENT.md"
-CLAUDE = ROOT / "CLAUDE.md"  # opcional: redirect para AGENT.md (Claude Code)
-STATE = ROOT / "STATE.md"
-MANIFEST_DIR = ROOT / "manifest"
-FEATURES_DIR = MANIFEST_DIR / "features"
-DECISIONS_DIR = ROOT / "decisions"
-PROPOSALS_DIR = DECISIONS_DIR / "proposals"
+# ROOT/AGENT/etc são populados preguiçosamente via _init_paths() na
+# primeira chamada de run() ou init_structure(). Importar o módulo (ex.:
+# para registrar o subparser via cli.py) não dispara `git rev-parse`.
+ROOT: Path = None  # type: ignore[assignment]
+AGENT: Path = None  # type: ignore[assignment]
+CLAUDE: Path = None  # type: ignore[assignment]
+STATE: Path = None  # type: ignore[assignment]
+MANIFEST_DIR: Path = None  # type: ignore[assignment]
+FEATURES_DIR: Path = None  # type: ignore[assignment]
+DECISIONS_DIR: Path = None  # type: ignore[assignment]
+PROPOSALS_DIR: Path = None  # type: ignore[assignment]
+
+
+def _init_paths() -> None:
+    """Resolve ROOT e dependentes a partir do cwd. Idempotente."""
+    global ROOT, AGENT, CLAUDE, STATE
+    global MANIFEST_DIR, FEATURES_DIR, DECISIONS_DIR, PROPOSALS_DIR
+    if ROOT is not None:
+        return
+    ROOT = find_project_root()
+    AGENT = ROOT / "AGENT.md"
+    CLAUDE = ROOT / "CLAUDE.md"
+    STATE = ROOT / "STATE.md"
+    MANIFEST_DIR = ROOT / "manifest"
+    FEATURES_DIR = MANIFEST_DIR / "features"
+    DECISIONS_DIR = ROOT / "decisions"
+    PROPOSALS_DIR = DECISIONS_DIR / "proposals"
 
 FEATURE_FILE_RE = re.compile(r"^F-\d{4}-[a-z0-9-]+\.md$")
 DECISION_FILE_RE = re.compile(r"^\d{4}-[a-z0-9-]+\.md$")
@@ -539,6 +558,7 @@ def run_audit(write_indices: bool = True,
 
 
 def init_structure() -> None:
+    _init_paths()
     for d in (MANIFEST_DIR, FEATURES_DIR, DECISIONS_DIR, PROPOSALS_DIR):
         d.mkdir(parents=True, exist_ok=True)
     print(f"Estrutura inicializada em {ROOT}")
@@ -601,6 +621,7 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
+    _init_paths()
     if args.init:
         init_structure()
         return 0

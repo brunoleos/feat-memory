@@ -53,9 +53,22 @@ def find_project_root() -> Path:
     return Path.cwd()
 
 
-ROOT = find_project_root()
-DECISIONS_DIR = ROOT / "decisions"
-PROPOSALS_DIR = DECISIONS_DIR / "proposals"
+# Populados preguiçosamente via _init_paths() em run(); importar o
+# módulo (ex.: para registrar o subparser via cli.py) não dispara
+# `git rev-parse`.
+ROOT: Path = None  # type: ignore[assignment]
+DECISIONS_DIR: Path = None  # type: ignore[assignment]
+PROPOSALS_DIR: Path = None  # type: ignore[assignment]
+
+
+def _init_paths() -> None:
+    """Resolve ROOT e dependentes a partir do cwd. Idempotente."""
+    global ROOT, DECISIONS_DIR, PROPOSALS_DIR
+    if ROOT is not None:
+        return
+    ROOT = find_project_root()
+    DECISIONS_DIR = ROOT / "decisions"
+    PROPOSALS_DIR = DECISIONS_DIR / "proposals"
 
 DEPENDENCY_FILES = {
     "pyproject.toml", "requirements.txt", "Pipfile", "Pipfile.lock",
@@ -389,6 +402,7 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
+    _init_paths()
     if not (ROOT / ".git").exists():
         print(f"Erro: project root {ROOT} não é um repositório Git",
               file=sys.stderr)
