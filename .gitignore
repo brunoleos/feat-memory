@@ -7,6 +7,11 @@ __pycache__/
 build/
 dist/
 
+# Caches de ferramentas de teste/lint
+.pytest_cache/
+.coverage
+htmlcov/
+
 # Virtualenvs criados pelo desenvolvedor
 .venv/
 venv/
