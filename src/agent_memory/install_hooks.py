@@ -1,71 +1,46 @@
-#!/usr/bin/env python3
-"""
-install_hooks.py — Instala os Git hooks do projeto em .git/hooks/.
+"""install_hooks.py — Instala os Git hooks no projeto consumidor.
 
-Idempotente: pode ser rodado quantas vezes quiser.
-
-Uso:
-    python install_hooks.py
+Chamado pelo deploy via install_hooks.install(target). Idempotente.
+Os hooks ficam em src/agent_memory/data/hooks/ e são acessados via
+importlib.resources (funciona em editable e wheel install).
 """
 
 from __future__ import annotations
 
 import shutil
 import stat
-import subprocess
-import sys
+from importlib.resources import as_file, files
 from pathlib import Path
 
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-HOOKS_SRC = SCRIPT_DIR / "hooks"
+def install(target: Path) -> int:
+    """Copia hooks do pacote para <target>/.git/hooks/.
 
+    Retorna 0 se ok ou se target não é repositório Git (apenas avisa).
+    """
+    git_dir = target / ".git"
+    if not git_dir.exists():
+        print("  pulado (não é repositório Git)")
+        return 0
 
-def find_project_root() -> Path:
-    """Descobre a raiz do repositório Git."""
-    try:
-        out = subprocess.check_output(
-            ["git", "rev-parse", "--show-toplevel"],
-            text=True, stderr=subprocess.DEVNULL,
-        ).strip()
-        if out:
-            return Path(out)
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        pass
-    print("Erro: não é um repositório Git", file=sys.stderr)
-    sys.exit(1)
-
-
-def main() -> int:
-    root = find_project_root()
-    hooks_dst = root / ".git" / "hooks"
-
-    if not HOOKS_SRC.exists() or not HOOKS_SRC.is_dir():
-        print(f"Erro: pasta de hooks não encontrada em {HOOKS_SRC}",
-              file=sys.stderr)
-        return 1
-
+    hooks_dst = git_dir / "hooks"
     hooks_dst.mkdir(parents=True, exist_ok=True)
 
-    installed = 0
-    for hook_path in sorted(HOOKS_SRC.iterdir()):
-        if not hook_path.is_file():
-            continue
-        hook_name = hook_path.name
-        dst = hooks_dst / hook_name
+    hooks_src = files("agent_memory") / "data" / "hooks"
 
-        shutil.copy2(hook_path, dst)
-        # Garante permissão de execução (0o755)
-        current = dst.stat().st_mode
-        dst.chmod(current | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-        print(f"instalado: {hook_name}")
+    installed = 0
+    for entry in sorted(hooks_src.iterdir(), key=lambda e: e.name):
+        if not entry.is_file():
+            continue
+        hook_name = entry.name
+        with as_file(entry) as src_path:
+            dst = hooks_dst / hook_name
+            shutil.copy2(src_path, dst)
+            current = dst.stat().st_mode
+            dst.chmod(current | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+        print(f"  instalado: {hook_name}")
         installed += 1
 
-    print()
-    print(f"{installed} hook(s) instalados em {hooks_dst}")
-    print("Para desabilitar temporariamente um commit: git commit --no-verify")
+    print(f"  {installed} hook(s) em {hooks_dst}")
+    print("  Para desabilitar temporariamente um commit: git commit --no-verify")
     return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
