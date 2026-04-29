@@ -32,7 +32,7 @@ Se ainda não estão no contexto da sessão atual, leia:
 
 O total fica dentro do orçamento de retomada definido em `AGENT.md::budgets::resumption_max_bytes` (padrão: 12KB).
 
-**Detecção de pós-merge.** Se o último commit é um merge commit (verifique com `git log -1 --pretty=%P` retornando dois ou mais hashes de parent), os índices podem estar desatualizados porque o `.gitattributes` configurou `merge=ours` para mantê-los, deixando para o agente regenerar. Rode `python .agent-memory/tools/audit.py` antes de prosseguir, o que valida a estrutura mesclada e regenera os índices automaticamente. Se a auditoria reportar problemas (drift, colisões residuais, schemas quebrados), informe o usuário e sugira investigação antes de continuar.
+**Detecção de pós-merge.** Se o último commit é um merge commit (verifique com `git log -1 --pretty=%P` retornando dois ou mais hashes de parent), os índices podem estar desatualizados porque o `.gitattributes` configurou `merge=ours` para mantê-los, deixando para o agente regenerar. Rode `agent-memory audit` antes de prosseguir, o que valida a estrutura mesclada e regenera os índices automaticamente. Se a auditoria reportar problemas (drift, colisões residuais, schemas quebrados), informe o usuário e sugira investigação antes de continuar.
 
 ### 2. Expanda apenas o necessário
 
@@ -72,4 +72,4 @@ Quer prosseguir com o predicate pushdown ou tem outra prioridade?
 - Não apresente o briefing como se fosse a primeira vez quando a conversa já está em andamento
 - Não invente IDs ou referências que não estão nos índices
 - Não expanda features ou ADRs que não estão em `active_*` (custo de tokens sem ganho)
-- Não mostre o briefing em projetos que ainda não têm `STATE.md` populado — nesse caso, sugira rodar `.agent-memory/deploy.sh` ou usar a skill `memory-retroactive-genesis`
+- Não mostre o briefing em projetos que ainda não têm `STATE.md` populado — nesse caso, sugira rodar `agent-memory deploy <projeto>` ou invocar a skill `memory-deploy`

@@ -59,7 +59,7 @@ Mantenha o STATE.md abaixo de 4KB. Se está crescendo, é sinal de que algo deve
 ### 4. Decida sobre ADR
 
 Se a sessão produziu uma decisão arquitetural não-trivial:
-- Rode `python .agent-memory/tools/propose-adr.py --staged` para gerar um draft em `decisions/proposals/`
+- Rode `agent-memory propose-adr --staged` para gerar um draft em `decisions/proposals/`
 - Examine o draft, complete as seções TODO (Contexto, Decisão, Consequências, Alternativas rejeitadas)
 - Quando completo, mova de `decisions/proposals/NNNN-draft.md` para `decisions/NNNN-slug-final.md`
 - Atualize `affects_features` no frontmatter do ADR para listar features impactadas
@@ -70,11 +70,11 @@ Não force criação de ADR para refactors mecânicos, renames, ou correções d
 
 ### 5. Valide
 
-Rode `python .agent-memory/tools/audit.py --strict --no-index` antes de propor o commit. Se o pre-commit hook está instalado, ele vai rodar isso automaticamente — mas validar antes evita falha tardia.
+Rode `agent-memory audit --strict --no-index` antes de propor o commit. Se o pre-commit hook está instalado, ele vai rodar isso automaticamente — mas validar antes evita falha tardia.
 
 Se a auditoria reportar drift, examine: ou um caminho em `contracts` virou inválido (precisa atualizar a feature), ou um arquivo foi removido sem deprecar a feature correspondente.
 
-Se a sessão atual está em uma branch que será mesclada de volta para uma branch principal (geralmente `main` ou `develop`), rode adicionalmente `python .agent-memory/tools/audit.py --check-collisions origin/main` para detectar colisões de IDs antes do merge. A checagem compara os IDs novos criados nesta branch com os IDs existentes na branch destino, e avisa se duas branches paralelas criaram features ou ADRs com o mesmo ID. Se há colisão, renumere o artefato local antes do commit, atualizando o nome do arquivo, o campo `id` no frontmatter, e qualquer referência cruzada. ADRs já mesclados na branch destino nunca são renumerados — apenas o que está chegando se ajusta.
+Se a sessão atual está em uma branch que será mesclada de volta para uma branch principal (geralmente `main` ou `develop`), rode adicionalmente `agent-memory audit --check-collisions origin/main` para detectar colisões de IDs antes do merge. A checagem compara os IDs novos criados nesta branch com os IDs existentes na branch destino, e avisa se duas branches paralelas criaram features ou ADRs com o mesmo ID. Se há colisão, renumere o artefato local antes do commit, atualizando o nome do arquivo, o campo `id` no frontmatter, e qualquer referência cruzada. ADRs já mesclados na branch destino nunca são renumerados — apenas o que está chegando se ajusta.
 
 ### 6. Apresente o resumo
 
