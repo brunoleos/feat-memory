@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+"""
+pre-commit hook — Bloqueia commits que violam o protocolo de auditoria.
+
+Para contornar deliberadamente: git commit --no-verify
+
+Este hook roda audit.py em modo --strict, que promove warnings (drift de
+contratos) a errors. Isso garante a regra fundamental do Manifest:
+código e features são commitados juntos.
+"""
+
+from __future__ import annotations
+
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+
+def find_project_root() -> Path | None:
+    """Descobre a raiz do repositório Git."""
+    try:
+        out = subprocess.check_output(
+            ["git", "rev-parse", "--show-toplevel"],
+            text=True, stderr=subprocess.DEVNULL,
+        ).strip()
+        if out:
+            return Path(out)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pass
+    return None
+
+
+def find_audit_script(root: Path) -> Path | None:
+    """Localiza audit.py em locais conhecidos."""
+    candidates = [
+        root / ".agent-memory" / "tools" / "audit.py",
+        root / "tools" / "audit.py",
+    ]
+    for path in candidates:
+        if path.is_file():
+            return path
+    return None
+
+
+def main() -> int:
+    root = find_project_root()
+    if root is None:
+        print("[pre-commit] não foi possível localizar a raiz do repositório",
+              file=sys.stderr)
+        return 1
+
+    audit_script = find_audit_script(root)
+    if audit_script is None:
+        print("[pre-commit] audit.py não encontrado, pulando auditoria")
+        return 0
+
+    py = shutil.which("python3") or shutil.which("python")
+    if py is None:
+        print("[pre-commit] Python não encontrado no PATH", file=sys.stderr)
+        return 1
+
+    print("[pre-commit] auditando artefatos...")
+    result = subprocess.run(
+        [py, str(audit_script), "--strict", "--no-index"],
+        cwd=root,
+    )
+
+    if result.returncode != 0:
+        print("", file=sys.stderr)
+        print("[pre-commit] auditoria falhou. "
+              "Para contornar: git commit --no-verify",
+              file=sys.stderr)
+
+    return result.returncode
+
+
+if __name__ == "__main__":
+    sys.exit(main())

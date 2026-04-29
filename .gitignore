@@ -1,0 +1,12 @@
+# Artefatos temporários de coordenação entre deploy.py e a skill memory-deploy.
+# Quando AGENT.md ou CLAUDE.md já existem na raiz, o deploy registra-os
+# aqui para que a skill processe o merge. Após o merge ser resolvido,
+# estes artefatos são removidos automaticamente.
+.merge-queue
+.pending-merge/
+
+# Marcador de versão instalada (gerado pelo deploy/update, específico do clone)
+.installed-version
+
+# Configuração de upstream (específica do clone, opcional)
+.upstream
