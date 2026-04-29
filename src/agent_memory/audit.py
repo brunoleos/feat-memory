@@ -1,20 +1,18 @@
-#!/usr/bin/env python3
 """
 audit.py — Auditoria dos quatro artefatos de memória do projeto.
 
 Valida schemas, gera índices e produz relatório de saúde.
 
-Localização: .agent-memory/tools/audit.py
-Os artefatos auditados (AGENT.md, STATE.md, manifest/, decisions/) ficam
-no project root, descoberto via `git rev-parse --show-toplevel` ou,
-como fallback, subindo dois níveis a partir deste script.
+Subcomando da CLI: `agent-memory audit`. Os artefatos auditados
+(AGENT.md, STATE.md, manifest/, decisions/) ficam no project root,
+descoberto via `git rev-parse --show-toplevel`.
 
 Uso:
-    python .agent-memory/tools/audit.py              # relatório + índices
-    python .agent-memory/tools/audit.py --json       # output em JSON (CI)
-    python .agent-memory/tools/audit.py --strict     # warnings viram errors
-    python .agent-memory/tools/audit.py --init       # cria estrutura
-    python .agent-memory/tools/audit.py --no-index   # só valida
+    agent-memory audit              # relatório + índices
+    agent-memory audit --json       # output em JSON (CI)
+    agent-memory audit --strict     # warnings viram errors
+    agent-memory audit --init       # cria estrutura
+    agent-memory audit --no-index   # só valida
 
 Saída:
     Exit code 0 se nenhum erro foi encontrado.
@@ -51,7 +49,7 @@ except ImportError:
 
 
 def find_project_root() -> Path:
-    """Descobre o project root via git, com fallback para ../../ do script."""
+    """Descobre o project root via git, com fallback para o cwd."""
     try:
         out = subprocess.check_output(
             ["git", "rev-parse", "--show-toplevel"],
@@ -62,16 +60,14 @@ def find_project_root() -> Path:
     except (subprocess.CalledProcessError, FileNotFoundError):
         pass
 
-    # Fallback: sobe da localização do script (.agent-memory/tools/audit.py)
-    # até achar AGENT.md ou esgotar 5 níveis
-    current = Path(__file__).resolve().parent
+    current = Path.cwd().resolve()
     for _ in range(5):
         if (current / "AGENT.md").exists():
             return current
         if current.parent == current:
             break
         current = current.parent
-    return Path(__file__).resolve().parent.parent.parent
+    return Path.cwd()
 
 
 ROOT = find_project_root()
@@ -360,7 +356,7 @@ def gen_manifest_index(features: list[dict]) -> str:
         )
     rows += [
         "",
-        f"_Gerado por `.agent-memory/tools/audit.py` em "
+        f"_Gerado por `agent-memory audit` em "
         f"{datetime.now(timezone.utc).isoformat(timespec='seconds')}. "
         f"Não edite manualmente._",
     ]
@@ -383,7 +379,7 @@ def gen_decisions_index(decisions: list[dict]) -> str:
         )
     rows += [
         "",
-        f"_Gerado por `.agent-memory/tools/audit.py` em "
+        f"_Gerado por `agent-memory audit` em "
         f"{datetime.now(timezone.utc).isoformat(timespec='seconds')}. "
         f"Não edite manualmente._",
     ]
@@ -585,21 +581,26 @@ def print_report(result: dict) -> None:
         print("Nenhum issue encontrado.")
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--json", action="store_true",
-                        help="output em JSON")
-    parser.add_argument("--init", action="store_true",
-                        help="inicializa estrutura de pastas")
-    parser.add_argument("--no-index", action="store_true",
-                        help="não regenerar índices")
-    parser.add_argument("--strict", action="store_true",
-                        help="trata warnings (drift) como errors")
-    parser.add_argument("--check-collisions", metavar="REF",
-                        help="detecta colisões de IDs contra REF "
-                        "(ex: origin/main) antes de merge")
-    args = parser.parse_args()
+def add_subparser(subparsers: argparse._SubParsersAction) -> None:
+    p = subparsers.add_parser(
+        "audit",
+        help="Valida artefatos da metodologia e regenera índices",
+    )
+    p.add_argument("--json", action="store_true",
+                   help="output em JSON")
+    p.add_argument("--init", action="store_true",
+                   help="inicializa estrutura de pastas")
+    p.add_argument("--no-index", action="store_true",
+                   help="não regenerar índices")
+    p.add_argument("--strict", action="store_true",
+                   help="trata warnings (drift) como errors")
+    p.add_argument("--check-collisions", metavar="REF",
+                   help="detecta colisões de IDs contra REF "
+                   "(ex: origin/main) antes de merge")
+    p.set_defaults(func=run)
 
+
+def run(args: argparse.Namespace) -> int:
     if args.init:
         init_structure()
         return 0
@@ -623,7 +624,3 @@ def main() -> int:
                   file=sys.stderr)
             errors += warnings
     return 1 if errors else 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())

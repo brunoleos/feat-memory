@@ -1,6 +1,5 @@
-#!/usr/bin/env python3
 """
-propose-adr.py — Detecta mudanças que podem merecer ADR e gera draft.
+propose_adr.py — Detecta mudanças que podem merecer ADR e gera draft.
 
 Examina o diff atual contra um commit base (HEAD~1 por padrão) e
 aplica heurísticas para identificar sinais de decisão arquitetural:
@@ -9,18 +8,18 @@ em mensagens de commit. Quando detecta sinais relevantes, gera um
 draft pré-preenchido em decisions/proposals/.
 
 Drafts NÃO são ADRs — eles vivem em uma subpasta separada e são
-ignorados pelo audit.py. Cabe ao humano revisar, completar as
+ignorados pelo audit. Cabe ao humano revisar, completar as
 seções TODO, renomear com slug definitivo e mover para decisions/.
 
-Localização: .agent-memory/tools/propose-adr.py
-Os artefatos ficam no project root, descoberto via git.
+Subcomando da CLI: `agent-memory propose-adr`. Os artefatos ficam
+no project root, descoberto via git.
 
 Uso:
-    python .agent-memory/tools/propose-adr.py             # HEAD~1..HEAD
-    python .agent-memory/tools/propose-adr.py --base ABC  # contra commit
-    python .agent-memory/tools/propose-adr.py --staged    # mudanças staged
-    python .agent-memory/tools/propose-adr.py --force     # sem sinais
-    python .agent-memory/tools/propose-adr.py --prompt    # prompt LLM
+    agent-memory propose-adr             # HEAD~1..HEAD
+    agent-memory propose-adr --base ABC  # contra commit específico
+    agent-memory propose-adr --staged    # mudanças staged
+    agent-memory propose-adr --force     # gera mesmo sem sinais
+    agent-memory propose-adr --prompt    # emite prompt para LLM
 """
 
 from __future__ import annotations
@@ -34,7 +33,7 @@ from pathlib import Path
 
 
 def find_project_root() -> Path:
-    """Descobre o project root via git, com fallback."""
+    """Descobre o project root via git, com fallback para o cwd."""
     try:
         out = subprocess.check_output(
             ["git", "rev-parse", "--show-toplevel"],
@@ -44,14 +43,14 @@ def find_project_root() -> Path:
             return Path(out)
     except (subprocess.CalledProcessError, FileNotFoundError):
         pass
-    current = Path(__file__).resolve().parent
+    current = Path.cwd().resolve()
     for _ in range(5):
         if (current / "AGENT.md").exists():
             return current
         if current.parent == current:
             break
         current = current.parent
-    return Path(__file__).resolve().parent.parent.parent
+    return Path.cwd()
 
 
 ROOT = find_project_root()
@@ -373,18 +372,23 @@ def has_enough_history(base: str) -> tuple[bool, str]:
         return False, f"Ref '{base}' não encontrada no repositório."
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--base", default="HEAD~1",
-                        help="commit de referência (padrão: HEAD~1)")
-    parser.add_argument("--staged", action="store_true",
-                        help="examina mudanças staged em vez de --base")
-    parser.add_argument("--force", action="store_true",
-                        help="gera proposta mesmo sem sinais detectados")
-    parser.add_argument("--prompt", action="store_true",
-                        help="emite prompt para LLM em vez de gerar draft")
-    args = parser.parse_args()
+def add_subparser(subparsers: argparse._SubParsersAction) -> None:
+    p = subparsers.add_parser(
+        "propose-adr",
+        help="Detecta mudanças que merecem ADR e gera draft em decisions/proposals/",
+    )
+    p.add_argument("--base", default="HEAD~1",
+                   help="commit de referência (padrão: HEAD~1)")
+    p.add_argument("--staged", action="store_true",
+                   help="examina mudanças staged em vez de --base")
+    p.add_argument("--force", action="store_true",
+                   help="gera proposta mesmo sem sinais detectados")
+    p.add_argument("--prompt", action="store_true",
+                   help="emite prompt para LLM em vez de gerar draft")
+    p.set_defaults(func=run)
 
+
+def run(args: argparse.Namespace) -> int:
     if not (ROOT / ".git").exists():
         print(f"Erro: project root {ROOT} não é um repositório Git",
               file=sys.stderr)
@@ -434,7 +438,3 @@ def main() -> int:
     print("  4. git add decisions/<NNNN>-<slug>.md")
 
     return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())

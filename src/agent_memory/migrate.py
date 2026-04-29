@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 migrate.py — Assistente de migração para projetos legados.
 
@@ -10,13 +9,13 @@ Importante: este script não escreve nada automaticamente. Todas as
 sugestões são impressas para revisão humana, porque gênese retroativa
 silenciosa cristaliza interpretações erradas como decisões oficiais.
 
-Localização: .agent-memory/tools/migrate.py
-O project root é descoberto via git rev-parse.
+Subcomando da CLI: `agent-memory migrate`. O project root é descoberto
+via git rev-parse.
 
 Uso:
-    python .agent-memory/tools/migrate.py             # últimos 100 commits
-    python .agent-memory/tools/migrate.py --limit 200 # mais commits
-    python .agent-memory/tools/migrate.py --json      # output estruturado
+    agent-memory migrate              # últimos 100 commits
+    agent-memory migrate --limit 200  # mais commits
+    agent-memory migrate --json       # output estruturado
 """
 
 from __future__ import annotations
@@ -117,14 +116,19 @@ def detect_entry_points(root: Path) -> list[str]:
     return candidates
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--limit", type=int, default=100,
-                        help="número de commits a examinar (padrão: 100)")
-    parser.add_argument("--json", action="store_true",
-                        help="output em JSON")
-    args = parser.parse_args()
+def add_subparser(subparsers: argparse._SubParsersAction) -> None:
+    p = subparsers.add_parser(
+        "migrate",
+        help="Examina histórico Git e sugere ADRs candidatos para projetos legados",
+    )
+    p.add_argument("--limit", type=int, default=100,
+                   help="número de commits a examinar (padrão: 100)")
+    p.add_argument("--json", action="store_true",
+                   help="output em JSON")
+    p.set_defaults(func=run)
 
+
+def run(args: argparse.Namespace) -> int:
     root = find_project_root()
 
     try:
@@ -183,9 +187,5 @@ def main() -> int:
     print("  2. Para cada ADR relevante, criar decisions/NNNN-slug.md.")
     print("  3. Para cada entrypoint público, criar arquivo em")
     print("     manifest/features/F-NNNN-slug.md com status: shipped.")
-    print("  4. Rodar `python tools/audit.py` para validar e gerar índices.")
+    print("  4. Rodar `agent-memory audit` para validar e gerar índices.")
     return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
