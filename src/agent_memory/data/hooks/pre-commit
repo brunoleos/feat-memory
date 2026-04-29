@@ -4,9 +4,9 @@ pre-commit hook — Bloqueia commits que violam o protocolo de auditoria.
 
 Para contornar deliberadamente: git commit --no-verify
 
-Este hook roda audit.py em modo --strict, que promove warnings (drift de
-contratos) a errors. Isso garante a regra fundamental do Manifest:
-código e features são commitados juntos.
+Este hook chama `agent-memory audit --strict --no-index`, que promove
+warnings (drift de contratos) a errors. Isso garante a regra fundamental
+do Manifest: código e features são commitados juntos.
 """
 
 from __future__ import annotations
@@ -31,18 +31,6 @@ def find_project_root() -> Path | None:
     return None
 
 
-def find_audit_script(root: Path) -> Path | None:
-    """Localiza audit.py em locais conhecidos."""
-    candidates = [
-        root / ".agent-memory" / "tools" / "audit.py",
-        root / "tools" / "audit.py",
-    ]
-    for path in candidates:
-        if path.is_file():
-            return path
-    return None
-
-
 def main() -> int:
     root = find_project_root()
     if root is None:
@@ -50,19 +38,16 @@ def main() -> int:
               file=sys.stderr)
         return 1
 
-    audit_script = find_audit_script(root)
-    if audit_script is None:
-        print("[pre-commit] audit.py não encontrado, pulando auditoria")
+    if shutil.which("agent-memory") is None:
+        print("[pre-commit] AVISO: 'agent-memory' não encontrado no PATH; "
+              "pulando auditoria")
+        print("  Instale com: pipx install -e <clone-do-agent-memory>",
+              file=sys.stderr)
         return 0
-
-    py = shutil.which("python3") or shutil.which("python")
-    if py is None:
-        print("[pre-commit] Python não encontrado no PATH", file=sys.stderr)
-        return 1
 
     print("[pre-commit] auditando artefatos...")
     result = subprocess.run(
-        [py, str(audit_script), "--strict", "--no-index"],
+        ["agent-memory", "audit", "--strict", "--no-index"],
         cwd=root,
     )
 
