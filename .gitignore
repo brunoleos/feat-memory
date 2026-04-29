@@ -4,3 +4,6 @@
 # estes artefatos são removidos automaticamente.
 .merge-queue
 .pending-merge/
+
+# Configuração local do Claude Code
+.claude/
