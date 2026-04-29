@@ -6,6 +6,37 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto ader
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-04-29
+
+Modelo de instalação minimalista: `.agent-memory/` agora é gitignored no projeto consumidor e re-clonado em fresh checkouts, eliminando duplicação no histórico Git. O ciclo de update vira três comandos de shell, sem configuração persistente.
+
+### Mudado
+
+`deploy.py` agora adiciona `.agent-memory/` ao `.gitignore` do projeto consumidor automaticamente (bloco delimitado por sentinelas, idempotente).
+
+`deploy.py` agora sempre atualiza as skills em `skills/` a cada execução (eram puladas se já existiam). Skills são conteúdo de metodologia, não de usuário; quem precisa customizar deve copiar a skill para um nome diferente.
+
+`deploy.py` agora gerencia o `.gitattributes` via bloco com sentinelas, permitindo refresh idempotente do conteúdo da metodologia sem destruir regras locais adicionadas fora do bloco.
+
+### Removido
+
+`update.py`, `.upstream.example`, `.upstream` e `.installed-version`. O fluxo de atualização agora é `rm -rf .agent-memory && git clone --branch <tag> ... .agent-memory && python .agent-memory/deploy.py`.
+
+### Migração de 0.1.0 → 0.2.0
+
+Para projetos que instalaram a v0.1.0 e versionavam `.agent-memory/`, a migração tem quatro passos. O `deploy.py` da v0.2.0 detecta o cenário e imprime as instruções automaticamente quando rodado:
+
+```bash
+rm -rf .agent-memory
+git clone --depth 1 --branch v0.2.0 \
+  https://github.com/brunoleos/agent-memory.git .agent-memory
+python .agent-memory/deploy.py
+git rm -r --cached .agent-memory/
+git commit -m "chore: untrack .agent-memory/ (agent-memory v0.2.0)"
+```
+
+Os arquivos da pasta continuam no disco; só saem do índice do Git para que mudanças futuras na tool não apareçam como diff no projeto consumidor.
+
 ## [0.1.0] - 2026-04-28
 
 Versão inicial pública. Estabelece a fundação da metodologia.

@@ -24,11 +24,11 @@ Todas as ferramentas e scripts do pacote estão escritos em Python 3.10 ou super
 
 ### Versionamento semântico e changelog
 
-O pacote tem versionamento semântico em arquivo `VERSION` na raiz e histórico em `CHANGELOG.md` seguindo o formato Keep a Changelog. O `deploy.py` registra a versão instalada em `.agent-memory/.installed-version` no momento da instalação, permitindo que cada projeto consumidor saiba qual versão está em uso. Esta peça habilita o sistema de updates documentado no item seguinte.
+O pacote tem versionamento semântico em arquivo `VERSION` na raiz e histórico em `CHANGELOG.md` seguindo o formato Keep a Changelog. Cada release publicada no GitHub corresponde a uma tag `vX.Y.Z` e a uma seção do `CHANGELOG.md`. A versão da metodologia em uso por um projeto consumidor é simplesmente `cat .agent-memory/VERSION`, eliminando a necessidade de um marcador separado.
 
-### Sistema de updates com upstream configurável
+### Atualização via re-clone explícito
 
-O `update.py` permite que projetos consumidores recebam atualizações da metodologia ao longo do tempo sem perder customizações locais. O upstream é configurado em `.agent-memory/.upstream` apontando para um repositório Git, uma referência específica desse repositório, ou um caminho local. O update baixa o conteúdo upstream, substitui o pacote preservando arquivos de configuração local, e re-roda o deploy com a lógica de merge para propagar mudanças aos artefatos do projeto sem perder customizações do `AGENT.md` ou do `CLAUDE.md`. Esta abordagem permite que o `agent-memory` seja desenvolvido como repositório upstream único e replicado em vários projetos consumidores via comando explícito.
+A pasta `.agent-memory/` é gitignored no projeto consumidor; atualizar a metodologia significa apagar a pasta, re-clonar o repositório oficial fixado em uma tag específica, e rodar `deploy.py` para propagar mudanças aos artefatos versionados (`AGENT.md`, `CLAUDE.md`, `STATE.md`, `manifest/`, `decisions/`, `skills/`, `.gitattributes`). A lógica de merge do `deploy.py` preserva customizações em `AGENT.md` e `CLAUDE.md` via fila de merge processada pela skill `memory-deploy`. Skills e `.gitattributes` são sempre atualizados (conteúdo de metodologia, não de usuário). Esta abordagem evita carregar duplicação no histórico Git de cada projeto consumidor e mantém o ciclo de update transparente: três comandos de shell, sem configuração persistente.
 
 ### Robustez de tratamento de erros
 

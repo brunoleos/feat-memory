@@ -4,9 +4,3 @@
 # estes artefatos são removidos automaticamente.
 .merge-queue
 .pending-merge/
-
-# Marcador de versão instalada (gerado pelo deploy/update, específico do clone)
-.installed-version
-
-# Configuração de upstream (específica do clone, opcional)
-.upstream
