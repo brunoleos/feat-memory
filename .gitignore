@@ -1,9 +1,17 @@
-# Artefatos temporários de coordenação entre deploy.py e a skill memory-deploy.
-# Quando AGENT.md ou CLAUDE.md já existem na raiz, o deploy registra-os
-# aqui para que a skill processe o merge. Após o merge ser resolvido,
-# estes artefatos são removidos automaticamente.
-.merge-queue
-.pending-merge/
-
 # Configuração local do Claude Code
 .claude/
+
+# Artefatos de build/install do Python
+__pycache__/
+*.egg-info/
+build/
+dist/
+
+# Virtualenvs criados pelo desenvolvedor
+.venv/
+venv/
+
+# Estado transiente do deploy quando rodado neste próprio repositório
+# (dogfood opcional). Em projetos consumidores, o bloco é injetado
+# automaticamente pelo `agent-memory deploy` em sentinel block.
+.agent-memory-deploy/
