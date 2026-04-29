@@ -3,13 +3,13 @@
 # A diretiva `merge=ours` mantém a versão local em qualquer merge,
 # descartando a outra sem gerar conflito. Aplica-se a:
 #
-# - Índices gerados (regenerados pelo audit.py após merge)
+# - Índices gerados (regenerados pelo `agent-memory audit` após merge)
 # - STATE.md (foco da sessão é volátil; tentativa de mesclar produz texto
 #   incoerente sem ganho operacional)
 #
 # IMPORTANTE: para que `merge=ours` funcione, é necessário configurar
-# o driver no Git local. O deploy.sh faz isso automaticamente, mas se
-# precisar configurar manualmente em outro clone, execute:
+# o driver no Git local. O `agent-memory deploy` faz isso automaticamente,
+# mas se precisar configurar manualmente em outro clone, execute:
 #
 #   git config merge.ours.driver true
 

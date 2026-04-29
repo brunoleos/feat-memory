@@ -19,7 +19,7 @@ references:
   manifest_index: ./manifest/INDEX.md
   state: ./STATE.md
   decisions_index: ./decisions/INDEX.md
-  methodology: ./.agent-memory/METHODOLOGY.md
+  methodology: https://github.com/brunoleos/agent-memory/blob/main/METHODOLOGY.md
   skills: ./skills/
 budgets:
   resumption_max_bytes: 12288
@@ -29,7 +29,7 @@ budgets:
 
 # Constituição do projeto
 
-Sessões começam por `STATE.md` (foco atual) e `manifest/INDEX.md` (mapa de capacidades). Detalhes de uma feature ficam em `manifest/features/F-NNNN-*.md`. Decisões arquiteturais em `decisions/`. A metodologia completa está documentada em `.agent-memory/METHODOLOGY.md`.
+Sessões começam por `STATE.md` (foco atual) e `manifest/INDEX.md` (mapa de capacidades). Detalhes de uma feature ficam em `manifest/features/F-NNNN-*.md`. Decisões arquiteturais em `decisions/`. A metodologia completa está documentada no repositório do agent-memory: <https://github.com/brunoleos/agent-memory/blob/main/METHODOLOGY.md>.
 
 ## Identidade
 
@@ -37,7 +37,7 @@ Descreva aqui em uma ou duas frases o que o projeto faz, qual problema ele resol
 
 ## Restrições não-negociáveis
 
-As restrições marcadas como `severity: hard` no frontmatter são auditadas pelo `.agent-memory/tools/audit.py` e bloqueiam o build quando violadas. As `soft` geram apenas warning. Mudanças nesta lista exigem ADR.
+As restrições marcadas como `severity: hard` no frontmatter são auditadas pelo `agent-memory audit` e bloqueiam o build quando violadas. As `soft` geram apenas warning. Mudanças nesta lista exigem ADR.
 
 ## Convenções de código
 
@@ -47,7 +47,7 @@ Liste aqui apenas padrões que não são óbvios pela leitura do código e que u
 
 Este projeto inclui três skills em `skills/` (na raiz do workspace) que orientam você nos fluxos críticos da metodologia. Cada skill tem um arquivo `SKILL.md` com instruções detalhadas e condições de ativação no frontmatter. Use-as quando os triggers correspondentes aparecerem na conversa, lendo o `SKILL.md` correspondente antes de executar — as skills são autoritativas sobre como cada fluxo deve ser conduzido.
 
-A skill `memory-deploy` é o ponto de entrada único para instalar a metodologia em qualquer projeto. Ela ativa quando o usuário pede para instalar, configurar ou adotar a metodologia, com frases como "instale a metodologia neste projeto", "configure o agent-memory aqui" ou "este projeto não tem AGENT.md". Ela detecta automaticamente se o projeto é greenfield (novo, pouco código, poucos commits) ou legacy (com história e código de produção), executa o `deploy.sh` para a estrutura mecânica, e conduz personalização interativa ou gênese retroativa em quatro fases conforme o caso. Esta skill só é invocada na adoção inicial — depois disso, o projeto está instalado e as outras duas skills cobrem o uso diário.
+A skill `memory-deploy` é o ponto de entrada único para instalar a metodologia em qualquer projeto. Ela ativa quando o usuário pede para instalar, configurar ou adotar a metodologia, com frases como "instale a metodologia neste projeto", "configure o agent-memory aqui" ou "este projeto não tem AGENT.md". Ela detecta automaticamente se o projeto é greenfield (novo, pouco código, poucos commits) ou legacy (com história e código de produção), executa o `agent-memory deploy` para a estrutura mecânica, e conduz personalização interativa ou gênese retroativa em quatro fases conforme o caso. Esta skill só é invocada na adoção inicial — depois disso, o projeto está instalado e as outras duas skills cobrem o uso diário.
 
 A skill `memory-bootstrap` ativa no início de uma sessão quando o usuário pergunta sobre o estado atual do projeto, com frases como "onde paramos", "qual o status" ou "carregue o contexto". Ela carrega os artefatos de memória eficientemente e apresenta um briefing tático antes de você prosseguir com a tarefa.
 

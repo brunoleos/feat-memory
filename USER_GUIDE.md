@@ -16,27 +16,47 @@ A metodologia também faz sentido em projetos legados que estão sendo retomados
 
 ## Instalação em três passos
 
-A instalação tem três passos curtos. Primeiro, na raiz do seu projeto, traga a tool e rode o `deploy.py`:
+A instalação tem três passos. **Primeiro**, na sua máquina (uma vez só), clone o agent-memory e instale como editable install via pipx:
 
 ```bash
-git clone --depth 1 --branch v0.2.0 \
-  https://github.com/brunoleos/agent-memory.git .agent-memory
-python .agent-memory/deploy.py
+git clone https://github.com/brunoleos/agent-memory.git ~/dev/agent-memory
+pipx install -e ~/dev/agent-memory
 ```
 
-Isso monta `AGENT.md`, `CLAUDE.md`, `STATE.md`, `manifest/`, `decisions/`, `skills/`, `.gitattributes`, e adiciona automaticamente `.agent-memory/` ao `.gitignore` do projeto. A pasta `.agent-memory/` é volátil — ela não entra no histórico Git do seu projeto, e basta apagar e re-clonar para atualizar.
+A flag `-e` é editable install: o binário `agent-memory` no seu PATH lê código direto do clone, então `git pull` no clone atualiza a CLI imediatamente em todos os projetos consumidores sem precisar reinstalar. Implicações detalhadas estão em "Implicações do editable install" abaixo.
 
-Segundo, abra uma sessão com seu agente preferido (Claude Code, Cursor, ou outro que reconheça `AGENT.md`) e diga "instale a metodologia neste projeto". A skill `memory-deploy` assume o controle, detecta se o projeto é greenfield ou legacy, e conduz a personalização apropriada. Terceiro, faça o primeiro commit dos artefatos gerados com mensagem clara como "adopt agent memory methodology".
+**Segundo**, no projeto consumidor, rode:
 
-Em CI ou automação sem intervenção humana, pode-se rodar apenas `python .agent-memory/deploy.py --no-merge` após o clone. A flag `--no-merge` evita criar fila de merge pendente em `AGENT.md`/`CLAUDE.md`; os templates ficam genéricos sem personalização.
+```bash
+agent-memory deploy /caminho/do/projeto
+```
 
-A única dependência externa do projeto é PyYAML (`pip install pyyaml`). Todas as outras ferramentas usam apenas a biblioteca padrão do Python 3.10 ou superior, garantindo portabilidade entre Linux, macOS e Windows sem necessidade de WSL ou outras camadas de compatibilidade.
+Isso monta `AGENT.md`, `CLAUDE.md`, `STATE.md`, `manifest/`, `decisions/`, `skills/`, `.gitattributes`, instala o pre-commit hook se for repositório Git, e adiciona `.agent-memory-deploy/` (estado transiente do deploy) ao `.gitignore`.
+
+**Terceiro**, abra uma sessão com seu agente preferido (Claude Code, Cursor, ou outro que reconheça `AGENT.md`) e diga "instale a metodologia neste projeto". A skill `memory-deploy` assume o controle, detecta se o projeto é greenfield ou legacy, e conduz a personalização apropriada. Faça o primeiro commit dos artefatos gerados com mensagem clara como "adopt agent memory methodology".
+
+Em CI ou automação sem intervenção humana, rode `agent-memory deploy <projeto> --no-merge`. A flag `--no-merge` evita criar fila de merge pendente em `AGENT.md`/`CLAUDE.md`; os templates ficam genéricos sem personalização.
+
+A única dependência externa do pacote é PyYAML, declarada em `pyproject.toml` e instalada automaticamente pelo `pipx`. Todo o resto usa apenas a biblioteca padrão do Python 3.10 ou superior, garantindo portabilidade entre Linux, macOS e Windows sem necessidade de WSL ou outras camadas de compatibilidade.
+
+### Implicações do editable install
+
+Em editable install (`pipx install -e <clone>`), o binário `agent-memory` no seu PATH lê código direto do clone. Isso muda algumas coisas em relação a um install convencional:
+
+- **Edições refletem imediatamente.** Modifique `audit.py` no clone e a próxima execução de `agent-memory audit` em qualquer projeto já usa a nova lógica. Não precisa reinstalar.
+- **`git pull` no clone atualiza a CLI.** Ótimo para receber correções, mas atenção a versões: o `VERSION` no clone determina qual semver os projetos consumidores estão "rodando".
+- **Mover ou deletar o clone quebra a CLI.** Antes de mover o diretório do clone, faça `pipx uninstall agent-memory` e reinstale no novo path.
+- **Templates e skills também são live.** Como `data/templates/` e `data/skills/` ficam dentro do pacote (`src/agent_memory/data/`), suas edições afetam o próximo `agent-memory deploy` imediatamente.
+- **Não use `pipx upgrade` em editable.** O comando não funciona em modo editable; use `git pull` no clone.
+- **Conta um por dev.** Cada desenvolvedor mantém seu próprio clone e seu próprio editable install. Não compartilhe via diretório de rede.
+
+Quando o pacote estiver publicado na PyPI (planejado), o caminho de instalação para usuários finais será `pipx install agent-memory` (sem `-e`), e atualização será `pipx upgrade agent-memory`. As implicações acima deixam de valer porque a CLI passa a ser uma cópia imutável até o próximo upgrade.
 
 ## Os quatro artefatos no dia-a-dia
 
 A constituição em `AGENT.md` é o arquivo que você personaliza uma vez no início e raramente toca depois. Ela contém o nome do projeto, a stack técnica, restrições não-negociáveis com severidade explícita (`hard` bloqueia o build, `soft` apenas avisa), e ponteiros para os outros artefatos. Mudanças nesta constituição que alteram restrições `hard` exigem ADR registrando a justificativa. O Claude Code carrega `AGENT.md` automaticamente via `CLAUDE.md`, e outros agentes que reconhecem a convenção também o carregam.
 
-O manifesto em `manifest/features/` é onde você registra cada capacidade do sistema. Cada arquivo tem o nome `F-NNNN-slug.md` (por exemplo, `F-0007-vector-similarity-search.md`) e descreve uma capacidade nomeável que entrega valor identificável. O frontmatter YAML contém metadados estruturados (status, versão, dependências, decisões relacionadas) e os critérios de aceitação seguem a notação EARS com cinco padrões canônicos. O índice em `manifest/INDEX.md` é gerado automaticamente pelo `audit.py` e nunca deve ser editado à mão.
+O manifesto em `manifest/features/` é onde você registra cada capacidade do sistema. Cada arquivo tem o nome `F-NNNN-slug.md` (por exemplo, `F-0007-vector-similarity-search.md`) e descreve uma capacidade nomeável que entrega valor identificável. O frontmatter YAML contém metadados estruturados (status, versão, dependências, decisões relacionadas) e os critérios de aceitação seguem a notação EARS com cinco padrões canônicos. O índice em `manifest/INDEX.md` é gerado automaticamente pelo `agent-memory audit` e nunca deve ser editado à mão.
 
 O estado em `STATE.md` é o único artefato verdadeiramente volátil. Ele tem orçamento rígido de quatro kilobytes e estrutura fixa em três zonas: `Current` (estado agora), `Next` (próxima ação concreta), e `Recent` (buffer circular de cinco linhas com SITREPs anteriores). A skill `memory-debrief` reescreve as zonas `Current` e `Next` ao final de cada unidade de trabalho, e a skill `memory-bootstrap` lê o estado no início da próxima sessão para retomar exatamente de onde parou.
 
@@ -46,38 +66,37 @@ As decisões em `decisions/` são imutáveis depois de aceitas. Cada arquivo tem
 
 Um dia normal de trabalho com a metodologia segue um padrão simples. No início da sessão, você diz ao agente "onde paramos?" ou simplesmente entra no projeto e a skill `memory-bootstrap` carrega `STATE.md`, expande apenas as features e decisões ativas listadas em `active_features` e `active_decisions`, e apresenta um briefing tático curto de até cinco linhas. Você confirma se quer prosseguir com o `Next` registrado ou tem outra prioridade.
 
-Durante o trabalho, o agente segue as restrições da constituição automaticamente. Se você está modificando uma feature existente, ele atualiza o arquivo correspondente em `manifest/features/` no mesmo commit do código. Se você toma uma decisão arquitetural não-trivial, ele propõe um ADR via `propose-adr.py` ou diretamente como rascunho em `decisions/proposals/`. Se a mudança quebra restrições `hard` declaradas em `AGENT.md`, o pre-commit hook bloqueia o commit antes que ele aconteça.
+Durante o trabalho, o agente segue as restrições da constituição automaticamente. Se você está modificando uma feature existente, ele atualiza o arquivo correspondente em `manifest/features/` no mesmo commit do código. Se você toma uma decisão arquitetural não-trivial, ele propõe um ADR via `agent-memory propose-adr` ou diretamente como rascunho em `decisions/proposals/`. Se a mudança quebra restrições `hard` declaradas em `AGENT.md`, o pre-commit hook bloqueia o commit antes que ele aconteça.
 
 Antes de cada commit relevante, você diz ao agente "vou commitar" ou "atualize o STATE", e a skill `memory-debrief` executa a rotina completa: examina o diff, atualiza entradas do Manifest para features tocadas, reescreve as zonas `Current` e `Next` do `STATE.md`, gera proposta de ADR se a sessão produziu decisão arquitetural, e roda a auditoria. Se a sessão está em uma branch que será mesclada de volta, a skill também checa colisões de IDs contra a branch destino, evitando o problema antes que ele apareça no merge.
 
 ## Atualizações da metodologia
 
-A metodologia evolui ao longo do tempo, e cada projeto que a adota precisa de um caminho claro para receber essas evoluções sem perder customizações locais. O versionamento semântico em `VERSION` e o histórico em `CHANGELOG.md` tornam a evolução transparente; cada release corresponde a uma tag `vX.Y.Z` em <https://github.com/brunoleos/agent-memory/releases>. A versão da metodologia em uso em um projeto é `cat .agent-memory/VERSION`.
+A metodologia evolui ao longo do tempo, e cada projeto que a adota precisa de um caminho claro para receber essas evoluções sem perder customizações locais. O versionamento semântico em `VERSION` e o histórico em [CHANGELOG.md](CHANGELOG.md) tornam a evolução transparente; cada release corresponde a uma tag `vX.Y.Z` em <https://github.com/brunoleos/agent-memory/releases>. A versão da CLI instalada é mostrada em `pipx list` (e em breve via `agent-memory --version`).
 
-Como `.agent-memory/` é gitignored e nunca entra no histórico Git do projeto consumidor, atualizar é simplesmente apagar e re-clonar fixando uma tag nova:
+Em editable install (caminho atual durante o desenvolvimento da própria CLI), atualizar é simplesmente `git pull` no clone. A CLI passa a refletir a versão nova imediatamente. Se quiser fixar em uma tag específica:
 
 ```bash
-rm -rf .agent-memory
-git clone --depth 1 --branch v0.2.0 \
-  https://github.com/brunoleos/agent-memory.git .agent-memory
-python .agent-memory/deploy.py
+cd ~/dev/agent-memory
+git fetch --tags
+git checkout v0.3.0
 ```
 
-O `deploy.py` re-roda a lógica de merge para `AGENT.md` e `CLAUDE.md` (preservando customizações via fila de merge processada pela skill `memory-deploy`), atualiza skills e `.gitattributes`, garante a entrada de `.gitignore`, e reinstala o pre-commit hook. Tudo idempotente — rodar duas vezes é seguro.
+Para reaplicar templates e skills no projeto consumidor após um upgrade da CLI, rode `agent-memory deploy <projeto>` novamente. O comando re-roda a lógica de merge para `AGENT.md` e `CLAUDE.md` (preservando customizações via fila de merge processada pela skill `memory-deploy`), atualiza skills e `.gitattributes`, garante a entrada de `.gitignore`, e reinstala o pre-commit hook. Tudo idempotente — rodar duas vezes é seguro.
 
-Para times que usam a metodologia em múltiplos projetos, a recomendação é fixar todos eles na mesma tag (mesmo número em todas as instalações), avançando todos juntos quando uma release nova justifica adoção. Cada projeto decide quando subir; o ciclo de update tem três comandos e nenhuma configuração persistente.
+Para times que usam a metodologia em múltiplos projetos, a recomendação é fixar todos os clones na mesma tag, avançando todos juntos quando uma release nova justifica adoção. Cada projeto consumidor decide quando rodar `agent-memory deploy` para receber as mudanças.
 
-Migrando de v0.1.0 (que versionava `.agent-memory/` no projeto): após rodar o `deploy.py` da v0.2.0, ele detecta que a pasta está rastreada pelo Git e imprime instruções para você sair do índice via `git rm -r --cached .agent-memory/`. Os arquivos continuam no disco; só saem do histórico futuro.
+Migrando de v0.1.0 ou v0.2.0 (modelo "clone para `.agent-memory/`"): instale a v0.3.0 via pipx (passos acima), depois em cada projeto consumidor rode `agent-memory deploy <projeto>`. O comando detecta `.agent-memory/` rastreada pelo Git no projeto consumidor e imprime as instruções de migração: `git rm -r --cached .agent-memory/` para tirar do índice, e `rm -rf .agent-memory` para remover do disco. Os artefatos da metodologia (`AGENT.md`, `STATE.md`, `manifest/`, etc.) ficam preservados.
 
 ## Comandos importantes
 
-A auditoria é a ferramenta mais usada e cobre validação de schemas, geração de índices automáticos, e cálculo dos sete indicadores de saúde do projeto. A invocação básica é `python .agent-memory/tools/audit.py`, que emite um relatório legível e atualiza os índices. Para CI, use `python .agent-memory/tools/audit.py --json --strict`, que emite saída estruturada e promove warnings (drift) a errors. Para o pre-commit hook, o modo `--strict --no-index` é o padrão, validando sem regenerar arquivos durante o commit.
+A auditoria é a ferramenta mais usada e cobre validação de schemas, geração de índices automáticos, e cálculo dos sete indicadores de saúde do projeto. A invocação básica é `agent-memory audit`, que emite um relatório legível e atualiza os índices. Para CI, use `agent-memory audit --json --strict`, que emite saída estruturada e promove warnings (drift) a errors. Para o pre-commit hook, o modo `--strict --no-index` é o padrão, validando sem regenerar arquivos durante o commit.
 
-Para detectar colisões de IDs antes de um merge, use `python .agent-memory/tools/audit.py --check-collisions origin/main` (ou a branch destino que você usar). A checagem compara os IDs criados na branch atual com os existentes na branch destino, alertando se duas branches paralelas criaram o mesmo ID. Renumere antes de mesclar para evitar estado semanticamente quebrado.
+Para detectar colisões de IDs antes de um merge, use `agent-memory audit --check-collisions origin/main` (ou a branch destino que você usar). A checagem compara os IDs criados na branch atual com os existentes na branch destino, alertando se duas branches paralelas criaram o mesmo ID. Renumere antes de mesclar para evitar estado semanticamente quebrado.
 
-Para gerar propostas de ADR a partir do diff atual, use `python .agent-memory/tools/propose-adr.py --staged`. A ferramenta examina o diff, detecta sinais de mudança arquitetural não-trivial (volume, dependências alteradas, mudanças em múltiplos diretórios, padrões linguísticos em mensagens de commit), e gera um draft em `decisions/proposals/`. Drafts não são ADRs verdadeiros; são pontos de partida para revisão humana antes de promover para `decisions/`.
+Para gerar propostas de ADR a partir do diff atual, use `agent-memory propose-adr --staged`. A ferramenta examina o diff, detecta sinais de mudança arquitetural não-trivial (volume, dependências alteradas, mudanças em múltiplos diretórios, padrões linguísticos em mensagens de commit), e gera um draft em `decisions/proposals/`. Drafts não são ADRs verdadeiros; são pontos de partida para revisão humana antes de promover para `decisions/`.
 
-Para projetos legacy adotando a metodologia, use `python .agent-memory/tools/migrate.py --limit 200`. A ferramenta examina os últimos commits do Git e propõe ADRs candidatos a partir de padrões linguísticos. Os candidatos são impressos para revisão humana, não escritos automaticamente. A skill `memory-deploy` invoca essa ferramenta automaticamente na fase 2 da gênese retroativa.
+Para projetos legacy adotando a metodologia, use `agent-memory migrate --limit 200`. A ferramenta examina os últimos commits do Git e propõe ADRs candidatos a partir de padrões linguísticos. Os candidatos são impressos para revisão humana, não escritos automaticamente. A skill `memory-deploy` invoca essa ferramenta automaticamente na fase 2 da gênese retroativa.
 
 ## Resolução de problemas comuns
 
@@ -87,7 +106,7 @@ Quando o estado em `STATE.md` parece estar inconsistente com o código real, o p
 
 Quando duas branches têm features ou ADRs com IDs colidentes, rode `--check-collisions` antes do merge. A solução é renumerar o artefato mais novo na branch que ainda não foi mesclada, atualizando o nome do arquivo, o campo `id` no frontmatter, e qualquer referência cruzada em outras features ou ADRs. ADRs já mesclados na branch destino nunca são renumerados.
 
-Quando o `audit.py` reporta erros de notação EARS em critérios de aceitação, examine o `pattern` declarado e os campos obrigatórios para aquele padrão. Os cinco padrões canônicos são `ubiquitous` (sempre ativo, requer `requirement`), `event` (gatilho externo, requer `trigger` e `response`), `state` (em condição, requer `state` e `response`), `optional` (feature opcional, requer `feature` e `response`), e `unwanted` (situação indesejada, requer `trigger` e `response`). O sexto padrão `complex` existe como escape mas deve ser usado com parcimônia.
+Quando o `agent-memory audit` reporta erros de notação EARS em critérios de aceitação, examine o `pattern` declarado e os campos obrigatórios para aquele padrão. Os cinco padrões canônicos são `ubiquitous` (sempre ativo, requer `requirement`), `event` (gatilho externo, requer `trigger` e `response`), `state` (em condição, requer `state` e `response`), `optional` (feature opcional, requer `feature` e `response`), e `unwanted` (situação indesejada, requer `trigger` e `response`). O sexto padrão `complex` existe como escape mas deve ser usado com parcimônia.
 
 ## Trabalhando em time
 
@@ -101,7 +120,7 @@ Em projetos onde múltiplos agentes podem rodar em paralelo (por exemplo, um age
 
 A metodologia foi projetada com três casos de uso principais em mente, e a documentação inclui exemplos pedagógicos de cada um. O caso de uso de uma feature de busca semântica em banco vetorial, exemplificado por `examples/manifest/features/F-0001-vector-similarity-search.md`, mostra como uma capacidade técnica não-trivial é decomposta em metadados estruturados, contratos verificáveis, e seis critérios de aceitação cobrindo os cinco padrões EARS. O caso de uso de uma decisão sobre métrica de similaridade, exemplificado por `examples/decisions/0002-cosine-similarity-default.md`, mostra como uma escolha técnica que parece pequena vira ADR quando há trade-offs reais e alternativas rejeitadas. O caso de uso da própria adoção da metodologia, exemplificado por `examples/decisions/0001-record-architecture-decisions.md`, mostra como o ADR fundacional registra a meta-decisão de adotar ADRs.
 
-Estes exemplos não são copiados pelo `deploy.sh` para o seu projeto, ficando apenas em `.agent-memory/examples/` para consulta. Você pode usar o ADR-0001 como ponto de partida para o seu próprio ADR fundacional adaptando o contexto, mas os outros dois exemplos são puramente pedagógicos.
+Estes exemplos não são copiados pelo `agent-memory deploy` para o seu projeto, ficando apenas no clone do agent-memory (`~/dev/agent-memory/examples/`) para consulta. Você pode usar o ADR-0001 como ponto de partida para o seu próprio ADR fundacional adaptando o contexto, mas os outros dois exemplos são puramente pedagógicos.
 
 ## Próximos passos
 

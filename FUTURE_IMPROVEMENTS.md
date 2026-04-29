@@ -8,41 +8,45 @@ Esta seção registra o que já saiu do plano e está disponível na metodologia
 
 ### Notação EARS completa
 
-Os critérios de aceitação no Manifest agora seguem os cinco padrões canônicos da Easy Approach to Requirements Syntax: ubiquitous, event, state, optional, unwanted, com um sexto padrão complex como escape para combinações. O `audit.py` valida que cada critério declara `pattern` e contém os campos obrigatórios para aquele padrão. Critérios mal-formados são erro de schema e bloqueiam o build.
+Os critérios de aceitação no Manifest agora seguem os cinco padrões canônicos da Easy Approach to Requirements Syntax: ubiquitous, event, state, optional, unwanted, com um sexto padrão complex como escape para combinações. O `agent-memory audit` valida que cada critério declara `pattern` e contém os campos obrigatórios para aquele padrão. Critérios mal-formados são erro de schema e bloqueiam o build.
 
 ### Pre-commit hook
 
-O hook em `tools/hooks/pre-commit` é instalado por `tools/install-hooks.sh` e roda `audit.py --strict` antes de cada commit. A flag `--strict` foi adicionada ao `audit.py` para promover warnings (drift) a errors. O hook respeita `--no-verify` como válvula de escape para casos excepcionais. A combinação recomendada continua sendo hook local mais checagem em CI.
+O hook em `src/agent_memory/data/hooks/pre-commit` é instalado pelo `agent-memory deploy` e roda `agent-memory audit --strict` antes de cada commit. A flag `--strict` promove warnings (drift) a errors. O hook respeita `--no-verify` como válvula de escape para casos excepcionais. A combinação recomendada continua sendo hook local mais checagem em CI.
 
 ### Geração automática de propostas de ADR
 
-A ferramenta `tools/propose-adr.py` examina o diff atual e detecta sinais de mudança arquitetural não-trivial: volume, dependências alteradas, mudanças em múltiplos diretórios, padrões linguísticos em mensagens de commit. Quando detecta sinais, gera um draft em `decisions/proposals/`, subpasta que o `audit.py` ignora explicitamente para preservar a invariante de imutabilidade dos ADRs reais. O modo `--prompt` emite um prompt estruturado para um agente LLM em vez do template direto, separando detecção determinística de redação que exige julgamento.
+A ferramenta `agent-memory propose-adr` examina o diff atual e detecta sinais de mudança arquitetural não-trivial: volume, dependências alteradas, mudanças em múltiplos diretórios, padrões linguísticos em mensagens de commit. Quando detecta sinais, gera um draft em `decisions/proposals/`, subpasta que o `agent-memory audit` ignora explicitamente para preservar a invariante de imutabilidade dos ADRs reais. O modo `--prompt` emite um prompt estruturado para um agente LLM em vez do template direto, separando detecção determinística de redação que exige julgamento.
 
 ### Portabilidade total via Python
 
-Todas as ferramentas e scripts do pacote estão escritos em Python 3.10 ou superior, sem dependência de shell scripts. O `deploy.py` substitui o antigo `deploy.sh`, o `install_hooks.py` substitui o `install-hooks.sh`, e o pre-commit hook foi reescrito como script Python executável. A única dependência externa é PyYAML, que o `audit.py` reporta com mensagem acionável quando ausente. O pacote roda em Linux, macOS e Windows nativamente.
+Todas as ferramentas e scripts do pacote estão escritos em Python 3.10 ou superior, sem dependência de shell scripts. O pre-commit hook é Python executável. A única dependência externa é PyYAML, declarada em `pyproject.toml` e instalada automaticamente pelo pipx. O pacote roda em Linux, macOS e Windows nativamente.
 
 ### Versionamento semântico e changelog
 
-O pacote tem versionamento semântico em arquivo `VERSION` na raiz e histórico em `CHANGELOG.md` seguindo o formato Keep a Changelog. Cada release publicada no GitHub corresponde a uma tag `vX.Y.Z` e a uma seção do `CHANGELOG.md`. A versão da metodologia em uso por um projeto consumidor é simplesmente `cat .agent-memory/VERSION`, eliminando a necessidade de um marcador separado.
+O pacote tem versionamento semântico em arquivo `VERSION` na raiz (lido dinamicamente pelo `pyproject.toml`) e histórico em `CHANGELOG.md` seguindo o formato Keep a Changelog. Cada release publicada no GitHub corresponde a uma tag `vX.Y.Z` e a uma seção do `CHANGELOG.md`.
 
-### Atualização via re-clone explícito
+### Distribuição como CLI Python (v0.3.0)
 
-A pasta `.agent-memory/` é gitignored no projeto consumidor; atualizar a metodologia significa apagar a pasta, re-clonar o repositório oficial fixado em uma tag específica, e rodar `deploy.py` para propagar mudanças aos artefatos versionados (`AGENT.md`, `CLAUDE.md`, `STATE.md`, `manifest/`, `decisions/`, `skills/`, `.gitattributes`). A lógica de merge do `deploy.py` preserva customizações em `AGENT.md` e `CLAUDE.md` via fila de merge processada pela skill `memory-deploy`. Skills e `.gitattributes` são sempre atualizados (conteúdo de metodologia, não de usuário). Esta abordagem evita carregar duplicação no histórico Git de cada projeto consumidor e mantém o ciclo de update transparente: três comandos de shell, sem configuração persistente.
+O agent-memory é distribuído como pacote Python com entry point `agent-memory = agent_memory.cli:main` definido em `pyproject.toml`. O usuário clona o repositório uma vez na máquina e instala em modo editable com `pipx install -e <clone>`; o binário `agent-memory` no PATH lê código direto do clone, então `git pull` no clone atualiza a CLI imediatamente em todos os projetos consumidores. Templates, skills e o pre-commit hook ficam em `src/agent_memory/data/` e são acessados via `importlib.resources` (funciona em editable e wheel install). Esta arquitetura substitui o modelo v0.2.0 ("clonar para `.agent-memory/` dentro do projeto") e elimina a duplicação de scripts em cada projeto consumidor.
 
 ### Robustez de tratamento de erros
 
-O `propose-adr.py` ganhou validação prévia de base ref, com mensagens de erro acionáveis quando o repositório tem poucos commits para `HEAD~1` funcionar. O `audit.py` ganhou mensagem acionável quando PyYAML está ausente, incluindo opções de instalação para diferentes ambientes (pip, pip3, virtualenv, --break-system-packages). Estas mudanças tornam o feedback de erro útil em vez de obscuro.
+O `agent-memory propose-adr` ganhou validação prévia de base ref, com mensagens de erro acionáveis quando o repositório tem poucos commits para `HEAD~1` funcionar. O `agent-memory audit` ganhou mensagem acionável quando PyYAML está ausente, incluindo opções de instalação para diferentes ambientes (pip, pip3, virtualenv, --break-system-packages). Estas mudanças tornam o feedback de erro útil em vez de obscuro.
 
 ## Curto prazo
 
+### Publicação na PyPI
+
+Quando a CLI estabilizar (interface congelada por algumas releases sem mudança breaking), publicar o pacote na PyPI permitirá que usuários finais instalem com `pipx install agent-memory` em vez do clone-and-install editable atual. O caminho técnico é simples: `python -m build` para gerar wheel + sdist, `twine upload` para publicar; o trabalho real é (a) reservar o nome `agent-memory` na PyPI antes de qualquer concorrência, (b) decidir cadência de releases, e (c) configurar GitHub Actions para publicar automaticamente em cada tag `vX.Y.Z`.
+
 ### Integração com CI
 
-Rodar `python tools/audit.py --json --strict` em cada pull request, parsear o JSON e postar comentário no PR listando issues encontrados. Bloquear merge quando `violations_count > 0` ou `manifest_drift` não-vazio. A integração com GitHub Actions ou GitLab CI cabe em poucas linhas de YAML; o trabalho real é decidir os limiares de bloqueio. Com o pre-commit hook já implementado, a CI atua como segunda linha de defesa para casos onde o hook foi pulado ou não estava instalado.
+Rodar `agent-memory audit --json --strict` em cada pull request, parsear o JSON e postar comentário no PR listando issues encontrados. Bloquear merge quando `violations_count > 0` ou `manifest_drift` não-vazio. A integração com GitHub Actions ou GitLab CI cabe em poucas linhas de YAML; o trabalho real é decidir os limiares de bloqueio. Com o pre-commit hook já implementado, a CI atua como segunda linha de defesa para casos onde o hook foi pulado ou não estava instalado.
 
 ### Comando de busca no Manifest
 
-Uma CLI auxiliar `tools/query.py` que responde perguntas comuns sem o agente precisar carregar arquivos. Exemplos: `query.py depends-on F-0007` lista features que dependem de `F-0007`, `query.py affected-by ADR-0002` lista features afetadas por uma decisão, `query.py stale --days 90` lista features sem update há mais de noventa dias. Reduz o custo de retomada para perguntas frequentes.
+Um subcomando `agent-memory query` que responde perguntas comuns sem o agente precisar carregar arquivos. Exemplos: `agent-memory query depends-on F-0007` lista features que dependem de `F-0007`, `agent-memory query affected-by ADR-0002` lista features afetadas por uma decisão, `agent-memory query stale --days 90` lista features sem update há mais de noventa dias. Reduz o custo de retomada para perguntas frequentes.
 
 ### Linting de constraints hard
 
@@ -74,11 +78,11 @@ Em projetos com mais de cinquenta features, encontrar a feature relevante por no
 
 ### Federação entre projetos
 
-Em monorepos ou em organizações com múltiplos projetos relacionados, faz sentido linkar Manifests. Uma feature em `projeto-a` pode declarar `depends_on_external: projeto-b/F-0042`, e o `audit.py` consulta o Manifest do projeto vizinho via Git submodule ou registry. Habilita raciocínio cross-cutting sobre dependências sem precisar duplicar informação.
+Em monorepos ou em organizações com múltiplos projetos relacionados, faz sentido linkar Manifests. Uma feature em `projeto-a` pode declarar `depends_on_external: projeto-b/F-0042`, e o `agent-memory audit` consulta o Manifest do projeto vizinho via Git submodule ou registry. Habilita raciocínio cross-cutting sobre dependências sem precisar duplicar informação.
 
 ### Versionamento de schema
 
-A versão atual usa `schema_version: 2` em todos os artefatos. Quando o schema mudar (campos novos, formatos diferentes), precisamos de migration scripts que atualizem artefatos antigos preservando informação. A proposta é um diretório `tools/migrations/` com scripts numerados, um para cada incremento de schema, executáveis tanto em modo dry-run quanto aplicado.
+A versão atual usa `schema_version: 2` em todos os artefatos. Quando o schema mudar (campos novos, formatos diferentes), precisamos de migration scripts que atualizem artefatos antigos preservando informação. A proposta é um diretório `src/agent_memory/migrations/` com scripts numerados, um para cada incremento de schema, expostos como `agent-memory migrate-schema --to N` (dry-run por padrão).
 
 ### Integração com feature flags
 
@@ -92,7 +96,7 @@ Manter `manifest_drift` é uma série temporal valiosa: pode-se medir quanto dri
 
 Algumas extensões parecem atraentes mas não passam o teste de custo-benefício, e vale documentar a rejeição para evitar reabrir a discussão.
 
-A geração automática completa de ADRs a partir de diffs foi rejeitada porque ADRs são exatamente o tipo de conteúdo onde julgamento humano é insubstituível. A versão implementada de `propose-adr.py` é deliberadamente parcial: ela detecta sinais e gera template, mas exige preenchimento humano (ou assistido por LLM em modo `--prompt`) para se tornar ADR de fato. Geração end-to-end totalmente automática produziria ADRs vazios e poluiria a memória arquitetural.
+A geração automática completa de ADRs a partir de diffs foi rejeitada porque ADRs são exatamente o tipo de conteúdo onde julgamento humano é insubstituível. A versão implementada de `agent-memory propose-adr` é deliberadamente parcial: ela detecta sinais e gera template, mas exige preenchimento humano (ou assistido por LLM em modo `--prompt`) para se tornar ADR de fato. Geração end-to-end totalmente automática produziria ADRs vazios e poluiria a memória arquitetural.
 
 Migração automática silenciosa do Manifest a partir do código foi rejeitada pelo mesmo motivo da migração de ADRs: cristaliza interpretações erradas como verdades. O agente pode propor, o humano decide.
 

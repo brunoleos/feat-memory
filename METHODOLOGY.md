@@ -41,7 +41,7 @@ Os campos obrigatórios do frontmatter são `id`, `name`, `status`, `user_value`
 
 O campo `status` aceita quatro valores: `planned` (especificada mas não construída), `in_progress` (em construção ativa), `shipped` (entregue e em uso) e `deprecated` (mantida apenas para compatibilidade reversa). A transição de status é registrada no commit que faz a mudança.
 
-O campo `contracts` é o mais importante porque torna o arquivo automaticamente verificável. Cada caminho referenciado deve apontar para um arquivo que existe no código (`src/api/search.py::search_endpoint` significa "função `search_endpoint` no módulo `src/api/search.py`"). O `audit.py` checa estes caminhos e marca como drift qualquer referência quebrada.
+O campo `contracts` é o mais importante porque torna o arquivo automaticamente verificável. Cada caminho referenciado deve apontar para um arquivo que existe no código (`src/api/search.py::search_endpoint` significa "função `search_endpoint` no módulo `src/api/search.py`"). O `agent-memory audit` checa estes caminhos e marca como drift qualquer referência quebrada.
 
 ### Critérios de aceitação em notação EARS
 
@@ -59,13 +59,13 @@ O padrão **unwanted** descreve uma resposta a uma situação indesejada. Tem ca
 
 O padrão **complex** existe como escape para combinações que não cabem nos cinco padrões básicos. Tem apenas o campo `requirement` em prosa estruturada. Use com parcimônia: a maioria dos critérios cabe em um dos cinco padrões canônicos, e quebrar em múltiplos critérios é geralmente preferível a usar `complex`.
 
-A validação no `audit.py` exige que cada critério tenha `pattern` declarado e que os campos obrigatórios para aquele padrão estejam presentes e não-vazios. Critérios mal-formados bloqueiam o build, garantindo que a notação seja seguida consistentemente.
+A validação no `agent-memory audit` exige que cada critério tenha `pattern` declarado e que os campos obrigatórios para aquele padrão estejam presentes e não-vazios. Critérios mal-formados bloqueiam o build, garantindo que a notação seja seguida consistentemente.
 
 ### Quando criar uma feature
 
 A unidade de uma feature é uma capacidade coerente que entrega valor identificável ao usuário ou ao operador do sistema. "Pool de conexões com Oracle" é uma feature; "função que parseia JSON" não é, é detalhe de implementação. A regra prática: se você consegue escrever um `user_value` em uma frase sem usar termos puramente técnicos, é feature; senão, é parte de uma feature maior.
 
-Features podem (e frequentemente devem) depender umas das outras. `F-0007 vector-similarity-search` depende de `F-0003 docling-ingest` e `F-0005 embedding-pipeline`, e essa cadeia fica explícita em `depends_on`. Quando uma feature é deprecada, o `audit.py` detecta automaticamente outras features que ainda dependem dela e gera warning.
+Features podem (e frequentemente devem) depender umas das outras. `F-0007 vector-similarity-search` depende de `F-0003 docling-ingest` e `F-0005 embedding-pipeline`, e essa cadeia fica explícita em `depends_on`. Quando uma feature é deprecada, o `agent-memory audit` detecta automaticamente outras features que ainda dependem dela e gera warning.
 
 ## 3. State: `STATE.md`
 
@@ -89,23 +89,23 @@ Quando uma decisão é substituída, o ADR original tem apenas seu campo `supers
 
 ### Propostas de ADR (`decisions/proposals/`)
 
-Drafts gerados pela ferramenta `tools/propose-adr.py` ficam em uma subpasta separada que o `audit.py` ignora explicitamente. Drafts não são ADRs e não têm validade arquitetural — são pontos de partida para conversa. Quando um draft é revisado e aprovado, o arquivo é renomeado com slug definitivo e movido para `decisions/`, momento em que passa a ser auditado normalmente.
+Drafts gerados pela ferramenta `agent-memory propose-adr` ficam em uma subpasta separada que o `agent-memory audit` ignora explicitamente. Drafts não são ADRs e não têm validade arquitetural — são pontos de partida para conversa. Quando um draft é revisado e aprovado, o arquivo é renomeado com slug definitivo e movido para `decisions/`, momento em que passa a ser auditado normalmente.
 
 A separação é deliberada: ADRs são imutáveis e proposals são mutáveis, e misturar os dois quebraria a invariante de imutabilidade. Drafts podem (e devem) ser editados livremente até o momento da promoção; uma vez em `decisions/`, ficam congelados.
 
 ## Skills
 
-A metodologia inclui três skills em `skills/` na raiz do workspace (deployadas pelo `deploy.sh` a partir de `.agent-memory/skills/`) que orientam o agente nos fluxos críticos. Elas são opcionais — todo o protocolo está documentado neste arquivo — mas sua presença torna a aplicação consistente e libera o agente de precisar relembrar a doutrina inteira a cada interação.
+A metodologia inclui três skills em `skills/` na raiz do workspace (deployadas pelo `agent-memory deploy` a partir do package data em `src/agent_memory/data/skills/`) que orientam o agente nos fluxos críticos. Elas são opcionais — todo o protocolo está documentado neste arquivo — mas sua presença torna a aplicação consistente e libera o agente de precisar relembrar a doutrina inteira a cada interação.
 
-A skill `memory-deploy` cobre a adoção inicial. Ela é o ponto de entrada único para instalar a metodologia em qualquer projeto, ativando quando o usuário pede para configurar ou adotar a estrutura. A skill detecta automaticamente se o projeto é greenfield (poucos commits, pouco código, sem entrypoints públicos) ou legacy (histórico substancial, código de produção, stack identificável), e ramifica para o fluxo apropriado. Em ambos os casos, ela executa o `deploy.sh` para a estrutura mecânica antes de personalizar — o script é a infraestrutura subjacente que a skill orquestra. Para greenfield, segue personalização interativa em diálogo curto sobre identidade, stack, restrições e foco inicial. Para legacy, segue gênese retroativa em quatro fases revisadas (constituição a partir do código, ADRs a partir do git log, Manifest a partir dos entrypoints, STATE inicial), com o princípio fundamental de que cristalização silenciosa de interpretações erradas é o pior erro possível.
+A skill `memory-deploy` cobre a adoção inicial. Ela é o ponto de entrada único para instalar a metodologia em qualquer projeto, ativando quando o usuário pede para configurar ou adotar a estrutura. A skill detecta automaticamente se o projeto é greenfield (poucos commits, pouco código, sem entrypoints públicos) ou legacy (histórico substancial, código de produção, stack identificável), e ramifica para o fluxo apropriado. Em ambos os casos, ela executa o `agent-memory deploy` para a estrutura mecânica antes de personalizar — o comando é a infraestrutura subjacente que a skill orquestra. Para greenfield, segue personalização interativa em diálogo curto sobre identidade, stack, restrições e foco inicial. Para legacy, segue gênese retroativa em quatro fases revisadas (constituição a partir do código, ADRs a partir do git log, Manifest a partir dos entrypoints, STATE inicial), com o princípio fundamental de que cristalização silenciosa de interpretações erradas é o pior erro possível.
 
 A skill `memory-bootstrap` cobre o início de sessão. Ela ativa quando o usuário pergunta sobre o estado atual do projeto e instrui o agente a carregar `STATE.md` e os índices, expandir apenas features e ADRs ativos, e apresentar um briefing tático curto antes de prosseguir.
 
-A skill `memory-debrief` cobre o fim de unidade de trabalho. Ela ativa quando o usuário sinaliza intenção de commitar e instrui o agente a examinar o diff, atualizar entradas do Manifest para features tocadas, reescrever as zonas `Current` e `Next` do `STATE.md`, e gerar proposta de ADR via `propose-adr.py` se a sessão produziu uma decisão arquitetural não-trivial. Esta é a skill mais usada no dia-a-dia, porque cobre o momento em que o trabalho realizado precisa ser refletido na memória persistente antes de virar commit.
+A skill `memory-debrief` cobre o fim de unidade de trabalho. Ela ativa quando o usuário sinaliza intenção de commitar e instrui o agente a examinar o diff, atualizar entradas do Manifest para features tocadas, reescrever as zonas `Current` e `Next` do `STATE.md`, e gerar proposta de ADR via `agent-memory propose-adr` se a sessão produziu uma decisão arquitetural não-trivial. Esta é a skill mais usada no dia-a-dia, porque cobre o momento em que o trabalho realizado precisa ser refletido na memória persistente antes de virar commit.
 
 A separação em três skills em vez de uma reflete a estrutura real do trabalho com a metodologia: três momentos qualitativamente diferentes (adoção, início de sessão, fim de unidade), cada um com sua própria checklist e cada um com seus próprios riscos de ser executado errado. Skills monolíticas tendem a ser ignoradas; skills específicas e curtas tendem a ser invocadas no momento certo.
 
-A escolha de fazer da `memory-deploy` o ponto de entrada — em vez de exigir que o usuário invoque o `deploy.sh` diretamente — reflete uma decisão de design importante. O script sozinho instala a estrutura mecânica mas não personaliza nada, o que deixa um projeto greenfield com `AGENT.md` genérico inútil ou um projeto legacy com Manifest vazio que ignora todo o código existente. A skill envolve o script com a inteligência necessária para que a instalação produza valor real desde o primeiro commit. O script direto permanece disponível para automação e CI, onde personalização não se aplica.
+A escolha de fazer da `memory-deploy` o ponto de entrada — em vez de exigir que o usuário invoque o `agent-memory deploy` diretamente — reflete uma decisão de design importante. O comando sozinho instala a estrutura mecânica mas não personaliza nada, o que deixa um projeto greenfield com `AGENT.md` genérico inútil ou um projeto legacy com Manifest vazio que ignora todo o código existente. A skill envolve o comando com a inteligência necessária para que a instalação produza valor real desde o primeiro commit. O comando direto permanece disponível para automação e CI, onde personalização não se aplica.
 
 ## Workflow de merge e rebase
 
@@ -113,15 +113,15 @@ Os quatro artefatos têm comportamentos qualitativamente diferentes sob merge, e
 
 O `STATE.md` é o caso patológico clássico. Duas branches paralelas reescrevem `Current` e `Next` para refletir focos diferentes, e o merge produz conflito em praticamente todo commit colaborativo. A configuração `merge=ours` no `.gitattributes` resolve automaticamente, mantendo a versão da branch destino. O `STATE.md` não é fonte de verdade compartilhada — é o cursor da última sessão de trabalho ativa, e tentar mesclar duas visões paralelas produz texto incoerente sem ganho operacional.
 
-Os índices gerados (`manifest/INDEX.md` e `decisions/INDEX.md`) seguem a mesma estratégia. Eles são recriados a cada execução do `audit.py`, então a regra prática é resolver o conflito escolhendo qualquer versão e regenerar. A configuração `merge=ours` para esses dois arquivos elimina o conflito explicitamente, e a skill `memory-bootstrap` detecta sessões pós-merge para regenerar automaticamente.
+Os índices gerados (`manifest/INDEX.md` e `decisions/INDEX.md`) seguem a mesma estratégia. Eles são recriados a cada execução do `agent-memory audit`, então a regra prática é resolver o conflito escolhendo qualquer versão e regenerar. A configuração `merge=ours` para esses dois arquivos elimina o conflito explicitamente, e a skill `memory-bootstrap` detecta sessões pós-merge para regenerar automaticamente.
 
-Os ADRs em `decisions/` enfrentam um problema diferente: colisão de IDs quando branches paralelas criam ADRs simultaneamente. O Git em si não detecta isso como conflito (são arquivos diferentes), mas o resultado é semanticamente quebrado. A solução é renumerar o ADR mais recente após o merge, ajustando todas as referências cruzadas. O `audit.py --check-collisions origin/main` detecta a situação preventivamente quando rodado na branch antes do merge, e a skill `memory-debrief` invoca essa checagem na rotina pré-commit em branches que serão mescladas.
+Os ADRs em `decisions/` enfrentam um problema diferente: colisão de IDs quando branches paralelas criam ADRs simultaneamente. O Git em si não detecta isso como conflito (são arquivos diferentes), mas o resultado é semanticamente quebrado. A solução é renumerar o ADR mais recente após o merge, ajustando todas as referências cruzadas. O `agent-memory audit --check-collisions origin/main` detecta a situação preventivamente quando rodado na branch antes do merge, e a skill `memory-debrief` invoca essa checagem na rotina pré-commit em branches que serão mescladas.
 
 As features em `manifest/features/` têm dois sub-casos. Quando duas branches criam features novas com IDs diferentes, não há conflito real e o merge é trivial. Quando duas branches modificam a mesma feature existente (por exemplo, ambas adicionando critérios de aceitação ou atualizando métricas), há conflito real que precisa de resolução manual. A estratégia recomendada é mesclar à mão, preservando todas as adições de ambos os lados (critérios de aceitação são aditivos por natureza), e tomando a versão mais recente para campos como `metrics` ou `version` que têm semântica de substituição. Colisão de IDs em features é detectada pelo mesmo `--check-collisions` que cobre ADRs.
 
 Para rebase, a dinâmica é a mesma com uma sutileza. O rebase replica os commits da feature branch sobre a branch destino atualizada, então conflitos de ADR ou State aparecem em cada commit replicado. A configuração `merge=ours` cobre State e índices. Para ADRs com colisão de ID, o ideal é resolver a colisão antes do rebase (renumerando na feature branch enquanto ela ainda é local), em vez de durante o rebase quando o contexto está mais opaco. Isso reforça a importância da checagem `--check-collisions` na rotina de debrief.
 
-A configuração do driver `merge.ours.driver` no Git é feita automaticamente pelo `deploy.sh`, que executa `git config merge.ours.driver true` no projeto. Em outros clones do mesmo repositório, cada desenvolvedor precisa rodar essa configuração manualmente uma vez (o `deploy.sh` faz isso, mas o `.gitattributes` já versionado pode não disparar nova execução do deploy). A documentação do `.gitattributes` deployado registra a instrução para esses casos.
+A configuração do driver `merge.ours.driver` no Git é feita automaticamente pelo `agent-memory deploy`, que executa `git config merge.ours.driver true` no projeto. Em outros clones do mesmo repositório, cada desenvolvedor precisa rodar essa configuração manualmente uma vez (o `agent-memory deploy` faz isso, mas o `.gitattributes` já versionado pode não disparar nova execução do deploy). A documentação do `.gitattributes` deployado registra a instrução para esses casos.
 
 ## Protocolo do agente
 
@@ -135,7 +135,7 @@ No debrief, o agente reescreve as seções `Current` e `Next` do `STATE.md`, adi
 
 ## Auditoria
 
-O `tools/audit.py` produz um relatório de uma página com sete indicadores. Cada um responde uma pergunta operacional concreta sobre se o sistema está entregando valor ou virando burocracia.
+O `agent-memory audit` produz um relatório de uma página com sete indicadores. Cada um responde uma pergunta operacional concreta sobre se o sistema está entregando valor ou virando burocracia.
 
 A **conformidade de schema** mede se todos os artefatos passam validação estrutural, incluindo a validação dos critérios de aceitação contra os padrões EARS. Qualquer erro aqui bloqueia o build — schemas inválidos significam que o agente vai consumir dados quebrados na próxima sessão.
 
@@ -153,21 +153,21 @@ A **saúde de decisões** mede a razão de substituição (superseded sobre tota
 
 ### Modo strict
 
-A flag `--strict` promove warnings (drift) a errors. Em modo padrão o `audit.py` retorna exit 0 mesmo com drift presente, porque drift pode ser temporário (você refatorou e ainda vai atualizar o Manifest no próximo commit). Em modo strict, qualquer drift bloqueia. O modo strict é usado pelo pre-commit hook e deve ser usado pela CI.
+A flag `--strict` promove warnings (drift) a errors. Em modo padrão o `agent-memory audit` retorna exit 0 mesmo com drift presente, porque drift pode ser temporário (você refatorou e ainda vai atualizar o Manifest no próximo commit). Em modo strict, qualquer drift bloqueia. O modo strict é usado pelo pre-commit hook e deve ser usado pela CI.
 
 ## Pre-commit hook
 
-O hook em `tools/hooks/pre-commit` é instalado em `.git/hooks/pre-commit` por meio do script `tools/install-hooks.sh`. Como o diretório `.git/` não é versionado, cada clone do repositório precisa rodar o instalador uma vez. Isto é deliberado: hooks são opt-in, e desenvolvedores que não querem a checagem local não são forçados a tê-la.
+O hook em `src/agent_memory/data/hooks/pre-commit` é instalado em `.git/hooks/pre-commit` automaticamente pelo `agent-memory deploy`. Como o diretório `.git/` não é versionado, cada clone do projeto consumidor precisa rodar `agent-memory deploy` uma vez para instalar o hook.
 
-O hook roda `python tools/audit.py --strict --no-index` antes de cada commit. Se a auditoria falha — schema inválido, EARS mal-formado, drift detectado — o commit é bloqueado e o desenvolvedor vê a lista exata de problemas. Para contornar deliberadamente em situações excepcionais, `git commit --no-verify` ignora todos os hooks. Esta válvula de escape é importante: hooks que não podem ser ignorados acabam sendo desinstalados, e o objetivo é nudge, não coerção.
+O hook roda `agent-memory audit --strict --no-index` antes de cada commit. Se a auditoria falha — schema inválido, EARS mal-formado, drift detectado — o commit é bloqueado e o desenvolvedor vê a lista exata de problemas. Para contornar deliberadamente em situações excepcionais, `git commit --no-verify` ignora todos os hooks. Esta válvula de escape é importante: hooks que não podem ser ignorados acabam sendo desinstalados, e o objetivo é nudge, não coerção.
 
 A combinação hook local mais checagem em CI é o padrão recomendado. O hook pega a maioria dos problemas no início do ciclo de feedback, quando o custo de correção é mínimo; a CI pega os casos onde o hook foi pulado ou não estava instalado, e impede merges incorretos. Sem hook local, todo erro espera o tempo de CI para ser detectado.
 
 ## Geração de propostas de ADR
 
-A ferramenta `tools/propose-adr.py` examina o diff atual contra um commit base (HEAD~1 por padrão, ou mudanças staged com `--staged`) e aplica heurísticas para detectar mudanças que podem merecer um ADR. Os sinais que ela observa incluem volume da mudança (cinco arquivos ou cem linhas), alterações em arquivos de manifesto de dependências, mudanças em três ou mais diretórios distintos, e mensagens de commit contendo padrões linguísticos de decisão como "switched from", "instead of", "deprecated".
+A ferramenta `agent-memory propose-adr` examina o diff atual contra um commit base (HEAD~1 por padrão, ou mudanças staged com `--staged`) e aplica heurísticas para detectar mudanças que podem merecer um ADR. Os sinais que ela observa incluem volume da mudança (cinco arquivos ou cem linhas), alterações em arquivos de manifesto de dependências, mudanças em três ou mais diretórios distintos, e mensagens de commit contendo padrões linguísticos de decisão como "switched from", "instead of", "deprecated".
 
-Quando os sinais são detectados, a ferramenta gera um draft pré-preenchido em `decisions/proposals/NNNN-draft.md`, com as seções TODO marcadas e os sinais detectados anotados como contexto. O draft não é um ADR — é matéria-prima para um, e o `audit.py` ignora a subpasta `proposals/` para preservar a invariante de que ADRs verdadeiros são imutáveis.
+Quando os sinais são detectados, a ferramenta gera um draft pré-preenchido em `decisions/proposals/NNNN-draft.md`, com as seções TODO marcadas e os sinais detectados anotados como contexto. O draft não é um ADR — é matéria-prima para um, e o `agent-memory audit` ignora a subpasta `proposals/` para preservar a invariante de que ADRs verdadeiros são imutáveis.
 
 A ferramenta também oferece um modo `--prompt` que emite um prompt estruturado para um agente LLM em vez de gerar o template diretamente. Este modo é útil quando você quer aproveitar a presença de um agente Claude para redigir o draft completo, e o prompt já inclui as instruções para o agente decidir se a mudança realmente merece um ADR (recusando explicitamente se for trivial) e para preencher cada seção com substância em vez de placeholders.
 
@@ -177,7 +177,7 @@ A separação entre detecção e redação é deliberada. A detecção é determ
 
 Para um projeto novo, criar `AGENT.md`, `STATE.md`, `manifest/` e `decisions/` leva minutos, e a primeira feature a ser entregue já segue o protocolo. Para projetos legados, a migração tem dois passos sequenciais.
 
-Primeiro, `tools/migrate.py` examina os últimos cem ou duzentos commits e propõe ADRs candidatos a partir de mensagens contendo padrões como "switched", "instead of", "revert", "decided to". Os candidatos são impressos para revisão humana, não escritos automaticamente. Esta restrição é deliberada — gênese retroativa não pode ser silenciosa, sob pena de cristalizar interpretações erradas como decisões oficiais.
+Primeiro, `agent-memory migrate` examina os últimos cem ou duzentos commits e propõe ADRs candidatos a partir de mensagens contendo padrões como "switched", "instead of", "revert", "decided to". Os candidatos são impressos para revisão humana, não escritos automaticamente. Esta restrição é deliberada — gênese retroativa não pode ser silenciosa, sob pena de cristalizar interpretações erradas como decisões oficiais.
 
 Segundo, o agente examina os módulos públicos do código (entrypoints da API, casos de uso, comandos CLI) e propõe entradas iniciais do Manifest, marcando-as como `status: shipped` mas sem métricas. O humano revisa e aprova antes da gravação. Em sistemas grandes (cento e oitenta mil linhas, mais de um ano de desenvolvimento), o agente trabalha como assistente da migração, não como executor autônomo: ele propõe, o humano dispõe.
 
@@ -187,9 +187,9 @@ Segundo, o agente examina os módulos públicos do código (entrypoints da API, 
 
 **E features muito pequenas?** Se uma capacidade não merece um arquivo próprio, provavelmente é parte de uma feature maior. Resista à tentação de criar features triviais — o Manifest perde valor quando vira lista de funções. A regra é a mesma do início: `user_value` em uma frase sem termos puramente técnicos.
 
-**E ADRs para mudanças menores?** Se a mudança não exigiria explicação para um futuro contribuidor, ela não merece ADR. A pergunta operacional: "se eu olhar este commit em seis meses, vou entender por que essa escolha?" Se a resposta for sim, comentário no commit basta; se for não, vire ADR. A ferramenta `propose-adr.py` ajuda a calibrar essa intuição, mas a decisão final é humana.
+**E ADRs para mudanças menores?** Se a mudança não exigiria explicação para um futuro contribuidor, ela não merece ADR. A pergunta operacional: "se eu olhar este commit em seis meses, vou entender por que essa escolha?" Se a resposta for sim, comentário no commit basta; se for não, vire ADR. A ferramenta `agent-memory propose-adr` ajuda a calibrar essa intuição, mas a decisão final é humana.
 
-**E quando o `audit.py` reporta drift mas o caminho está certo?** Verifique convenções de path: o `audit.py` checa caminhos relativos à raiz do projeto. `src/api/search.py::search_endpoint` é interpretado como "arquivo `src/api/search.py` existe", o `::search_endpoint` é metadata para o agente. Drift vem de arquivos movidos ou renomeados sem atualizar o Manifest.
+**E quando o `agent-memory audit` reporta drift mas o caminho está certo?** Verifique convenções de path: o `agent-memory audit` checa caminhos relativos à raiz do projeto. `src/api/search.py::search_endpoint` é interpretado como "arquivo `src/api/search.py` existe", o `::search_endpoint` é metadata para o agente. Drift vem de arquivos movidos ou renomeados sem atualizar o Manifest.
 
 **E para projetos sem testes?** Cobertura zero é cobertura honesta. Melhor que cobertura inflada por testes inexistentes. Se a equipe não tem prática de testes, o Manifest expõe esse débito explicitamente, o que é o primeiro passo para resolvê-lo.
 
