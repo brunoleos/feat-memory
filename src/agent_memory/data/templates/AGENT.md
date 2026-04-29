@@ -19,7 +19,7 @@ references:
   manifest_index: ./manifest/INDEX.md
   state: ./STATE.md
   decisions_index: ./decisions/INDEX.md
-  methodology: https://github.com/brunoleos/agent-memory/blob/main/METHODOLOGY.md
+  methodology: https://github.com/brunoleos/agent-memory/blob/v{VERSION}/METHODOLOGY.md
   skills: ./skills/
 budgets:
   resumption_max_bytes: 12288
@@ -29,7 +29,7 @@ budgets:
 
 # Constituição do projeto
 
-Sessões começam por `STATE.md` (foco atual) e `manifest/INDEX.md` (mapa de capacidades). Detalhes de uma feature ficam em `manifest/features/F-NNNN-*.md`. Decisões arquiteturais em `decisions/`. A metodologia completa está documentada no repositório do agent-memory: <https://github.com/brunoleos/agent-memory/blob/main/METHODOLOGY.md>.
+Sessões começam por `STATE.md` (foco atual) e `manifest/INDEX.md` (mapa de capacidades). Detalhes de uma feature ficam em `manifest/features/F-NNNN-*.md`. Decisões arquiteturais em `decisions/`. A metodologia completa está documentada no repositório do agent-memory: <https://github.com/brunoleos/agent-memory/blob/v{VERSION}/METHODOLOGY.md>.
 
 ## Identidade
 

@@ -48,6 +48,19 @@ def _copy_resource(src: Traversable, dst: Path) -> None:
         shutil.copy2(src_path, dst)
 
 
+def _copy_template(src: Traversable, dst: Path) -> None:
+    """Copia um template fazendo substituições (`{VERSION}` → versão atual).
+
+    Usado para AGENT.md/CLAUDE.md/STATE.md, onde o frontmatter referencia
+    a doutrina por URL ancorada na tag da versão. Templates sem
+    placeholders passam intactos.
+    """
+    from agent_memory import __version__
+    content = src.read_text(encoding="utf-8")
+    content = content.replace("{VERSION}", __version__)
+    dst.write_text(content, encoding="utf-8")
+
+
 def _replace_sentinel_block(existing: str, payload: str) -> tuple[str, bool]:
     """Substitui ou insere um bloco delimitado por sentinelas.
 
@@ -85,12 +98,12 @@ def deploy_constitution(target: Path, force: bool, merge: bool,
             sys.exit(1)
 
         if not dst.exists():
-            _copy_resource(src, dst)
+            _copy_template(src, dst)
             print(f"  criado: {template}")
             continue
 
         if force:
-            _copy_resource(src, dst)
+            _copy_template(src, dst)
             print(f"  sobrescrito: {template} (--force)")
             continue
 
@@ -99,7 +112,7 @@ def deploy_constitution(target: Path, force: bool, merge: bool,
             continue
 
         pending_dir.mkdir(parents=True, exist_ok=True)
-        _copy_resource(src, pending_dir / f"{template}.new")
+        _copy_template(src, pending_dir / f"{template}.new")
         merge_queue.append(template)
         print(f"  pendente de merge: {template} (existente preservado)")
 
@@ -111,10 +124,10 @@ def deploy_state(target: Path, force: bool) -> None:
     dst = target / "STATE.md"
 
     if not dst.exists():
-        _copy_resource(src, dst)
+        _copy_template(src, dst)
         print("  criado: STATE.md")
     elif force:
-        _copy_resource(src, dst)
+        _copy_template(src, dst)
         print("  sobrescrito: STATE.md (--force)")
     else:
         print("  pulado: STATE.md (já existe; foco da sessão é volátil)")
@@ -324,8 +337,11 @@ def run(args: argparse.Namespace) -> int:
 
     deploy_dir = target / ".agent-memory-deploy"
     merge_queue_file = deploy_dir / "merge-queue"
-    if merge_queue_file.exists():
-        merge_queue_file.unlink()
+    # Remove qualquer estado transiente do deploy anterior (queue + pending/).
+    # Se houver merges não resolvidos, são re-detectados nesta execução e
+    # re-escritos abaixo. Previne acúmulo de .new órfãos.
+    if deploy_dir.exists():
+        shutil.rmtree(deploy_dir, ignore_errors=True)
 
     merge_queue: list[str] = []
 
