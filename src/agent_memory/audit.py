@@ -11,7 +11,6 @@ Uso:
     agent-memory audit              # relatório + índices
     agent-memory audit --json       # output em JSON (CI)
     agent-memory audit --strict     # warnings viram errors
-    agent-memory audit --init       # cria estrutura
     agent-memory audit --no-index   # só valida
 
 Saída:
@@ -30,22 +29,30 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-try:
-    import yaml
-except ImportError:
-    print(
-        "ERRO: PyYAML é uma dependência obrigatória.\n\n"
-        "Instale com um dos comandos abaixo:\n"
-        "  pip install pyyaml\n"
-        "  pip3 install pyyaml\n"
-        "  python -m pip install pyyaml\n\n"
-        "Em ambientes com gerenciamento de pacotes do sistema "
-        "(Debian/Ubuntu recente),\n"
-        "use --break-system-packages se necessário ou um virtualenv:\n"
-        "  pip install --break-system-packages pyyaml",
-        file=sys.stderr,
-    )
-    sys.exit(1)
+def _yaml():
+    """Importa PyYAML preguiçosamente com mensagem de erro acionável.
+
+    Retorna o módulo `yaml`. Sai com exit 1 se PyYAML não está instalado.
+    Adiar o import até a primeira chamada evita que `agent-memory --help`
+    (que não toca em YAML) pague o custo de carregar a lib.
+    """
+    try:
+        import yaml as _y
+    except ImportError:
+        print(
+            "ERRO: PyYAML é uma dependência obrigatória.\n\n"
+            "Instale com um dos comandos abaixo:\n"
+            "  pip install pyyaml\n"
+            "  pip3 install pyyaml\n"
+            "  python -m pip install pyyaml\n\n"
+            "Em ambientes com gerenciamento de pacotes do sistema "
+            "(Debian/Ubuntu recente),\n"
+            "use --break-system-packages se necessário ou um virtualenv:\n"
+            "  pip install --break-system-packages pyyaml",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    return _y
 
 
 def find_project_root() -> Path:
@@ -71,8 +78,8 @@ def find_project_root() -> Path:
 
 
 # ROOT/AGENT/etc são populados preguiçosamente via _init_paths() na
-# primeira chamada de run() ou init_structure(). Importar o módulo (ex.:
-# para registrar o subparser via cli.py) não dispara `git rev-parse`.
+# primeira chamada de run(). Importar o módulo (ex.: para registrar o
+# subparser via cli.py) não dispara `git rev-parse`.
 ROOT: Path = None  # type: ignore[assignment]
 AGENT: Path = None  # type: ignore[assignment]
 CLAUDE: Path = None  # type: ignore[assignment]
@@ -127,6 +134,7 @@ def parse_frontmatter(path: Path) -> tuple[dict, str]:
     end = text.find("\n---\n", 4)
     if end < 0:
         return {}, text
+    yaml = _yaml()
     try:
         fm = yaml.safe_load(text[4:end]) or {}
     except yaml.YAMLError as e:
@@ -557,13 +565,6 @@ def run_audit(write_indices: bool = True,
     }
 
 
-def init_structure() -> None:
-    _init_paths()
-    for d in (MANIFEST_DIR, FEATURES_DIR, DECISIONS_DIR, PROPOSALS_DIR):
-        d.mkdir(parents=True, exist_ok=True)
-    print(f"Estrutura inicializada em {ROOT}")
-
-
 def print_report(result: dict) -> None:
     m = result["metrics"]
     print("=" * 60)
@@ -608,8 +609,6 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
     )
     p.add_argument("--json", action="store_true",
                    help="output em JSON")
-    p.add_argument("--init", action="store_true",
-                   help="inicializa estrutura de pastas")
     p.add_argument("--no-index", action="store_true",
                    help="não regenerar índices")
     p.add_argument("--strict", action="store_true",
@@ -622,9 +621,6 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
 
 def run(args: argparse.Namespace) -> int:
     _init_paths()
-    if args.init:
-        init_structure()
-        return 0
 
     result = run_audit(
         write_indices=not args.no_index,

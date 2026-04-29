@@ -36,6 +36,8 @@ Skills (`memory-deploy`, `memory-bootstrap`, `memory-debrief`) e documentação 
 
 Modelo de "clone para `.agent-memory/`" não é mais suportado. Quem está em v0.1.0/v0.2.0 deve seguir o caminho de migração na seção abaixo.
 
+Subcomando `agent-memory audit --init` (que apenas criava as pastas `manifest/features/` e `decisions/proposals/`) — sobreposição funcional com `agent-memory deploy <projeto>`, que faz o mesmo e mais. Usuários que dependiam de `--init` devem migrar para `agent-memory deploy`.
+
 ### Migração de 0.2.0 → 0.3.0
 
 ```bash
