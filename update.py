@@ -12,9 +12,9 @@ Estratégia:
 
 Configuração:
     O upstream é configurado em .agent-memory/.upstream com uma das opções:
-        git+<URL>           # ex: git+https://github.com/user/agent-memory.git
-        git+<URL>#<ref>     # ex: git+https://github.com/user/agent-memory.git#v0.2.0
-        local:<path>        # ex: local:/home/user/agent-memory
+        git+<URL>           # ex: git+https://github.com/brunoleos/agent-memory.git
+        git+<URL>#<ref>     # ex: git+https://github.com/brunoleos/agent-memory.git#v0.1.0
+        local:<path>        # ex: local:/home/usuario/agent-memory
 
 Uso:
     python update.py              # atualiza para a versão upstream
@@ -229,9 +229,11 @@ def main() -> int:
         print("ERRO: upstream não configurado.")
         print()
         print("Crie .agent-memory/.upstream com uma linha indicando a fonte:")
-        print("  git+https://github.com/usuario/agent-memory.git")
-        print("  git+https://github.com/usuario/agent-memory.git#v0.2.0")
+        print("  git+https://github.com/brunoleos/agent-memory.git")
+        print("  git+https://github.com/brunoleos/agent-memory.git#v0.1.0")
         print("  local:/home/usuario/agent-memory")
+        print()
+        print("Veja .agent-memory/.upstream.example para os formatos suportados.")
         return 1
 
     installed = get_installed_version()

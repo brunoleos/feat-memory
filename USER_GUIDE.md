@@ -16,9 +16,18 @@ A metodologia também faz sentido em projetos legados que estão sendo retomados
 
 ## Instalação em três comandos
 
-A instalação completa requer apenas três passos. Primeiro, copie a pasta `.agent-memory/` para a raiz do seu projeto, seja por download direto, clone do repositório, ou cópia manual. Segundo, abra uma sessão com seu agente preferido (Claude Code, Cursor, ou outro que reconheça `AGENT.md`) e diga "instale a metodologia neste projeto". A skill `memory-deploy` assume o controle, detecta se o projeto é greenfield ou legacy, executa o `deploy.py`, e conduz a personalização apropriada. Terceiro, faça o primeiro commit dos artefatos gerados com mensagem clara como "adopt agent memory methodology".
+A instalação completa tem três passos. Primeiro, traga a pasta `.agent-memory/` para a raiz do seu projeto a partir do repositório oficial em <https://github.com/brunoleos/agent-memory>. Segundo, abra uma sessão com seu agente preferido (Claude Code, Cursor, ou outro que reconheça `AGENT.md`) e diga "instale a metodologia neste projeto". A skill `memory-deploy` assume o controle, detecta se o projeto é greenfield ou legacy, executa o `deploy.py`, e conduz a personalização apropriada. Terceiro, faça o primeiro commit dos artefatos gerados com mensagem clara como "adopt agent memory methodology".
 
-Para automação ou CI, o script pode ser invocado diretamente com `python .agent-memory/deploy.py --no-merge`. A flag `--no-merge` evita criar fila de merge pendente em ambientes onde não há agente para processá-la. Os templates ficam genéricos sem personalização.
+A maneira recomendada de fazer o passo 1 é clonar a tag mais recente da página de releases (<https://github.com/brunoleos/agent-memory/releases>) e copiar apenas a pasta `.agent-memory/` para o seu projeto:
+
+```bash
+git clone --depth 1 --branch v0.1.0 \
+  https://github.com/brunoleos/agent-memory.git /tmp/agent-memory
+cp -r /tmp/agent-memory/.agent-memory ./
+rm -rf /tmp/agent-memory
+```
+
+Substitua `v0.1.0` pela tag corrente. Alternativamente, baixe o tarball de uma release específica via `curl` ou pelo botão "Source code (tar.gz)" na página da release no GitHub. Para automação ou CI, o script pode ser invocado diretamente com `python .agent-memory/deploy.py --no-merge`; a flag `--no-merge` evita criar fila de merge pendente em ambientes onde não há agente para processá-la, e os templates ficam genéricos sem personalização.
 
 A única dependência externa do projeto é PyYAML, que pode ser instalado via `pip install pyyaml`. Todas as outras ferramentas usam apenas a biblioteca padrão do Python 3.10 ou superior, garantindo portabilidade entre Linux, macOS e Windows sem necessidade de WSL ou outras camadas de compatibilidade.
 
@@ -42,13 +51,15 @@ Antes de cada commit relevante, você diz ao agente "vou commitar" ou "atualize 
 
 ## Atualizações da metodologia
 
-A metodologia evolui ao longo do tempo, e cada projeto que a adota precisa de um caminho claro para receber essas evoluções sem perder customizações locais. O versionamento semântico em VERSION e o histórico em CHANGELOG.md tornam a evolução transparente, e o arquivo .installed-version registra qual versão está em uso em cada projeto consumidor.
+A metodologia evolui ao longo do tempo, e cada projeto que a adota precisa de um caminho claro para receber essas evoluções sem perder customizações locais. O versionamento semântico em `VERSION` e o histórico em `CHANGELOG.md` tornam a evolução transparente, e o arquivo `.agent-memory/.installed-version` registra qual versão está em uso em cada projeto consumidor (esse arquivo é gerado pelo `deploy.py` e fica fora do Git).
 
-Para receber atualizações, configure o upstream em .agent-memory/.upstream com a fonte do pacote. O upstream pode ser um repositório Git remoto (formato git+URL), uma referência específica desse repositório (formato git+URL#tag), ou um caminho local para desenvolvimento da própria metodologia (formato local:caminho). O arquivo .upstream.example documenta as opções e pode ser copiado e editado.
+Para receber atualizações, configure o upstream em `.agent-memory/.upstream` com a fonte do pacote. **Esse arquivo não é do Git** — apesar do prefixo `git+`, ele é apenas um arquivo de configuração lido pelo `update.py`, que aceita três formatos: um repositório Git remoto (`git+URL`), uma referência específica desse repositório (`git+URL#tag`, `git+URL#branch` ou `git+URL#commit`), ou um caminho local para desenvolvimento da própria metodologia (`local:caminho`). O arquivo `.upstream.example` documenta os três formatos e pode ser copiado e editado.
 
-Com o upstream configurado, python .agent-memory/update.py --check verifica se há atualização disponível sem aplicá-la, mostrando a versão instalada e a versão upstream lado a lado. O comando python .agent-memory/update.py aplica a atualização: baixa o conteúdo do upstream, substitui a pasta .agent-memory/ preservando arquivos de configuração local, atualiza o marcador de versão, e re-roda o deploy.py para propagar mudanças aos artefatos do projeto. A lógica de merge para AGENT.md e CLAUDE.md é a mesma do deploy inicial, garantindo que customizações sejam preservadas.
+A escolha entre seguir uma branch e fixar em uma tag importa. Quando você usa `git+https://github.com/brunoleos/agent-memory.git`, o `update.py` baixa o último commit da branch padrão; isso é prático em projetos experimentais mas pode trazer mudanças não anunciadas em release formal. Quando você usa `git+https://github.com/brunoleos/agent-memory.git#v0.1.0`, o `update.py` baixa apenas a tag indicada; para subir de versão, você edita o `.upstream` trocando a tag. Em projetos de produção, fixar em tag dá controle explícito sobre quando aceitar mudanças.
 
-Para times que usam a metodologia em múltiplos projetos com sincronização, a recomendação é manter um repositório upstream único (próprio ou referenciado via Git) e configurar todos os projetos consumidores apontando para ele. Atualizações na metodologia ficam disponíveis para todos os projetos via update.py, e cada projeto decide quando aplicar conforme seu próprio cronograma.
+Com o upstream configurado, `python .agent-memory/update.py --check` verifica se há atualização disponível sem aplicá-la, mostrando a versão instalada e a versão upstream lado a lado. O comando `python .agent-memory/update.py` aplica a atualização: clona o upstream em diretório temporário, substitui a pasta `.agent-memory/` preservando arquivos de configuração local (`.installed-version`, `.upstream`, `.merge-queue`, `.pending-merge/`), atualiza o marcador de versão, e re-roda o `deploy.py` para propagar mudanças aos artefatos do projeto. A lógica de merge para `AGENT.md` e `CLAUDE.md` é a mesma do deploy inicial, garantindo que customizações sejam preservadas.
+
+Para times que usam a metodologia em múltiplos projetos, a recomendação é apontar todos os projetos consumidores para o mesmo repositório upstream (no caso oficial, <https://github.com/brunoleos/agent-memory>), idealmente fixados na mesma tag. Atualizações na metodologia ficam disponíveis para todos os projetos via `update.py`, e cada projeto decide quando aplicar conforme seu próprio cronograma. Se você mantém um fork interno, basta apontar o `.upstream` para ele em vez do oficial.
 
 ## Comandos importantes
 

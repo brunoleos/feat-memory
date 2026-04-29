@@ -2,6 +2,8 @@
 
 Pacote autocontido de memória persistente para agentes LLM. Cole esta pasta inteira na raiz do seu projeto e peça ao agente para instalar a metodologia.
 
+Repositório oficial: <https://github.com/brunoleos/agent-memory>. Releases e changelog em <https://github.com/brunoleos/agent-memory/releases>.
+
 ## O que é isso
 
 Quatro artefatos versionados que dão a um agente LLM tudo que ele precisa para retomar trabalho em um projeto sem reler todo o código a cada sessão. Cada artefato responde uma pergunta diferente, com um ciclo de mutação diferente.
@@ -15,14 +17,46 @@ Quatro artefatos versionados que dão a um agente LLM tudo que ele precisa para 
 
 ## Instalação
 
-A instalação tem dois passos. Primeiro, copie a pasta `.agent-memory/` para a raiz do seu projeto. Segundo, peça ao agente para instalar a metodologia com uma frase como "instale a metodologia neste projeto" ou "configure o agent-memory aqui".
+A instalação tem dois passos: trazer a pasta `.agent-memory/` para a raiz do seu projeto e pedir ao agente para configurá-la. A pasta inteira fica versionada junto com o seu projeto.
+
+### 1. Trazer a pasta para o projeto
+
+Escolha um dos três caminhos. Os três produzem o mesmo resultado; mude apenas em qual versão você fica fixado.
+
+**a) Clone direto da release mais recente (recomendado).** Use a tag estável; `--depth 1` evita baixar o histórico inteiro:
 
 ```bash
-# 1. Cole esta pasta inteira na raiz do projeto
-cp -r path/to/agent-memory/.agent-memory ./
+git clone --depth 1 --branch v0.1.0 \
+  https://github.com/brunoleos/agent-memory.git /tmp/agent-memory
+cp -r /tmp/agent-memory/.agent-memory ./
+rm -rf /tmp/agent-memory
+```
 
-# 2. Inicie uma sessão com o agente e peça:
-#    "instale a metodologia neste projeto"
+Ajuste `v0.1.0` para a tag listada em <https://github.com/brunoleos/agent-memory/releases>.
+
+**b) Download do tarball de uma release.** Útil se você não quer Git no caminho:
+
+```bash
+curl -L https://github.com/brunoleos/agent-memory/archive/refs/tags/v0.1.0.tar.gz \
+  | tar -xz --strip-components=1 -C ./ agent-memory-0.1.0/.agent-memory
+```
+
+**c) Seguir a `main` em vez de uma tag.** Recomendado apenas durante experimentação:
+
+```bash
+git clone --depth 1 https://github.com/brunoleos/agent-memory.git /tmp/agent-memory
+cp -r /tmp/agent-memory/.agent-memory ./
+rm -rf /tmp/agent-memory
+```
+
+A pasta `.agent-memory/` que você acabou de copiar já contém tudo: scripts, skills, templates e este README. Ela é autocontida — o repositório de onde você clonou só é necessário se você quiser receber atualizações depois (ver "Versionamento e atualizações" abaixo).
+
+### 2. Pedir ao agente para configurar
+
+Inicie uma sessão com o agente e diga:
+
+```
+instale a metodologia neste projeto
 ```
 
 A partir daí, a skill `memory-deploy` assume o controle. Ela detecta automaticamente se o seu projeto é greenfield (novo, pouco código) ou legacy (com história substancial e código de produção), executa o `deploy.py` para estabelecer a estrutura mecânica, e conduz a personalização apropriada para cada caso.
@@ -41,24 +75,51 @@ A flag `--force` sobrescreve tudo sem merge, útil quando você quer descartar c
 
 ## Versionamento e atualizações
 
-O pacote tem versionamento semântico em `VERSION` e changelog em `CHANGELOG.md`. Quando você instala em um projeto, a versão é registrada em `.agent-memory/.installed-version` (não versionado no Git), permitindo saber qual versão está em uso e gerenciar atualizações.
+O pacote tem versionamento semântico em `VERSION` e changelog em `CHANGELOG.md`. Cada release publicada no GitHub corresponde a uma tag `vX.Y.Z` e a uma seção do `CHANGELOG.md`. Quando você instala em um projeto, a versão é registrada em `.agent-memory/.installed-version` (não versionado no Git), permitindo saber qual versão está em uso e gerenciar atualizações.
 
-Para atualizar a metodologia em um projeto, configure o upstream em `.agent-memory/.upstream` e rode `python .agent-memory/update.py`. O upstream pode ser um repositório Git remoto, uma tag específica desse repositório, ou um caminho local (útil durante desenvolvimento da própria metodologia).
+Para receber atualizações, configure uma única vez o arquivo `.agent-memory/.upstream` apontando para o repositório oficial. **Esse arquivo não é do Git** — é um arquivo de configuração lido apenas pelo `update.py`, que escolhe entre seguir uma tag ou rastrear uma branch. Veja `.upstream.example` para os formatos suportados.
 
 ```bash
-# Configure o upstream (faça uma vez por clone)
-echo "git+https://github.com/usuario/agent-memory.git" > .agent-memory/.upstream
+# Opção A: rastrear a branch principal (sempre baixa o último commit de main)
+echo "git+https://github.com/brunoleos/agent-memory.git" > .agent-memory/.upstream
 
-# Verifique se há atualização
+# Opção B (recomendada): fixar em uma tag específica
+echo "git+https://github.com/brunoleos/agent-memory.git#v0.1.0" > .agent-memory/.upstream
+
+# Opção C: apontar para uma cópia local (durante desenvolvimento da metodologia)
+echo "local:/home/usuario/agent-memory" > .agent-memory/.upstream
+```
+
+A diferença entre A e B importa: com a opção A, qualquer commit em `main` aparece como atualização disponível, mesmo que ainda não tenha virado release; com a opção B, você só vê uma atualização quando bumpar manualmente a tag no `.upstream` para a próxima release publicada. Em projetos de produção, fixar em tag dá controle; em projetos de experimentação, seguir a `main` é prático.
+
+Com o upstream configurado, o ciclo de update tem duas chamadas:
+
+```bash
+# Verifica se há atualização disponível, sem aplicar
 python .agent-memory/update.py --check
 
-# Aplique a atualização
+# Aplica a atualização
 python .agent-memory/update.py
 ```
 
-O `update.py` baixa a versão mais recente do upstream, substitui o conteúdo de `.agent-memory/` preservando arquivos de configuração local (`.installed-version`, `.upstream`, fila de merge pendente), e re-roda o `deploy.py` com a lógica de merge para propagar mudanças aos artefatos do projeto sem perder customizações do `AGENT.md` ou do `CLAUDE.md`.
+O `update.py` clona o upstream em uma pasta temporária, lê o `VERSION` de lá, e — se for diferente do `.installed-version` local — substitui o conteúdo de `.agent-memory/` preservando os arquivos de configuração específicos do clone (`.installed-version`, `.upstream`, fila de merge pendente em `.merge-queue` e `.pending-merge/`). Em seguida, re-roda o `deploy.py` com a lógica de merge para propagar mudanças aos artefatos do projeto sem perder customizações do `AGENT.md` ou do `CLAUDE.md`. A pasta temporária é removida ao final.
 
-O arquivo `.upstream.example` no pacote documenta as opções de configuração. O fluxo de update reusa toda a infraestrutura de merge do deploy, garantindo consistência semântica entre instalação inicial e atualizações subsequentes.
+Para subir de uma tag fixada para a seguinte, edite o `.upstream` trocando `#v0.1.0` por `#v0.2.0` (ou a tag desejada) e rode `update.py` novamente.
+
+## Lançamento de novas versões (mantenedor)
+
+Esta seção é para quem mantém o `agent-memory` em si, não para quem apenas o consome. Ignore se você é apenas usuário.
+
+Cada release segue um ciclo curto e repetível:
+
+1. Faça as mudanças no código e em `CHANGELOG.md` (uma nova seção `## [X.Y.Z]` com a data e o que mudou).
+2. Atualize o arquivo `VERSION` para `X.Y.Z`, seguindo SemVer: `patch` para correções, `minor` para adições retrocompatíveis, `major` para mudanças que quebram compatibilidade.
+3. Commite tudo junto: `git commit -m "Release vX.Y.Z"`.
+4. Crie a tag: `git tag vX.Y.Z`.
+5. Faça o push do branch e da tag: `git push && git push --tags`.
+6. Publique a release no GitHub: <https://github.com/brunoleos/agent-memory/releases/new>, selecione a tag, use como título `vX.Y.Z` (ou `vX.Y.Z - <descritivo>` em releases marcantes), e cole no corpo a seção correspondente do `CHANGELOG.md`. Marque "Set as the latest release".
+
+A release no GitHub não muda o que o `update.py` baixa (ele opera sobre tags Git diretamente), mas serve como ponto de download formal e como histórico legível para humanos.
 
 ## Modo programático
 

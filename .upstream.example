@@ -1,20 +1,23 @@
 # Configuração do upstream do agent-memory
 #
-# Descomente e edite UMA das linhas abaixo para apontar para a fonte
-# de atualizações do pacote. Renomeie este arquivo para .upstream
-# (sem o sufixo .example) para ativar.
+# Este arquivo NÃO é do Git. É lido por update.py para descobrir de onde
+# baixar a próxima versão da metodologia. Renomeie para .upstream
+# (sem o sufixo .example) com UMA das linhas abaixo descomentada.
 #
 # Opções:
 #
-# 1. Repositório Git remoto (GitHub, GitLab, etc):
-# git+https://github.com/seu-usuario/agent-memory.git
+# 1. Repositório Git remoto (GitHub, GitLab etc), seguindo a branch padrão:
+# git+https://github.com/brunoleos/agent-memory.git
 #
-# 2. Repositório Git em ref específica (tag, branch ou commit):
-# git+https://github.com/seu-usuario/agent-memory.git#v0.2.0
-# git+https://github.com/seu-usuario/agent-memory.git#main
+# 2. Repositório Git remoto fixo em uma tag, branch ou commit:
+# git+https://github.com/brunoleos/agent-memory.git#v0.1.0
+# git+https://github.com/brunoleos/agent-memory.git#main
 #
-# 3. Cópia local (útil durante desenvolvimento da própria metodologia):
+# 3. Cópia local (útil enquanto você desenvolve a própria metodologia):
 # local:/home/usuario/projetos/agent-memory
+#
+# O prefixo git+ é convenção do próprio update.py (inspirada no pip);
+# por baixo, ele apenas roda `git clone` e, se houver #ref, um checkout.
 #
 # Para verificar atualizações:
 #   python .agent-memory/update.py --check
