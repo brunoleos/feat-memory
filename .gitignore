@@ -16,7 +16,6 @@ htmlcov/
 .venv/
 venv/
 
-# Estado transiente do deploy quando rodado neste próprio repositório
-# (dogfood opcional). Em projetos consumidores, o bloco é injetado
-# automaticamente pelo `agent-memory deploy` em sentinel block.
+# >>> agent-memory >>>
 .agent-memory-deploy/
+# <<< agent-memory <<<

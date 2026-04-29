@@ -52,6 +52,10 @@ Um subcomando `agent-memory query` que responde perguntas comuns sem o agente pr
 
 Hoje as restrições `severity: hard` em `AGENT.md` são apenas declarativas. A extensão é executar linters específicos para cada constraint registrada e reportar violações reais no código. Por exemplo, uma constraint "Pydantic obrigatório para schemas de borda" pode ser checada por um plugin de AST. Aumenta significativamente o valor das constraints, mas cada nova regra exige código de validação.
 
+### Formalizar campo `version` em ADRs no schema da metodologia
+
+A METHODOLOGY descreve `version` (semver da release que tocou) apenas para features no Manifest. Durante a gênese retroativa do próprio agent-memory (v0.3.0), introduzimos o mesmo campo no frontmatter dos ADRs para registrar em qual versão do projeto cada decisão foi aceita — útil para tabelas de overview e para correlacionar mudanças arquiteturais com releases. A extensão é propagar isso formalmente: documentar o campo na seção "Decisions" da METHODOLOGY, atualizar o schema validado pelo `agent-memory audit` para reconhecer (mas não exigir) o campo, e atualizar o template de ADR gerado pelo `agent-memory propose-adr`. Trabalho pequeno, mas precisa de coordenação entre doc, audit e propose-adr para evitar drift.
+
 ## Médio prazo
 
 ### Coordenação multi-agente
