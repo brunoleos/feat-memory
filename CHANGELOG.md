@@ -6,6 +6,16 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto ader
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-04-30
+
+### Corrigido
+
+Skill `memory-deploy` (Etapa 3) tinha bug de concatenação no merge do `AGENT.md`: quando o template novo carregava `## Identidade` como placeholder e o existente já tinha conteúdo real, a heurística "adiciona seções novas ao final" produzia arquivo com seções duplicadas. O algoritmo de merge foi reescrito para separar seções de metodologia (sincronizadas a partir do template) de seções de projeto (preservadas a partir do existente), com ordem fixa do resultado: intro → projeto → Skills → Como retomar trabalho.
+
+### Mudado
+
+Template `AGENT.md` deixa de carregar placeholders para as seções de projeto (`## Identidade`, `## Restrições não-negociáveis`, `## Convenções de código`) — apenas um comentário HTML marca o ponto de inserção. A skill `memory-deploy` escreve essas seções a partir da investigação do repositório durante a Etapa 4 (personalização ou gênese retroativa). Decisão formalizada em [ADR-0010](decisions/0010-merge-separates-methodology-from-project-sections.md).
+
 ## [0.3.0] - 2026-04-29
 
 **BREAKING CHANGE.** Modelo de instalação muda de "clonar para `.agent-memory/`" para "instalar como pacote Python via pipx". A CLI vira `agent-memory <subcomando>` no PATH, eliminando duplicação de scripts em cada projeto consumidor e permitindo que edições no clone reflitam imediatamente em todos os projetos via editable install.
