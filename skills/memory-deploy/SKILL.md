@@ -43,31 +43,73 @@ Se o deploy reportar erros (não confundir com merges pendentes, que não são e
 
 Após o deploy, verifique se o arquivo `.agent-memory-deploy/merge-queue` existe. Se sim, há arquivos pré-existentes que precisam ser mesclados com os templates novos antes que a personalização da Etapa 4 possa prosseguir.
 
-Para cada arquivo listado em `.agent-memory-deploy/merge-queue`, leia tanto a versão atual no project root (que tem o conteúdo customizado pelo usuário) quanto a versão nova em `.agent-memory-deploy/pending/<arquivo>.new` (que tem a estrutura mais recente do template). Compare as duas e produza uma versão consolidada aplicando as regras de merge descritas abaixo.
+Para cada arquivo em `.agent-memory-deploy/merge-queue`, leia tanto a versão atual no project root quanto a versão nova em `.agent-memory-deploy/pending/<arquivo>.new`. Aplique a estratégia de merge específica do arquivo descrita abaixo e apresente o resultado para revisão humana antes de gravar.
 
-Para o frontmatter YAML, a estratégia é união conservadora. Campos que existem só no arquivo atual são preservados intactos. Campos que existem só no template novo são adicionados. Quando há conflito (mesmo campo com valores diferentes), o valor atual prevalece, mas registre o conflito em comentário inline para revisão humana, no formato `# template novo sugere: <valor>`. Listas de constraints são mescladas pelo campo `id`: constraints com IDs presentes apenas no atual ou apenas no novo são unidas, e quando o mesmo ID aparece em ambos, o atual prevalece.
+#### `AGENT.md`: separação entre seções de metodologia e seções de projeto
 
-Para o corpo markdown, identifique as seções por seus headings (`## Identidade`, `## Restrições não-negociáveis`, etc.). Seções que existem em ambos são preservadas com o conteúdo atual. Seções que existem apenas no template novo são adicionadas ao final, marcadas com um comentário introdutório como "<!-- Seção adicionada do template em <data>. Revise. -->" para que o usuário saiba que vieram do merge. Seções que existem apenas no arquivo atual são preservadas intactas — o usuário deve ter tido razão para criá-las.
+O `AGENT.md` mistura dois tipos de conteúdo, e o merge trata cada um de forma diferente.
 
-Caso especial para o `CLAUDE.md`: se o template novo é apenas o redirect `@AGENT.md` mas o existente tem conteúdo customizado adicional (instruções específicas para o Claude Code que não fazem sentido em outras ferramentas), preserve o conteúdo customizado e adicione o `@AGENT.md` no início se ainda não estiver presente. Esta é a única forma do CLAUDE.md acumular conteúdo legítimo: instruções que fazem sentido apenas para o Claude Code.
+**Seções de metodologia** são idênticas em qualquer projeto e descrevem como a metodologia funciona. Elas devem ser sincronizadas com a versão mais recente do template a cada deploy, porque o template carrega correções e atualizações da própria doutrina:
 
-Apresente cada arquivo mesclado para revisão humana antes de gravar. Mostre as diferenças principais entre o atual e o resultado proposto, destacando o que foi adicionado, o que foi mantido, e o que tem conflito registrado em comentário. Quando o usuário aprovar, escreva o resultado no project root e remova os artefatos temporários: o arquivo correspondente em `.agent-memory-deploy/pending/` e a entrada no `.agent-memory-deploy/merge-queue`. Quando todos os arquivos da fila forem processados, remova o diretório `.agent-memory-deploy/` por completo (é gitignored, mas a remoção sinaliza que o handoff foi resolvido).
+- O parágrafo introdutório (todo o conteúdo entre `# Constituição do projeto` e o primeiro `##`).
+- `## Skills disponíveis`.
+- `## Como retomar trabalho`.
+
+**Seções de projeto** são específicas e devem ser preservadas inalteradas a partir do existente. O template não traz placeholders para elas — elas são escritas pela Etapa 4. Quando a Etapa 3 encontra seções já preenchidas, são preservadas como estão:
+
+- `## Identidade`.
+- `## Restrições não-negociáveis`.
+- `## Convenções de código`.
+- Qualquer outra seção `##` que o usuário tenha adicionado e que não esteja na lista de metodologia (preservada intacta — o usuário deve ter tido razão para criá-la).
+
+**Algoritmo do merge**:
+
+1. Faça parse do `AGENT.md` existente em frontmatter + corpo. Quebre o corpo em seções pelos headings `##`. Trate o conteúdo entre `# Constituição do projeto` e o primeiro `##` como uma seção especial chamada "intro".
+2. Faça parse do `.new` da mesma forma.
+3. **Frontmatter**: união conservadora. Campos só no atual ficam intactos. Campos só no novo são adicionados. Quando há conflito (mesmo campo com valores diferentes), o valor atual prevalece, mas registre o conflito em comentário inline `# template novo sugere: <valor>` para revisão humana. Listas de `constraints` são mescladas pelo `id`: IDs presentes só em um lado são unidos; em colisão de ID, o atual prevalece.
+4. **Corpo**: monte na seguinte ordem fixa:
+   1. `# Constituição do projeto` + intro do `.new` (sempre da metodologia).
+   2. Seções de projeto do existente, na ordem em que apareciam no original.
+   3. `## Skills disponíveis` do `.new`.
+   4. `## Como retomar trabalho` do `.new`.
+5. Se o existente não tinha alguma das seções de projeto esperadas (`## Identidade`, `## Restrições não-negociáveis`, `## Convenções de código`), o resultado do merge fica sem ela. Registre quais estão faltando — a Etapa 4 vai inserir.
+
+Este algoritmo garante três propriedades. Atualizações de metodologia (novas skills documentadas no template, mudanças no fluxo de retomada) chegam a todos os projetos sem intervenção manual. O conteúdo específico do projeto nunca é tocado — não há heurística de comparação por heading, então não há risco de duplicação por concatenação. Seções `##` extras criadas pelo usuário sobrevivem ao merge.
+
+Aviso ao usuário antes de gravar: se ele customizou o conteúdo das seções de metodologia (adicionou notas em `## Skills disponíveis` ou `## Como retomar trabalho`), essas customizações serão perdidas. Sugira mover notas locais para uma seção própria (ex: `## Notas locais sobre skills`) antes de aprovar o merge.
+
+#### `CLAUDE.md`: preservar customizações específicas do Claude Code
+
+Se o template novo é apenas o redirect `@AGENT.md` mas o existente tem conteúdo customizado adicional (instruções específicas para o Claude Code que não fazem sentido em outras ferramentas), preserve o conteúdo customizado e garanta que `@AGENT.md` esteja presente no início. Esta é a única forma do `CLAUDE.md` acumular conteúdo legítimo: instruções que fazem sentido apenas para o Claude Code.
+
+#### Finalização
+
+Apresente cada arquivo mesclado para revisão humana antes de gravar. Mostre as diferenças principais entre o atual e o resultado proposto: o que foi sincronizado da metodologia, o que foi preservado do projeto, o que tem conflito de frontmatter registrado em comentário, e quais seções de projeto ficaram faltando (a Etapa 4 cuida). Quando o usuário aprovar, escreva o resultado no project root e remova os artefatos temporários: o arquivo correspondente em `.agent-memory-deploy/pending/` e a entrada no `.agent-memory-deploy/merge-queue`. Quando todos os arquivos da fila forem processados, remova o diretório `.agent-memory-deploy/` por completo (é gitignored, mas a remoção sinaliza que o handoff foi resolvido).
 
 Após processar todos os merges, rode `agent-memory audit` para validar a estrutura mesclada e gerar os índices.
 
 ### Etapa 4a: greenfield — personalização interativa
 
-Esta etapa só executa em projetos greenfield onde os arquivos foram criados do zero (não houve merge). Conduza personalização em diálogo curto com o usuário. Faça perguntas específicas e use as respostas para reescrever os templates antes do primeiro commit.
+Esta etapa só executa em projetos greenfield onde os arquivos foram criados do zero (não houve merge). Conduza personalização em diálogo curto com o usuário. Faça perguntas específicas e use as respostas para reescrever o `AGENT.md` antes do primeiro commit.
 
-A primeira pergunta cobre identidade, com algo como "Em uma frase, o que este projeto faz e quem usa?" Use a resposta para preencher a seção "Identidade" do `AGENT.md`. A segunda pergunta cobre stack: liste o que você detectou em arquivos de configuração e peça confirmação ou correção. A terceira pergunta cobre restrições não-negociáveis, perguntando algo como "Quais são as restrições hard que não podem ser violadas? Por exemplo, ausência de PII em logs, validação obrigatória de schema, requisitos de auditoria." Use as respostas para popular `constraints` no frontmatter do `AGENT.md`. A quarta pergunta cobre foco inicial, perguntando "Qual é a primeira coisa que você vai construir neste projeto?" Use a resposta para popular `Next` no `STATE.md`.
+O template recém-instalado tem apenas mecânica da metodologia (intro, `## Skills disponíveis`, `## Como retomar trabalho`) e um comentário HTML marcando o ponto de inserção das seções de projeto. Sua tarefa é remover esse comentário e inserir três seções entre o intro e `## Skills disponíveis`: `## Identidade`, `## Restrições não-negociáveis`, `## Convenções de código` (esta última pode ser omitida se não há padrões não-óbvios). Mantenha essa ordem.
+
+A primeira pergunta cobre identidade, com algo como "Em uma frase, o que este projeto faz e quem usa?" Use a resposta para escrever a seção `## Identidade`. A segunda pergunta cobre stack: liste o que você detectou em arquivos de configuração e peça confirmação ou correção, atualizando o frontmatter do `AGENT.md` (campo `stack`). A terceira pergunta cobre restrições não-negociáveis, perguntando algo como "Quais são as restrições hard que não podem ser violadas? Por exemplo, ausência de PII em logs, validação obrigatória de schema, requisitos de auditoria." Use as respostas para popular `constraints` no frontmatter e escrever a seção `## Restrições não-negociáveis` espelhando a lista (uma frase por restrição, mencionando o `id`). A quarta pergunta cobre foco inicial, perguntando "Qual é a primeira coisa que você vai construir neste projeto?" Use a resposta para popular `Next` no `STATE.md`.
 
 Ao final, escreva os arquivos personalizados, rode `agent-memory audit` para confirmar que tudo passa, e proponha o commit inicial com mensagem clara como "adopt agent memory methodology".
 
 ### Etapa 4b: legacy — gênese retroativa em quatro fases
 
-Esta etapa executa em projetos legacy. Quando houve merge na Etapa 3, parta do `AGENT.md` mesclado em vez de propor um novo do zero — o usuário já tem identidade e restrições registradas, e a gênese retroativa adiciona apenas o que está faltando.
+Esta etapa executa em projetos legacy. Quando houve merge na Etapa 3, parta do `AGENT.md` mesclado em vez de propor um novo do zero — o usuário pode já ter algumas seções de projeto registradas, e a gênese retroativa preenche apenas o que falta.
 
-Fase 1, AGENT.md a partir do código: examine os arquivos de configuração principais — manifestos de dependência, configs de linters e formatadores, CI configs, e READMEs existentes. Proponha as adições ao `AGENT.md` (ou um novo `AGENT.md` completo se ainda não existia) com a stack detectada, restrições inferidas dos linters e configs (com `severity: soft` por padrão até confirmação), e identidade do projeto resumida do README. Apresente o draft completo para revisão antes de gravar.
+Fase 1, AGENT.md a partir do código: examine os arquivos de configuração principais — manifestos de dependência, configs de linters e formatadores, CI configs, e READMEs existentes. A partir dessa investigação, prepare três artefatos:
+
+- **Frontmatter**: `stack` (linguagem, arquitetura, banco principal) detectada e `constraints` inferidas dos linters e configs (com `severity: soft` por padrão até o usuário confirmar como hard).
+- **Seção `## Identidade`**: 1-2 frases resumindo o que o projeto faz e quem usa, baseado no README e nos entrypoints públicos.
+- **Seção `## Restrições não-negociáveis`**: lista narrativa espelhando os `constraints` do frontmatter, com uma frase por restrição mencionando o `id`.
+- **Seção `## Convenções de código`** (opcional): apenas se você identificou padrões não-óbvios no código que um agente provavelmente não inferiria. Ausência é aceitável.
+
+Insira as seções no `AGENT.md` entre o parágrafo introdutório e `## Skills disponíveis`, na ordem: Identidade, Restrições, Convenções. Se a Etapa 3 já gravou alguma dessas seções a partir do existente, preserve o que já está lá e preencha apenas as que faltam. Apresente o draft completo para revisão antes de gravar.
 
 Fase 2, ADRs candidatos a partir do git log: rode `agent-memory migrate` para detectar candidatos automáticos. Para cada candidato, examine o commit completo via `git show <sha>` e os arquivos tocados. Avalie se a mudança realmente representa decisão arquitetural ou apenas correção de bug ou refactor mecânico. Para os candidatos que sobrevivem ao filtro, redija um ADR no formato padrão com as quatro seções (Contexto, Decisão, Consequências, Alternativas rejeitadas), usando a data do commit original como `date` e marcando `status: accepted` porque a decisão já está em produção.
 

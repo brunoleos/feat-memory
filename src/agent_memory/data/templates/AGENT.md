@@ -31,17 +31,16 @@ budgets:
 
 Sessões começam por `STATE.md` (foco atual) e `manifest/INDEX.md` (mapa de capacidades). Detalhes de uma feature ficam em `manifest/features/F-NNNN-*.md`. Decisões arquiteturais em `decisions/`. A metodologia completa está documentada no repositório do agent-memory: <https://github.com/brunoleos/agent-memory/blob/v{VERSION}/METHODOLOGY.md>.
 
-## Identidade
+<!--
+Personalização: durante o setup inicial, a skill `memory-deploy` insere
+seções específicas do projeto entre este comentário e `## Skills disponíveis`:
 
-Descreva aqui em uma ou duas frases o que o projeto faz, qual problema ele resolve e quem o usa. Esta seção é o primeiro contato que um novo agente ou contribuidor tem com o domínio — seja específico mas conciso.
+  ## Identidade
+  ## Restrições não-negociáveis
+  ## Convenções de código
 
-## Restrições não-negociáveis
-
-As restrições marcadas como `severity: hard` no frontmatter são auditadas pelo `agent-memory audit` e bloqueiam o build quando violadas. As `soft` geram apenas warning. Mudanças nesta lista exigem ADR.
-
-## Convenções de código
-
-Liste aqui apenas padrões que não são óbvios pela leitura do código e que um agente provavelmente não infere corretamente do contexto. Evite repetir convenções universais como "use 4 espaços de indentação" — confie nas ferramentas de formatação para isso.
+Remova este comentário após a personalização.
+-->
 
 ## Skills disponíveis
 

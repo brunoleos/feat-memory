@@ -11,5 +11,6 @@
 | ADR-0007 | 2026-04-29 | accepted | installation,distribution,packaging,breaking-change | F-0001 |
 | ADR-0008 | 2026-04-29 | accepted | hooks,audit,ux | F-0005 |
 | ADR-0009 | 2026-04-29 | accepted | meta,dogfooding,methodology | — |
+| ADR-0010 | 2026-04-30 | proposed | deploy,merge,template,skill | F-0001,F-0006 |
 
-_Gerado por `agent-memory audit` em 2026-04-29T18:02:03+00:00. Não edite manualmente._
+_Gerado por `agent-memory audit` em 2026-04-30T08:44:46+00:00. Não edite manualmente._

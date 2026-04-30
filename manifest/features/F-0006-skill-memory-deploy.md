@@ -9,7 +9,9 @@ user_value: >
   automaticamente projeto greenfield versus legacy e conduzindo
   personalização interativa ou gênese retroativa em quatro fases.
 contracts:
-  api: src/agent_memory/data/skills/memory-deploy/SKILL.md
+  api:
+    - src/agent_memory/data/skills/memory-deploy/SKILL.md
+    - src/agent_memory/data/templates/AGENT.md
 acceptance:
   - id: A1
     pattern: event
@@ -24,7 +26,8 @@ acceptance:
     state: "projeto classificado como greenfield"
     response: >
       conduz personalização interativa em diálogo curto sobre identidade,
-      stack, restrições e foco inicial
+      stack, restrições e foco inicial; insere as seções de projeto
+      entre o intro e ## Skills disponíveis no AGENT.md
   - id: A3
     pattern: state
     state: "projeto classificado como legacy"
@@ -42,8 +45,18 @@ acceptance:
     requirement: >
       jamais grava artefatos sem aprovação humana — cristalização
       silenciosa de interpretações erradas é o pior erro possível
+  - id: A6
+    pattern: state
+    state: "merge de AGENT.md em curso na Etapa 3"
+    response: >
+      sincroniza as seções de metodologia (intro, ## Skills disponíveis,
+      ## Como retomar trabalho) a partir do template novo, e preserva
+      as seções de projeto (## Identidade, ## Restrições não-negociáveis,
+      ## Convenções de código, mais qualquer ## extra) a partir do
+      existente; ordem fixa do resultado: intro → projeto → Skills →
+      Como retomar
 depends_on: [F-0001, F-0004]
-decisions: [ADR-0004]
+decisions: [ADR-0004, ADR-0010]
 ---
 
 # F-0006 · skill-memory-deploy
