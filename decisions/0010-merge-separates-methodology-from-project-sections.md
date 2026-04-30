@@ -1,13 +1,15 @@
 ---
 id: ADR-0010
 date: 2026-04-30
-status: proposed
+status: superseded
 supersedes: null
-superseded_by: null
+superseded_by: ADR-0011
 affects_features: [F-0001, F-0006]
-related: []
+related: [ADR-0011]
 tags: [deploy, merge, template, skill]
 ---
+
+> **Superseded por [ADR-0011](0011-deploy-replaces-agent-md-block-via-sentinels.md)**: a separação metodologia/projeto deste ADR ficou implícita e mais simples quando o deploy passou a gerenciar a metodologia inteiramente dentro de um bloco delimitado por sentinelas markdown. Esta proposta original (parser de seções por heading) foi descartada antes de gerar dependências em produção.
 
 # ADR-0010 · Merge de AGENT.md separa seções de metodologia (sincronizadas) de seções de projeto (preservadas)
 

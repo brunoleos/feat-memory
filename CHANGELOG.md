@@ -6,6 +6,30 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto ader
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-04-30
+
+### Mudado
+
+**BREAKING.** O `agent-memory deploy` passa a gerenciar a metodologia em `AGENT.md` exclusivamente dentro de um bloco delimitado por sentinelas markdown (`<!-- >>> agent-memory >>> -->` / `<!-- <<< agent-memory <<< -->`). Refresh é idempotente: re-deploy substitui só o bloco, todo o resto do arquivo é preservado byte-a-byte. Identidade, restrições, convenções e qualquer outro conteúdo específico do projeto vivem fora do bloco e nunca são tocados pelo deploy ou pela skill `memory-deploy`. O comportamento anterior de "merge inteligente" baseado em comparação de headings (introduzido em v0.3.1) é abandonado em favor desta abordagem mais simples.
+
+A skill `memory-deploy` perde a Etapa 3 (merge) e a Etapa 4 (personalização) inteiras. Em greenfield, a skill apenas roda o deploy mecânico — não pergunta sobre identidade/stack/restrições nem popula o frontmatter. Em legacy, conduz três fases de gênese retroativa: ADRs do git log, Manifest dos entrypoints, e `STATE.md::Current` descrevendo a gênese. A skill nunca toca em `AGENT.md` fora do bloco.
+
+Decisão formalizada em [ADR-0011](decisions/proposals/0011-draft.md), que supersede [ADR-0010](decisions/0010-merge-separates-methodology-from-project-sections.md).
+
+### Removido
+
+Mecanismo de merge-queue (`<projeto>/.agent-memory-deploy/merge-queue` e `pending/`) eliminado. O deploy resolve o bloco da `AGENT.md` diretamente via sentinelas, sem handoff intermediário. Diretório legado é removido automaticamente na primeira execução pós-upgrade.
+
+### Migração de 0.3.x → 0.4.0
+
+Para projetos consumidores que estão na v0.3.x:
+
+```bash
+agent-memory deploy /caminho/projeto
+```
+
+O bloco com sentinelas é anexado ao fim do `AGENT.md` existente. O conteúdo de metodologia que estava em seções H2 separadas (`## Skills disponíveis`, `## Como retomar trabalho`) e no parágrafo introdutório fica duplicado — agora dentro do bloco e ainda nas seções antigas. Remova manualmente as seções antigas (basta deletar tudo entre `## Skills disponíveis` e `## Como retomar trabalho` inclusive, se essas eram as únicas seções de metodologia preexistentes).
+
 ## [0.3.1] - 2026-04-30
 
 ### Corrigido

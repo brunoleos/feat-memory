@@ -3,11 +3,14 @@ id: F-0006
 name: skill-memory-deploy
 status: shipped
 introduced: 2026-04-28
-version: 0.3.0
+version: 0.4.0
 user_value: >
-  Orienta o agente LLM no fluxo de adoção da metodologia, detectando
-  automaticamente projeto greenfield versus legacy e conduzindo
-  personalização interativa ou gênese retroativa em quatro fases.
+  Orienta o agente LLM no fluxo de adoção da metodologia: detecta
+  greenfield versus legacy, executa o deploy mecânico, e em projetos
+  legacy conduz gênese retroativa de ADRs e do Manifest. Não escreve
+  no corpo da AGENT.md fora do bloco com sentinelas — identidade,
+  restrições e convenções específicas do projeto são autoria do
+  mantenedor humano.
 contracts:
   api:
     - src/agent_memory/data/skills/memory-deploy/SKILL.md
@@ -25,44 +28,38 @@ acceptance:
     pattern: state
     state: "projeto classificado como greenfield"
     response: >
-      conduz personalização interativa em diálogo curto sobre identidade,
-      stack, restrições e foco inicial; insere as seções de projeto
-      entre o intro e ## Skills disponíveis no AGENT.md
+      executa `agent-memory deploy` e encerra; não pergunta sobre
+      identidade, stack, restrições nem foco inicial — toda autoria
+      de conteúdo específico do projeto é do mantenedor humano
   - id: A3
     pattern: state
     state: "projeto classificado como legacy"
     response: >
-      conduz gênese retroativa em quatro fases: AGENT.md a partir do
-      código, ADRs do git log, Manifest dos entrypoints, STATE inicial
+      executa `agent-memory deploy` e em seguida conduz gênese retroativa
+      em três fases: ADRs do git log via `agent-memory migrate`, Manifest
+      dos entrypoints públicos, e STATE.md::Current descrevendo a gênese;
+      não escreve em AGENT.md fora do bloco com sentinelas
   - id: A4
-    pattern: state
-    state: "arquivo .agent-memory-deploy/merge-queue existe"
-    response: >
-      processa cada merge pendente apresentando para revisão humana antes
-      de gravar; remove o diretório transiente após resolução
+    pattern: ubiquitous
+    requirement: >
+      jamais escreve no corpo da AGENT.md fora do bloco delimitado pelas
+      sentinelas markdown agent-memory — identidade, restrições e
+      convenções específicas do projeto são autoria do mantenedor humano
   - id: A5
     pattern: ubiquitous
     requirement: >
       jamais grava artefatos sem aprovação humana — cristalização
       silenciosa de interpretações erradas é o pior erro possível
-  - id: A6
-    pattern: state
-    state: "merge de AGENT.md em curso na Etapa 3"
-    response: >
-      sincroniza as seções de metodologia (intro, ## Skills disponíveis,
-      ## Como retomar trabalho) a partir do template novo, e preserva
-      as seções de projeto (## Identidade, ## Restrições não-negociáveis,
-      ## Convenções de código, mais qualquer ## extra) a partir do
-      existente; ordem fixa do resultado: intro → projeto → Skills →
-      Como retomar
 depends_on: [F-0001, F-0004]
-decisions: [ADR-0004, ADR-0010]
+decisions: [ADR-0004, ADR-0010, ADR-0011]
 ---
 
 # F-0006 · skill-memory-deploy
 
 ## Comportamento
 
-SKILL.md em [src/agent_memory/data/skills/memory-deploy/SKILL.md](src/agent_memory/data/skills/memory-deploy/SKILL.md). Ponto de entrada único para adoção — invoca `agent-memory deploy` (F-0001) na etapa 2 do fluxo, e `agent-memory migrate` (F-0004) na fase 2 do sub-fluxo legacy.
+SKILL.md em [src/agent_memory/data/skills/memory-deploy/SKILL.md](src/agent_memory/data/skills/memory-deploy/SKILL.md). Ponto de entrada único para adoção — invoca `agent-memory deploy` (F-0001) na Etapa 2 do fluxo, e `agent-memory migrate` (F-0004) na Fase 3.1 do sub-fluxo legacy.
 
-Princípio operacional central: lotes pequenos, revisão crítica. Limite de cinco itens por rodada de aprovação para evitar saturação do revisor. Conteúdo do usuário é sagrado — em qualquer fase de merge, conteúdo pré-existente prevalece sobre template.
+Princípio operacional central: a skill toca em `decisions/`, `manifest/` e `STATE.md` durante a gênese retroativa, mas nunca no corpo da `AGENT.md` fora do bloco com sentinelas. O bloco em si é gerenciado pelo `agent-memory deploy` de forma idempotente. Todo conteúdo de projeto na `AGENT.md` (identidade, restrições, convenções) é autoria humana.
+
+Lotes pequenos, revisão crítica. Limite de cinco itens por rodada de aprovação na gênese de ADRs e features para evitar saturação do revisor.

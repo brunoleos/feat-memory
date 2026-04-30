@@ -33,8 +33,6 @@ budgets:
 
 # Constituição do projeto
 
-Sessões começam por `STATE.md` (foco atual) e `manifest/INDEX.md` (mapa de capacidades). Detalhes de uma feature ficam em `manifest/features/F-NNNN-*.md`. Decisões arquiteturais em `decisions/`. A metodologia completa está documentada em [METHODOLOGY.md](METHODOLOGY.md).
-
 ## Identidade
 
 `agent-memory` é uma CLI Python que distribui uma metodologia de memória persistente para agentes LLM (Claude Code, Cursor, Aider e qualquer ferramenta que reconheça `AGENT.md`). Quatro artefatos versionados (`AGENT.md`, `manifest/`, `STATE.md`, `decisions/`) dão ao agente contexto durável entre sessões; quatro subcomandos (`deploy`, `audit`, `propose-adr`, `migrate`) automatizam instalação, validação e gênese retroativa. Três skills (`memory-deploy`, `memory-bootstrap`, `memory-debrief`) orientam os fluxos críticos. Usuários: desenvolvedores que querem que seu agente preserve foco e decisões arquiteturais sem reler o código a cada sessão.
@@ -57,16 +55,24 @@ Pre-commit hook é fail-open: se o binário `agent-memory` não está no PATH, e
 
 Código, identificadores e nomes de arquivos em inglês; documentação em pt-br (C4).
 
-## Skills disponíveis
+<!-- >>> agent-memory >>> -->
+## agent-memory
+
+Sessões começam por `STATE.md` (foco atual) e `manifest/INDEX.md` (mapa de capacidades). Detalhes de uma feature ficam em `manifest/features/F-NNNN-*.md`. Decisões arquiteturais em `decisions/`. A metodologia completa está documentada em [METHODOLOGY.md](METHODOLOGY.md).
+
+Este bloco é refrescado a cada `agent-memory deploy`. Não edite diretamente — mudanças aqui são sobrescritas no próximo redeploy. Conteúdo específico do projeto vai fora das marcações HTML que delimitam este bloco.
+
+### Skills disponíveis
 
 Este projeto inclui três skills em `skills/` (na raiz do workspace) que orientam você nos fluxos críticos da metodologia. Cada skill tem um arquivo `SKILL.md` com instruções detalhadas e condições de ativação no frontmatter. Use-as quando os triggers correspondentes aparecerem na conversa, lendo o `SKILL.md` correspondente antes de executar — as skills são autoritativas sobre como cada fluxo deve ser conduzido.
 
-A skill `memory-deploy` é o ponto de entrada único para instalar a metodologia em qualquer projeto. Ela ativa quando o usuário pede para instalar, configurar ou adotar a metodologia, com frases como "instale a metodologia neste projeto", "configure o agent-memory aqui" ou "este projeto não tem AGENT.md". Ela detecta automaticamente se o projeto é greenfield (novo, pouco código, poucos commits) ou legacy (com história e código de produção), executa o `agent-memory deploy` para a estrutura mecânica, e conduz personalização interativa ou gênese retroativa em quatro fases conforme o caso. Esta skill só é invocada na adoção inicial — depois disso, o projeto está instalado e as outras duas skills cobrem o uso diário.
+A skill `memory-deploy` é o ponto de entrada único para instalar a metodologia em qualquer projeto. Ela ativa quando o usuário pede para instalar, configurar ou adotar a metodologia, com frases como "instale a metodologia neste projeto", "configure o agent-memory aqui" ou "este projeto não tem AGENT.md". Ela detecta se o projeto é greenfield ou legacy, executa `agent-memory deploy` para instalar a estrutura mecânica, e em projetos legacy conduz gênese retroativa de ADRs (a partir do git log) e do Manifest (a partir dos entrypoints públicos). A skill nunca escreve no corpo da `AGENT.md` fora do bloco delimitado por sentinelas — identidade, restrições e convenções específicas do projeto são autoria do mantenedor humano.
 
 A skill `memory-bootstrap` ativa no início de uma sessão quando o usuário pergunta sobre o estado atual do projeto, com frases como "onde paramos", "qual o status" ou "carregue o contexto". Ela carrega os artefatos de memória eficientemente e apresenta um briefing tático antes de você prosseguir com a tarefa.
 
 A skill `memory-debrief` ativa quando o usuário sinaliza intenção de commitar ou fechar a sessão, com frases como "vou commitar", "atualize o STATE" ou "antes de subir". Ela executa a rotina de debrief: examina o diff, atualiza entradas do Manifest para features tocadas, reescreve o `STATE.md`, e gera proposta de ADR se a sessão produziu uma decisão arquitetural não-trivial. Esta é a skill mais importante do dia-a-dia — invoque-a antes de cada commit relevante.
 
-## Como retomar trabalho
+### Como retomar trabalho
 
 A constituição é carregada automaticamente. Em seguida, você deve carregar `STATE.md` para descobrir o foco da sessão e os IDs de features e decisões ativas. Apenas as features e ADRs listados em `STATE.md::active_features` e `STATE.md::active_decisions` precisam ser expandidos no contexto inicial — carregar o Manifest inteiro ou todos os ADRs viola o orçamento de retomada.
+<!-- <<< agent-memory <<< -->

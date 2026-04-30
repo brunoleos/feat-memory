@@ -4,17 +4,15 @@ Subcomando da CLI: `agent-memory deploy <target>`. Copia templates,
 instala hooks e configura .gitignore/.gitattributes no target.
 
 Comportamento por arquivo:
-    AGENT.md, CLAUDE.md  → merge inteligente se existem (skill memory-deploy)
+    AGENT.md             → bloco com sentinelas markdown, refrescado a cada
+                            deploy; conteúdo do usuário fora do bloco nunca
+                            é tocado
+    CLAUDE.md            → copia se ausente; deixa quieto se existe
     STATE.md             → pula se existe (conteúdo é volátil)
     skills/              → sempre atualizadas (conteúdo de metodologia)
     .gitattributes       → bloco com sentinelas, refrescado a cada deploy
     .gitignore           → bloco com sentinelas garantindo .agent-memory-deploy/
     pastas               → cria se não existem
-
-Saída:
-    Lista o que foi deployado, mesclado, criado e pulado.
-    Quando merge é necessário, registra arquivos pendentes para a skill
-    em <target>/.agent-memory-deploy/.
 """
 
 from __future__ import annotations
@@ -32,6 +30,12 @@ from agent_memory import install_hooks
 
 SENTINEL_BEGIN = "# >>> agent-memory >>>"
 SENTINEL_END = "# <<< agent-memory <<<"
+
+# Sentinelas markdown (HTML comments) para o bloco da metodologia em AGENT.md.
+# Diferentes das sentinelas shell-style usadas em .gitignore/.gitattributes
+# porque `#` em markdown é heading, não comentário.
+MD_SENTINEL_BEGIN = "<!-- >>> agent-memory >>> -->"
+MD_SENTINEL_END = "<!-- <<< agent-memory <<< -->"
 
 
 def _data_path(*parts: str) -> Traversable:
@@ -61,17 +65,22 @@ def _copy_template(src: Traversable, dst: Path) -> None:
     dst.write_text(content, encoding="utf-8")
 
 
-def _replace_sentinel_block(existing: str, payload: str) -> tuple[str, bool]:
+def _replace_sentinel_block(existing: str, payload: str,
+                            begin: str = SENTINEL_BEGIN,
+                            end: str = SENTINEL_END) -> tuple[str, bool]:
     """Substitui ou insere um bloco delimitado por sentinelas.
 
     Retorna (novo_conteúdo, mudou). Se o bloco já existir e for idêntico,
     mudou=False. Caso contrário, substitui (ou anexa, se ausente).
     """
-    block = f"{SENTINEL_BEGIN}\n{payload.rstrip()}\n{SENTINEL_END}\n"
+    block = f"{begin}\n{payload.rstrip()}\n{end}\n"
 
-    if SENTINEL_BEGIN in existing and SENTINEL_END in existing:
-        before, _, rest = existing.partition(SENTINEL_BEGIN)
-        _, _, after = rest.partition(SENTINEL_END)
+    if begin in existing and end in existing:
+        # Pega a PRIMEIRA ocorrência da sentinela de abertura e a ÚLTIMA da
+        # sentinela de fechamento. Defesa contra menções literais às strings
+        # das sentinelas no conteúdo do bloco (raro mas catastrófico).
+        before, _, rest = existing.partition(begin)
+        _, _, after = rest.rpartition(end)
         if after.startswith("\n"):
             after = after[1:]
         new_content = before + block + after
@@ -82,39 +91,87 @@ def _replace_sentinel_block(existing: str, payload: str) -> tuple[str, bool]:
     return new_content, new_content != existing
 
 
-def deploy_constitution(target: Path, force: bool, merge: bool,
-                        merge_queue: list[str]) -> None:
-    """Deploy de AGENT.md e CLAUDE.md com lógica de merge."""
+def _extract_methodology_block(template_text: str) -> str:
+    """Extrai o conteúdo entre sentinelas markdown no template AGENT.md.
+
+    O conteúdo retornado é o que vai entre `<!-- >>> agent-memory >>> -->`
+    e `<!-- <<< agent-memory <<< -->` no template (sem as sentinelas em si).
+    Usado para refrescar o bloco em arquivos AGENT.md já existentes sem
+    sobrescrever o resto do conteúdo do usuário.
+    """
+    if MD_SENTINEL_BEGIN not in template_text or MD_SENTINEL_END not in template_text:
+        raise ValueError(
+            "template AGENT.md não contém sentinelas markdown agent-memory"
+        )
+    # Defesa contra menções literais às sentinelas no conteúdo: usa primeira
+    # abertura e última fechamento (cf. _replace_sentinel_block).
+    _, _, rest = template_text.partition(MD_SENTINEL_BEGIN)
+    block, _, _ = rest.rpartition(MD_SENTINEL_END)
+    return block.strip()
+
+
+def deploy_constitution(target: Path, force: bool, merge: bool) -> None:
+    """Deploy de AGENT.md (via bloco com sentinelas) e CLAUDE.md.
+
+    Para AGENT.md, a única mudança que o deploy faz num arquivo existente
+    é substituir o bloco delimitado por sentinelas markdown. O resto do
+    conteúdo (frontmatter, seções específicas do projeto autoradas pelo
+    mantenedor) nunca é tocado. Em arquivo ausente, copia o template
+    completo.
+
+    Para CLAUDE.md (redirect mínimo `@AGENT.md`), copia se ausente e
+    deixa quieto se existe — não há merge nem refresh.
+    """
     print("Constituição (AGENT.md, CLAUDE.md):")
-    pending_dir = target / ".agent-memory-deploy" / "pending"
 
-    for template in ("AGENT.md", "CLAUDE.md"):
-        src = _data_path("templates", template)
-        dst = target / template
+    src = _data_path("templates", "AGENT.md")
+    dst = target / "AGENT.md"
+    if not src.is_file():
+        print("  ERRO: template ausente no pacote: AGENT.md", file=sys.stderr)
+        sys.exit(1)
 
-        if not src.is_file():
-            print(f"  ERRO: template ausente no pacote: {template}",
-                  file=sys.stderr)
-            sys.exit(1)
+    from agent_memory import __version__
+    template_text = src.read_text(encoding="utf-8").replace(
+        "{VERSION}", __version__
+    )
 
-        if not dst.exists():
-            _copy_template(src, dst)
-            print(f"  criado: {template}")
-            continue
+    if not dst.exists():
+        dst.write_text(template_text, encoding="utf-8")
+        print("  criado: AGENT.md")
+    elif force:
+        dst.write_text(template_text, encoding="utf-8")
+        print("  sobrescrito: AGENT.md (--force)")
+    elif not merge:
+        print("  pulado: AGENT.md (já existe; --no-merge)")
+    else:
+        block_payload = _extract_methodology_block(template_text)
+        existing = dst.read_text(encoding="utf-8")
+        had_block = MD_SENTINEL_BEGIN in existing and MD_SENTINEL_END in existing
+        new_content, changed = _replace_sentinel_block(
+            existing, block_payload,
+            begin=MD_SENTINEL_BEGIN, end=MD_SENTINEL_END,
+        )
+        if changed:
+            dst.write_text(new_content, encoding="utf-8")
+            verb = "atualizado" if had_block else "atualizado (bloco anexado)"
+            print(f"  {verb}: AGENT.md (bloco agent-memory)")
+        else:
+            print("  já contém: AGENT.md (bloco agent-memory atualizado)")
 
-        if force:
-            _copy_template(src, dst)
-            print(f"  sobrescrito: {template} (--force)")
-            continue
+    src = _data_path("templates", "CLAUDE.md")
+    dst = target / "CLAUDE.md"
+    if not src.is_file():
+        print("  ERRO: template ausente no pacote: CLAUDE.md", file=sys.stderr)
+        sys.exit(1)
 
-        if not merge:
-            print(f"  pulado: {template} (já existe; --no-merge)")
-            continue
-
-        pending_dir.mkdir(parents=True, exist_ok=True)
-        _copy_template(src, pending_dir / f"{template}.new")
-        merge_queue.append(template)
-        print(f"  pendente de merge: {template} (existente preservado)")
+    if not dst.exists():
+        _copy_template(src, dst)
+        print("  criado: CLAUDE.md")
+    elif force:
+        _copy_template(src, dst)
+        print("  sobrescrito: CLAUDE.md (--force)")
+    else:
+        print("  pulado: CLAUDE.md (já existe)")
 
 
 def deploy_state(target: Path, force: bool) -> None:
@@ -259,12 +316,8 @@ def install_git_hooks(target: Path) -> None:
     install_hooks.install(target)
 
 
-def run_audit(target: Path, has_pending_merge: bool) -> None:
+def run_audit(target: Path) -> None:
     """Roda primeira auditoria via subprocess (cwd=target)."""
-    if has_pending_merge:
-        print("Auditoria inicial: ADIADA até resolução de merges pendentes.")
-        return
-
     print("Auditoria inicial:")
     try:
         result = subprocess.run(
@@ -280,25 +333,16 @@ def run_audit(target: Path, has_pending_merge: bool) -> None:
               "pulando auditoria inicial")
 
 
-def print_next_steps(target: Path, merge_queue: list[str]) -> None:
+def print_next_steps(target: Path) -> None:
     """Imprime próximos passos para o usuário."""
-    if merge_queue:
-        print("ATENÇÃO: arquivos pendentes de merge:")
-        for f in merge_queue:
-            print(f"  - {f} (template novo em "
-                  f".agent-memory-deploy/pending/{f}.new)")
-        print()
-        print("Próximo passo: peça ao agente para mesclar:")
-        print('  "resolva os merges pendentes do deploy"')
-        print()
-        print("A skill memory-deploy fará o merge preservando seu conteúdo")
-        print("e adicionando o que está faltando do template novo.")
-    else:
-        print("Próximos passos:")
-        print(f"  1. Personalize {target}/AGENT.md (project, stack, constraints)")
-        print(f"  2. Personalize {target}/STATE.md (Current, Next)")
-        print("  3. Crie sua primeira feature em manifest/features/")
-        print("  4. Faça commit: git add . && git commit -m 'adopt agent memory'")
+    print("Próximos passos:")
+    print(f"  1. Edite o frontmatter de {target}/AGENT.md "
+          "(project, stack, constraints)")
+    print(f"  2. Edite {target}/STATE.md (Current, Next)")
+    print("  3. (Opcional) Adicione seções específicas do projeto à AGENT.md "
+          "fora do bloco agent-memory")
+    print("  4. Crie sua primeira feature em manifest/features/")
+    print("  5. Faça commit: git add . && git commit -m 'adopt agent memory'")
 
 
 def add_subparser(subparsers: argparse._SubParsersAction) -> None:
@@ -336,16 +380,13 @@ def run(args: argparse.Namespace) -> int:
     print()
 
     deploy_dir = target / ".agent-memory-deploy"
-    merge_queue_file = deploy_dir / "merge-queue"
-    # Remove qualquer estado transiente do deploy anterior (queue + pending/).
-    # Se houver merges não resolvidos, são re-detectados nesta execução e
-    # re-escritos abaixo. Previne acúmulo de .new órfãos.
+    # Remove o diretório transiente legado (de versões anteriores que tinham
+    # merge queue para AGENT.md). v0.4+ resolve a constituição direto via
+    # bloco com sentinelas, sem handoff intermediário.
     if deploy_dir.exists():
         shutil.rmtree(deploy_dir, ignore_errors=True)
 
-    merge_queue: list[str] = []
-
-    deploy_constitution(target, args.force, not args.no_merge, merge_queue)
+    deploy_constitution(target, args.force, not args.no_merge)
     print()
 
     deploy_state(target, args.force)
@@ -369,13 +410,7 @@ def run(args: argparse.Namespace) -> int:
         print("Git hooks: pulado (--no-hooks)")
     print()
 
-    if merge_queue:
-        deploy_dir.mkdir(parents=True, exist_ok=True)
-        merge_queue_file.write_text(
-            "\n".join(merge_queue) + "\n", encoding="utf-8"
-        )
-
-    run_audit(target, has_pending_merge=bool(merge_queue))
+    run_audit(target)
     print()
 
     print("=" * 38)
@@ -384,6 +419,6 @@ def run(args: argparse.Namespace) -> int:
     print()
 
     check_legacy_layout(target)
-    print_next_steps(target, merge_queue)
+    print_next_steps(target)
 
     return 0

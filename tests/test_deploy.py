@@ -55,22 +55,46 @@ def test_deploy_is_idempotent(tmp_project):
     assert ".agent-memory-deploy/" in gitignore
 
 
-def test_deploy_preserves_existing_agent_md(tmp_project):
-    custom = "# Constituição custom do meu projeto\n"
+def test_deploy_appends_methodology_block_to_existing_agent_md(tmp_project):
+    """AGENT.md já existente recebe o bloco com sentinelas anexado."""
+    custom = "# Constituição custom do meu projeto\n\n## Identidade\n\nFoo.\n"
     (tmp_project / "AGENT.md").write_text(custom, encoding="utf-8")
 
     rc = deploy.run(_args(tmp_project))
     assert rc == 0
 
-    # Conteúdo customizado preservado
-    assert (tmp_project / "AGENT.md").read_text(encoding="utf-8") == custom
+    content = (tmp_project / "AGENT.md").read_text(encoding="utf-8")
+    # Conteúdo original preservado
+    assert "# Constituição custom do meu projeto" in content
+    assert "## Identidade" in content
+    assert "Foo." in content
+    # Bloco com sentinelas anexado
+    assert "<!-- >>> agent-memory >>> -->" in content
+    assert "<!-- <<< agent-memory <<< -->" in content
+    assert "## agent-memory" in content
+    # Sem fila de merge gerada (mecanismo legado removido)
+    assert not (tmp_project / ".agent-memory-deploy").exists()
 
-    # Template novo na fila de merge
-    queue = tmp_project / ".agent-memory-deploy" / "merge-queue"
-    pending = tmp_project / ".agent-memory-deploy" / "pending" / "AGENT.md.new"
-    assert queue.is_file()
-    assert "AGENT.md" in queue.read_text(encoding="utf-8")
-    assert pending.is_file()
+
+def test_deploy_redeploy_is_idempotent_on_block(tmp_project):
+    """Re-deploy refresca o bloco sem duplicar e sem tocar conteúdo do usuário."""
+    deploy.run(_args(tmp_project))
+    # Usuário adiciona seção própria fora do bloco
+    extra = "\n## Identidade\n\nProjeto teste.\n"
+    agent_md = tmp_project / "AGENT.md"
+    agent_md.write_text(
+        agent_md.read_text(encoding="utf-8") + extra, encoding="utf-8"
+    )
+
+    deploy.run(_args(tmp_project))
+
+    final = agent_md.read_text(encoding="utf-8")
+    # Seção do usuário preservada
+    assert "## Identidade" in final
+    assert "Projeto teste." in final
+    # Bloco aparece exatamente uma vez (não duplica)
+    assert final.count("<!-- >>> agent-memory >>> -->") == 1
+    assert final.count("<!-- <<< agent-memory <<< -->") == 1
 
 
 def test_deploy_force_overwrites_existing(tmp_project):
