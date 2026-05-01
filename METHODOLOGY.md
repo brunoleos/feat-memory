@@ -9,9 +9,9 @@ A escolha de quatro artefatos não é arbitrária. Cada um responde uma pergunta
 | Artefato | Pergunta | Verdade | Mutação |
 |---|---|---|---|
 | `AGENT.md` | Sob quais regras? | Normativa | Rara |
-| `manifest/` | O que existe hoje? | Descritiva | Append-only |
-| `STATE.md` | Onde estamos agora? | Volátil | Reescrita bounded |
-| `decisions/` | Por que escolhemos assim? | Histórica | Imutável + supersede |
+| `.agent-memory/manifest/` | O que existe hoje? | Descritiva | Append-only |
+| `.agent-memory/STATE.md` | Onde estamos agora? | Volátil | Reescrita bounded |
+| `.agent-memory/decisions/` | Por que escolhemos assim? | Histórica | Imutável + supersede |
 
 A metodologia adota convenções consolidadas em vez de inventar vocabulário. O arquivo `AGENT.md` segue a convenção multi-agente reconhecida por ferramentas como Claude Code, Cursor, Aider e Continue; ADRs em pasta `decisions/` seguem o padrão de Michael Nygard de 2011; os critérios de aceitação seguem a notação EARS (Easy Approach to Requirements Syntax) com seus cinco padrões canônicos. Toda a inteligência mora na disciplina das mutações, não em ferramentas exclusivas.
 

@@ -9,9 +9,9 @@ Quatro artefatos versionados que dão a um agente LLM tudo que ele precisa para 
 | Artefato | Pergunta | Mutação |
 |---|---|---|
 | `AGENT.md` | Sob quais regras construímos? | Rara |
-| `manifest/` | O que existe hoje no sistema? | Append-only |
-| `STATE.md` | Onde estamos agora? | Reescrita bounded |
-| `decisions/` | Por que escolhemos assim? | Imutável + supersede |
+| `.agent-memory/manifest/` | O que existe hoje no sistema? | Append-only |
+| `.agent-memory/STATE.md` | Onde estamos agora? | Reescrita bounded |
+| `.agent-memory/decisions/` | Por que escolhemos assim? | Imutável + supersede |
 
 ## Instalação
 
