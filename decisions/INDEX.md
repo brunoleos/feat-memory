@@ -13,5 +13,6 @@
 | ADR-0009 | 2026-04-29 | accepted | meta,dogfooding,methodology | — |
 | ADR-0010 | 2026-04-30 | superseded | deploy,merge,template,skill | F-0001,F-0006 |
 | ADR-0011 | 2026-04-30 | proposed | deploy,sentinels,scope,skill | F-0001,F-0006 |
+| ADR-0012 | 2026-04-30 | accepted | skills,methodology,post-pull,surface | F-0009 |
 
-_Gerado por `agent-memory audit` em 2026-04-30T16:41:08+00:00. Não edite manualmente._
+_Gerado por `agent-memory audit` em 2026-05-01T02:41:03+00:00. Não edite manualmente._

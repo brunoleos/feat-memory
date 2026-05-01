@@ -41,6 +41,7 @@ def test_deploy_creates_all_artifacts(tmp_project):
     assert (tmp_project / "skills" / "memory-deploy" / "SKILL.md").is_file()
     assert (tmp_project / "skills" / "memory-bootstrap" / "SKILL.md").is_file()
     assert (tmp_project / "skills" / "memory-debrief" / "SKILL.md").is_file()
+    assert (tmp_project / "skills" / "memory-pull-brief" / "SKILL.md").is_file()
 
 
 def test_deploy_is_idempotent(tmp_project):

@@ -6,6 +6,20 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto ader
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-04-30
+
+### Adicionado
+
+Quarta skill `memory-pull-brief` (F-0009) cobre o gap cognitivo pós-pull em projetos cliente. Quando o desenvolvedor faz `git pull` e recebe commits de colegas, a skill examina o diff trazido, identifica mudanças semânticas em `manifest/features/`, `decisions/` e no bloco metodológico de `AGENT.md`, e propõe ajustes em `STATE.md` (remoção de IDs em `active_*` cuja semântica upstream invalida o foco local, entrada nova no buffer `Recent`). É read-only sobre `manifest/` e `decisions/` por design — esses já vieram corretos do pull, escrever neles seria reverter trabalho de colegas. Trigger duplo: manual (frases como "o que veio do pull", "brifa as mudanças do main") e por delegação a partir de `memory-bootstrap` quando o último commit é merge que tocou artefatos.
+
+Decisão formalizada em [ADR-0012](decisions/0012-skill-memory-pull-brief.md).
+
+### Mudado
+
+Skill `memory-bootstrap` (F-0007) ganha passo de detecção de merge tocando artefatos: após o `agent-memory audit` regenerar índices, se o merge moveu `manifest/features/`, `decisions/` ou o bloco sentinela de `AGENT.md`, a bootstrap delega para `memory-pull-brief` antes do briefing tático. Sem esse trigger, comportamento prévio é preservado.
+
+Bloco "Skills disponíveis" do template `AGENT.md` atualizado de "três skills" para "quatro skills" e ganha parágrafo sobre `memory-pull-brief`. Refresh automático no próximo `agent-memory deploy` em projetos consumidores.
+
 ## [0.4.0] - 2026-04-30
 
 ### Mudado

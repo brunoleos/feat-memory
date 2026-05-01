@@ -6,7 +6,7 @@ Este manual cobre o uso prático da metodologia de memória persistente para age
 
 Agentes LLM perdem todo o contexto entre sessões. Sem memória persistente, você precisa explicar o projeto inteiro toda vez que abre uma nova sessão, ou aceitar que o agente vai inventar premissas, ignorar decisões já tomadas, e refazer trabalho que já foi feito. Em projetos pequenos isso é apenas tedioso; em projetos médios a grandes, vira um gargalo real que limita o quanto você consegue delegar ao agente.
 
-A solução é uma camada de memória estruturada em quatro artefatos versionados, um para cada tipo qualitativamente diferente de conhecimento sobre o projeto. A constituição (`AGENT.md`) registra as regras invariantes que o agente deve respeitar sempre. O manifesto (`manifest/`) descreve o que o sistema faz hoje, com critérios verificáveis. O estado (`STATE.md`) registra o foco atual em até quatro kilobytes, atualizado a cada sessão. As decisões (`decisions/`) registram escolhas arquiteturais imutáveis com supersedência explícita. Três skills automatizam os fluxos mais comuns (instalação, início de sessão, debrief antes de commit), e ferramentas em Python validam consistência e detectam problemas.
+A solução é uma camada de memória estruturada em quatro artefatos versionados, um para cada tipo qualitativamente diferente de conhecimento sobre o projeto. A constituição (`AGENT.md`) registra as regras invariantes que o agente deve respeitar sempre. O manifesto (`manifest/`) descreve o que o sistema faz hoje, com critérios verificáveis. O estado (`STATE.md`) registra o foco atual em até quatro kilobytes, atualizado a cada sessão. As decisões (`decisions/`) registram escolhas arquiteturais imutáveis com supersedência explícita. Quatro skills automatizam os fluxos mais comuns (instalação, início de sessão, debrief antes de commit, briefing pós-pull), e ferramentas em Python validam consistência e detectam problemas.
 
 ## Quando usar este projeto
 
@@ -70,6 +70,8 @@ Durante o trabalho, o agente segue as restrições da constituição automaticam
 
 Antes de cada commit relevante, você diz ao agente "vou commitar" ou "atualize o STATE", e a skill `memory-debrief` executa a rotina completa: examina o diff, atualiza entradas do Manifest para features tocadas, reescreve as zonas `Current` e `Next` do `STATE.md`, gera proposta de ADR se a sessão produziu decisão arquitetural, e roda a auditoria. Se a sessão está em uma branch que será mesclada de volta, a skill também checa colisões de IDs contra a branch destino, evitando o problema antes que ele apareça no merge.
 
+Depois de um `git pull` que trouxe commits de colegas, você diz ao agente "o que veio do pull?" ou "brifa as mudanças do main", e a skill `memory-pull-brief` examina o diff trazido, identifica mudanças semânticas em features e ADRs (transições de status, novos IDs, supersedes), e propõe ajustes no `STATE.md` local — remover IDs em `active_*` cuja semântica foi invalidada pelo trabalho dos colegas, registrar o pull no buffer `Recent`. Por design ela não toca `manifest/` nem `decisions/`, que já vieram corretos do pull.
+
 ## Atualizações da metodologia
 
 A metodologia evolui ao longo do tempo, e cada projeto que a adota precisa de um caminho claro para receber essas evoluções sem perder customizações locais. O versionamento semântico em `VERSION` e o histórico em [CHANGELOG.md](CHANGELOG.md) tornam a evolução transparente; cada release corresponde a uma tag `vX.Y.Z` em <https://github.com/brunoleos/agent-memory/releases>. A versão da CLI instalada é mostrada em `pipx list` (e em breve via `agent-memory --version`).
@@ -82,7 +84,7 @@ git fetch --tags
 git checkout v0.3.0
 ```
 
-Para reaplicar templates e skills no projeto consumidor após um upgrade da CLI, rode `agent-memory deploy <projeto>` novamente. O comando re-roda a lógica de merge para `AGENT.md` e `CLAUDE.md` (preservando customizações via fila de merge processada pela skill `memory-deploy`), atualiza skills e `.gitattributes`, garante a entrada de `.gitignore`, e reinstala o pre-commit hook. Tudo idempotente — rodar duas vezes é seguro.
+Para reaplicar templates e skills no projeto consumidor após um upgrade da CLI, rode `agent-memory deploy <projeto>` novamente. Em `AGENT.md`, o deploy refresca apenas o bloco delimitado por sentinelas markdown (`<!-- >>> agent-memory >>> -->` / `<!-- <<< agent-memory <<< -->`) — todo conteúdo fora do bloco (identidade, restrições, convenções autorias do mantenedor) é preservado byte-a-byte. Skills, `.gitattributes` e o pre-commit hook são atualizados; `.gitignore` ganha a entrada `.agent-memory-deploy/` se ainda não existe; `STATE.md` e `CLAUDE.md` são pulados se existem. Tudo idempotente — rodar duas vezes é seguro.
 
 Para times que usam a metodologia em múltiplos projetos, a recomendação é fixar todos os clones na mesma tag, avançando todos juntos quando uma release nova justifica adoção. Cada projeto consumidor decide quando rodar `agent-memory deploy` para receber as mudanças.
 

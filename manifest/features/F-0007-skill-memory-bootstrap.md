@@ -3,11 +3,13 @@ id: F-0007
 name: skill-memory-bootstrap
 status: shipped
 introduced: 2026-04-28
-version: 0.3.0
+version: 0.5.0
 user_value: >
   Orienta o agente LLM no início de cada sessão a carregar contexto
   eficientemente sem violar o orçamento de retomada, e a apresentar
-  briefing tático antes de prosseguir com a tarefa.
+  briefing tático antes de prosseguir com a tarefa. Quando detecta
+  merge que tocou artefatos da metodologia, delega para memory-pull-brief
+  antes do briefing.
 contracts:
   api: src/agent_memory/data/skills/memory-bootstrap/SKILL.md
 acceptance:
@@ -31,8 +33,16 @@ acceptance:
       expande apenas as features e ADRs listados em
       STATE.md::active_features e STATE.md::active_decisions, e apresenta
       briefing tático curto antes de prosseguir
+  - id: A4
+    pattern: state
+    state: >
+      último commit é merge que tocou manifest/features/, decisions/, ou
+      o bloco entre sentinelas de AGENT.md
+    response: >
+      delega para skill memory-pull-brief (F-0009) antes do briefing
+      tático, deixando STATE.md consistente com a nova realidade upstream
 depends_on: []
-decisions: [ADR-0004]
+decisions: [ADR-0004, ADR-0012]
 ---
 
 # F-0007 · skill-memory-bootstrap
