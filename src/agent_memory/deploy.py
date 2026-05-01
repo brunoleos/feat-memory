@@ -175,19 +175,21 @@ def deploy_constitution(target: Path, force: bool, merge: bool) -> None:
 
 
 def deploy_state(target: Path, force: bool) -> None:
-    """Deploy de STATE.md (sempre pula se existe; conteúdo é volátil)."""
-    print("Estado (STATE.md):")
+    """Deploy de STATE.md em .agent-memory/ (sempre pula se existe; conteúdo é volátil)."""
+    print("Estado (.agent-memory/STATE.md):")
     src = _data_path("templates", "STATE.md")
-    dst = target / "STATE.md"
+    agent_memory_dir = target / ".agent-memory"
+    agent_memory_dir.mkdir(parents=True, exist_ok=True)
+    dst = agent_memory_dir / "STATE.md"
 
     if not dst.exists():
         _copy_template(src, dst)
-        print("  criado: STATE.md")
+        print("  criado: .agent-memory/STATE.md")
     elif force:
         _copy_template(src, dst)
-        print("  sobrescrito: STATE.md (--force)")
+        print("  sobrescrito: .agent-memory/STATE.md (--force)")
     else:
-        print("  pulado: STATE.md (já existe; foco da sessão é volátil)")
+        print("  pulado: .agent-memory/STATE.md (já existe; foco da sessão é volátil)")
 
 
 def deploy_gitattributes(target: Path) -> None:
@@ -237,34 +239,65 @@ def ensure_gitignore(target: Path) -> None:
         print("  já contém: .gitignore (bloco agent-memory presente)")
 
 
-def check_legacy_layout(target: Path) -> None:
-    """Avisa se .agent-memory/ está rastreada no Git (legado v0.1/v0.2)."""
+def check_v03_layout(target: Path) -> bool:
+    """Detecta layout v0.3.x na raiz e aborta com instrução de migração.
+
+    Retorna True se layout legado detectado (não pode continuar).
+    Retorna False se layout já é novo ou não há Git.
+    """
     if not (target / ".git").exists():
-        return
+        return False
+
+    legacy_paths = ["manifest", "decisions", "STATE.md"]
+    tracked = []
     try:
-        result = subprocess.run(
-            ["git", "ls-files", "--error-unmatch", ".agent-memory/"],
-            cwd=target, capture_output=True, text=True, check=False,
-        )
+        for p in legacy_paths:
+            result = subprocess.run(
+                ["git", "ls-files", "--error-unmatch", p],
+                cwd=target, capture_output=True, text=True, check=False,
+            )
+            if result.returncode == 0:
+                tracked.append(p)
     except FileNotFoundError:
-        return
-    if result.returncode != 0:
-        return
+        return False
+
+    if not tracked:
+        return False
 
     print()
     print("=" * 60)
-    print("ATENÇÃO: layout legado .agent-memory/ detectado")
+    print("ATENÇÃO: layout v0.3.x detectado na raiz do projeto")
     print("=" * 60)
     print()
-    print("A partir de v0.3.0, o agent-memory é instalado como pacote")
-    print("Python (pipx install) e a pasta .agent-memory/ no projeto")
-    print("não é mais usada. Para finalizar a migração:")
+    print("A partir de v0.4.0, os artefatos de memória ficam em .agent-memory/.")
+    print("Os seguintes paths legados foram detectados no Git:")
+    for p in tracked:
+        print(f"  - {p}/" if p != "STATE.md" else f"  - {p}")
     print()
-    print("  git rm -r --cached .agent-memory/")
-    print("  rm -rf .agent-memory")
-    print('  git commit -m "chore: drop .agent-memory/ (agent-memory v0.3.0)"')
+    print("Execute a migração manual ANTES de prosseguir:")
+    print()
+    print("  # 1. Crie a nova estrutura")
+    print("  mkdir -p .agent-memory/manifest/features")
+    print("  mkdir -p .agent-memory/decisions/proposals")
+    print()
+    print("  # 2. Mova os artefatos (preserva histórico via git mv)")
+    if "manifest" in tracked:
+        print("  git mv manifest/* .agent-memory/manifest/")
+        print("  rmdir manifest")
+    if "decisions" in tracked:
+        print("  git mv decisions/* .agent-memory/decisions/")
+        print("  rmdir decisions")
+    if "STATE.md" in tracked:
+        print("  git mv STATE.md .agent-memory/STATE.md")
+    print()
+    print('  # 3. Ajuste .gitattributes (padrões de merge=ours)')
+    print('  # As linhas de STATE.md, manifest/INDEX.md, decisions/INDEX.md')
+    print('  # devem incluir o prefixo .agent-memory/')
+    print()
+    print('  git commit -m "chore: migrate to agent-memory v0.4 layout"')
     print()
     print("=" * 60)
+    return True
 
 
 def deploy_skills(target: Path, force: bool) -> None:
@@ -298,16 +331,17 @@ def deploy_skills(target: Path, force: bool) -> None:
 
 
 def create_directories(target: Path) -> None:
-    """Cria estrutura de pastas no target."""
+    """Cria estrutura de pastas .agent-memory/manifest/ e .agent-memory/decisions/."""
     print("Estrutura de pastas:")
+    base = target / ".agent-memory"
     for rel in ("manifest/features", "decisions/proposals"):
-        full = target / rel
+        full = base / rel
         if full.exists():
-            print(f"  já existe: {rel}/")
+            print(f"  já existe: .agent-memory/{rel}/")
         else:
             full.mkdir(parents=True, exist_ok=True)
             (full / ".gitkeep").touch()
-            print(f"  criado: {rel}/")
+            print(f"  criado: .agent-memory/{rel}/")
 
 
 def install_git_hooks(target: Path) -> None:
@@ -338,10 +372,10 @@ def print_next_steps(target: Path) -> None:
     print("Próximos passos:")
     print(f"  1. Edite o frontmatter de {target}/AGENT.md "
           "(project, stack, constraints)")
-    print(f"  2. Edite {target}/STATE.md (Current, Next)")
+    print(f"  2. Edite {target}/.agent-memory/STATE.md (Current, Next)")
     print("  3. (Opcional) Adicione seções específicas do projeto à AGENT.md "
           "fora do bloco agent-memory")
-    print("  4. Crie sua primeira feature em manifest/features/")
+    print("  4. Crie sua primeira feature em .agent-memory/manifest/features/")
     print("  5. Faça commit: git add . && git commit -m 'adopt agent memory'")
 
 
@@ -378,6 +412,9 @@ def run(args: argparse.Namespace) -> int:
     print(f"Versão: {__version__}")
     print(f"Target: {target}")
     print()
+
+    if check_v03_layout(target):
+        return 1
 
     deploy_dir = target / ".agent-memory-deploy"
     # Remove o diretório transiente legado (de versões anteriores que tinham
@@ -418,7 +455,6 @@ def run(args: argparse.Namespace) -> int:
     print("=" * 38)
     print()
 
-    check_legacy_layout(target)
     print_next_steps(target)
 
     return 0

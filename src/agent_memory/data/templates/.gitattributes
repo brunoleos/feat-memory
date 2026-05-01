@@ -13,6 +13,6 @@
 #
 #   git config merge.ours.driver true
 
-manifest/INDEX.md   merge=ours
-decisions/INDEX.md  merge=ours
-STATE.md            merge=ours
+.agent-memory/manifest/INDEX.md   merge=ours
+.agent-memory/decisions/INDEX.md  merge=ours
+.agent-memory/STATE.md            merge=ours

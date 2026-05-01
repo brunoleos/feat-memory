@@ -12,7 +12,7 @@ ignorados pelo audit. Cabe ao humano revisar, completar as
 seções TODO, renomear com slug definitivo e mover para decisions/.
 
 Subcomando da CLI: `agent-memory propose-adr`. Os artefatos ficam
-no project root, descoberto via git.
+em .agent-memory/ no project root, descoberto via git.
 
 Uso:
     agent-memory propose-adr             # HEAD~1..HEAD
@@ -67,7 +67,7 @@ def _init_paths() -> None:
     if ROOT is not None:
         return
     ROOT = find_project_root()
-    DECISIONS_DIR = ROOT / "decisions"
+    DECISIONS_DIR = ROOT / ".agent-memory" / "decisions"
     PROPOSALS_DIR = DECISIONS_DIR / "proposals"
 
 DEPENDENCY_FILES = {

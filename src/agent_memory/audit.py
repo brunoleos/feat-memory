@@ -4,7 +4,8 @@ audit.py — Auditoria dos quatro artefatos de memória do projeto.
 Valida schemas, gera índices e produz relatório de saúde.
 
 Subcomando da CLI: `agent-memory audit`. Os artefatos auditados
-(AGENT.md, STATE.md, manifest/, decisions/) ficam no project root,
+(AGENT.md, STATE.md, manifest/, decisions/) ficam dentro de .agent-memory/
+no project root,
 descoberto via `git rev-parse --show-toplevel`.
 
 Uso:
@@ -99,10 +100,10 @@ def _init_paths() -> None:
     ROOT = find_project_root()
     AGENT = ROOT / "AGENT.md"
     CLAUDE = ROOT / "CLAUDE.md"
-    STATE = ROOT / "STATE.md"
-    MANIFEST_DIR = ROOT / "manifest"
+    STATE = ROOT / ".agent-memory" / "STATE.md"
+    MANIFEST_DIR = ROOT / ".agent-memory" / "manifest"
     FEATURES_DIR = MANIFEST_DIR / "features"
-    DECISIONS_DIR = ROOT / "decisions"
+    DECISIONS_DIR = ROOT / ".agent-memory" / "decisions"
     PROPOSALS_DIR = DECISIONS_DIR / "proposals"
 
 FEATURE_FILE_RE = re.compile(r"^F-\d{4}-[a-z0-9-]+\.md$")
@@ -316,11 +317,11 @@ def get_id_to_file_map(ref: str, subdir: str) -> dict[str, str]:
     mapping: dict[str, str] = {}
     for line in out.splitlines():
         name = Path(line).name
-        if subdir == "manifest/features":
+        if subdir == ".agent-memory/manifest/features":
             m = re.match(r"^(F-\d{4})-", name)
             if m:
                 mapping[m.group(1)] = name
-        elif subdir == "decisions":
+        elif subdir == ".agent-memory/decisions":
             m = re.match(r"^(\d{4})-", name)
             if m:
                 mapping[f"ADR-{m.group(1)}"] = name
@@ -337,8 +338,8 @@ def check_collisions(base_ref: str) -> list[Issue]:
     """
     issues: list[Issue] = []
 
-    base_features = get_id_to_file_map(base_ref, "manifest/features")
-    head_features = get_id_to_file_map("HEAD", "manifest/features")
+    base_features = get_id_to_file_map(base_ref, ".agent-memory/manifest/features")
+    head_features = get_id_to_file_map("HEAD", ".agent-memory/manifest/features")
     for fid, head_name in sorted(head_features.items()):
         base_name = base_features.get(fid)
         if base_name and base_name != head_name:
@@ -349,8 +350,8 @@ def check_collisions(base_ref: str) -> list[Issue]:
                 f"(renumere antes do merge)",
             ))
 
-    base_adrs = get_id_to_file_map(base_ref, "decisions")
-    head_adrs = get_id_to_file_map("HEAD", "decisions")
+    base_adrs = get_id_to_file_map(base_ref, ".agent-memory/decisions")
+    head_adrs = get_id_to_file_map("HEAD", ".agent-memory/decisions")
     for aid, head_name in sorted(head_adrs.items()):
         base_name = base_adrs.get(aid)
         if base_name and base_name != head_name:
