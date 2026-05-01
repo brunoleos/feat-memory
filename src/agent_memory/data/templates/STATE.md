@@ -13,7 +13,7 @@ Inicialização do projeto. Nenhuma feature implementada ainda.
 
 ## Next
 
-Definir a primeira feature em `manifest/features/F-0001-*.md` e o ADR inicial registrando a adoção desta metodologia.
+Definir a primeira feature em `.agent-memory/manifest/features/F-0001-*.md` e o ADR inicial registrando a adoção desta metodologia.
 
 ## Recent
 

@@ -16,9 +16,9 @@ constraints:
     severity: soft
     rule: "Docstrings obrigatórias em funções públicas"
 references:
-  manifest_index: ./manifest/INDEX.md
-  state: ./STATE.md
-  decisions_index: ./decisions/INDEX.md
+  manifest_index: ./.agent-memory/manifest/INDEX.md
+  state: ./.agent-memory/STATE.md
+  decisions_index: ./.agent-memory/decisions/INDEX.md
   methodology: https://github.com/brunoleos/agent-memory/blob/v{VERSION}/METHODOLOGY.md
   skills: ./skills/
 budgets:
@@ -37,7 +37,7 @@ adicione-as e mantenha-as fora do bloco delimitado abaixo. -->
 <!-- >>> agent-memory >>> -->
 ## agent-memory
 
-Sessões começam por `STATE.md` (foco atual) e `manifest/INDEX.md` (mapa de capacidades). Detalhes de uma feature ficam em `manifest/features/F-NNNN-*.md`. Decisões arquiteturais em `decisions/`. A metodologia completa está documentada no repositório do agent-memory: <https://github.com/brunoleos/agent-memory/blob/v{VERSION}/METHODOLOGY.md>.
+Sessões começam por `.agent-memory/STATE.md` (foco atual) e `.agent-memory/manifest/INDEX.md` (mapa de capacidades). Detalhes de uma feature ficam em `.agent-memory/manifest/features/F-NNNN-*.md`. Decisões arquiteturais em `.agent-memory/decisions/`. A metodologia completa está documentada no repositório do agent-memory: <https://github.com/brunoleos/agent-memory/blob/v{VERSION}/METHODOLOGY.md>.
 
 Este bloco é refrescado a cada `agent-memory deploy`. Não edite diretamente — mudanças aqui são sobrescritas no próximo redeploy. Conteúdo específico do projeto vai fora das marcações HTML que delimitam este bloco.
 
@@ -55,5 +55,5 @@ A skill `memory-pull-brief` ativa após `git pull` quando o usuário pergunta o 
 
 ### Como retomar trabalho
 
-A constituição é carregada automaticamente. Em seguida, você deve carregar `STATE.md` para descobrir o foco da sessão e os IDs de features e decisões ativas. Apenas as features e ADRs listados em `STATE.md::active_features` e `STATE.md::active_decisions` precisam ser expandidos no contexto inicial — carregar o Manifest inteiro ou todos os ADRs viola o orçamento de retomada.
+A constituição é carregada automaticamente. Em seguida, você deve carregar `.agent-memory/STATE.md` para descobrir o foco da sessão e os IDs de features e decisões ativas. Apenas as features e ADRs listados em `STATE.md::active_features` e `STATE.md::active_decisions` precisam ser expandidos no contexto inicial — carregar o Manifest inteiro ou todos os ADRs viola o orçamento de retomada.
 <!-- <<< agent-memory <<< -->
