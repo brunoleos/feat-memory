@@ -30,14 +30,14 @@ def test_deploy_creates_all_artifacts(tmp_project):
     for path in (
         tmp_project / "AGENT.md",
         tmp_project / "CLAUDE.md",
-        tmp_project / "STATE.md",
+        tmp_project / ".agent-memory" / "STATE.md",
         tmp_project / ".gitattributes",
         tmp_project / ".gitignore",
     ):
         assert path.is_file(), f"esperado: {path}"
 
-    assert (tmp_project / "manifest" / "features").is_dir()
-    assert (tmp_project / "decisions" / "proposals").is_dir()
+    assert (tmp_project / ".agent-memory" / "manifest" / "features").is_dir()
+    assert (tmp_project / ".agent-memory" / "decisions" / "proposals").is_dir()
     assert (tmp_project / "skills" / "memory-deploy" / "SKILL.md").is_file()
     assert (tmp_project / "skills" / "memory-bootstrap" / "SKILL.md").is_file()
     assert (tmp_project / "skills" / "memory-debrief" / "SKILL.md").is_file()
