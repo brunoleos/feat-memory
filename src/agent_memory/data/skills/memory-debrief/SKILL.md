@@ -27,7 +27,7 @@ Execute os passos em ordem. Cada passo é condicional ao que mudou na sessão.
 
 Rode `git status` e `git diff --staged` (ou `git diff HEAD` se não há staging). Identifique:
 - Quais arquivos foram modificados, adicionados, ou removidos
-- Quais features do Manifest foram tocadas (cruze com `manifest/features/F-*.md::contracts`)
+- Quais features do Manifest foram tocadas (cruze com `.agent-memory/manifest/features/F-*.md::contracts`)
 - Se houve mudança de comportamento observável (não apenas refactor mecânico)
 
 ### 2. Atualize entradas do Manifest
@@ -39,7 +39,7 @@ Para cada feature cujo código foi tocado:
 - Atualize `status` se a feature transitou (`planned` → `in_progress` → `shipped` → `deprecated`)
 
 Se uma capacidade nova foi adicionada e não tem entrada no Manifest, **crie uma**:
-- ID monotônico (próximo número disponível em `manifest/features/`)
+- ID monotônico (próximo número disponível em `.agent-memory/manifest/features/`)
 - `status: in_progress` se ainda não está completa, `shipped` se está
 - Critérios de aceitação em notação EARS (ver seção "Notação EARS" abaixo)
 

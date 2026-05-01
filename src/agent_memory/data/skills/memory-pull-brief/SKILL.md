@@ -47,8 +47,8 @@ git diff --name-only <base>..HEAD
 ```
 
 Filtre para os caminhos relevantes:
-- `manifest/features/F-*.md` — novos, modificados, removidos
-- `decisions/*.md` (incluindo `decisions/proposals/*.md`)
+- `.agent-memory/manifest/features/F-*.md` — novos, modificados, removidos
+- `.agent-memory/decisions/*.md` (incluindo `.agent-memory/decisions/proposals/*.md`)
 - `AGENT.md` — apenas se o diff atingiu o conteúdo entre `<!-- >>> agent-memory >>> -->` e `<!-- <<< agent-memory <<< -->`
 
 **Ignore `STATE.md`.** O `.gitattributes` da metodologia o marca com `merge=ours`, então mudanças do colega são silenciosamente descartadas pelo merge driver. Reportar seria enganoso — o usuário não vai ver as mudanças do colega no seu STATE local.

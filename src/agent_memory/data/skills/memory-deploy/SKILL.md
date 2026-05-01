@@ -39,7 +39,7 @@ Em ambos os cenários (greenfield e legacy), rode `agent-memory deploy <projeto>
 - Cria `CLAUDE.md` (redirect mínimo `@AGENT.md`) se ausente; deixa quieto se existe.
 - Cria `STATE.md` se ausente.
 - Copia as skills para `skills/` (sempre sobrescritas; conteúdo de metodologia).
-- Cria pastas `manifest/features/` e `decisions/proposals/`.
+- Cria pastas `.agent-memory/manifest/features/` e `.agent-memory/decisions/proposals/`.
 - Instala o pre-commit hook se for repositório Git.
 - Refresca os blocos de `.gitattributes` e `.gitignore`.
 

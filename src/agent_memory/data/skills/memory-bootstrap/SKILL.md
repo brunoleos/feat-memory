@@ -27,18 +27,18 @@ Não se aplica para:
 Se ainda não estão no contexto da sessão atual, leia:
 - `AGENT.md` (constituição do projeto — geralmente já está no contexto via auto-load)
 - `STATE.md` (foco atual da sessão)
-- `manifest/INDEX.md` (mapa resumido de capacidades)
-- `decisions/INDEX.md` (decisões arquiteturais resumidas)
+- `.agent-memory/manifest/INDEX.md` (mapa resumido de capacidades)
+- `.agent-memory/decisions/INDEX.md` (decisões arquiteturais resumidas)
 
 O total fica dentro do orçamento de retomada definido em `AGENT.md::budgets::resumption_max_bytes` (padrão: 12KB).
 
 **Detecção de pós-merge.** Se o último commit é um merge commit (verifique com `git log -1 --pretty=%P` retornando dois ou mais hashes de parent), os índices podem estar desatualizados porque o `.gitattributes` configurou `merge=ours` para mantê-los, deixando para o agente regenerar. Rode `agent-memory audit` antes de prosseguir, o que valida a estrutura mesclada e regenera os índices automaticamente. Se a auditoria reportar problemas (drift, colisões residuais, schemas quebrados), informe o usuário e sugira investigação antes de continuar.
 
-Em seguida, verifique se o merge tocou artefatos da metodologia: `git log -1 --name-only --pretty=format: | grep -E '^(manifest/features/F-|decisions/[0-9]|AGENT\.md)'`. Se houve mudança nesses caminhos, invoque a skill `memory-pull-brief` antes de seguir para o passo 2. A pull-brief brifa o usuário sobre o que veio do remote e ajusta o `STATE.md` se necessário, deixando-o consistente com a nova realidade antes da expansão seletiva de `active_*`.
+Em seguida, verifique se o merge tocou artefatos da metodologia: `git log -1 --name-only --pretty=format: | grep -E '^(\.agent-memory/manifest/features/F-|\.agent-memory/decisions/[0-9]|AGENT\.md)'`. Se houve mudança nesses caminhos, invoque a skill `memory-pull-brief` antes de seguir para o passo 2. A pull-brief brifa o usuário sobre o que veio do remote e ajusta o `STATE.md` se necessário, deixando-o consistente com a nova realidade antes da expansão seletiva de `active_*`.
 
 ### 2. Expanda apenas o necessário
 
-Use `STATE.md::active_features` e `STATE.md::active_decisions` como filtro. Carregue **somente** os arquivos correspondentes em `manifest/features/F-NNNN-*.md` e `decisions/NNNN-*.md`. Não carregue o Manifest inteiro nem todos os ADRs — isso quebra o orçamento de contexto sem ganho.
+Use `STATE.md::active_features` e `STATE.md::active_decisions` como filtro. Carregue **somente** os arquivos correspondentes em `.agent-memory/manifest/features/F-NNNN-*.md` e `.agent-memory/decisions/NNNN-*.md`. Não carregue o Manifest inteiro nem todos os ADRs — isso quebra o orçamento de contexto sem ganho.
 
 ### 3. Apresente um briefing tático
 
