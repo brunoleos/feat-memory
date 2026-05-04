@@ -184,8 +184,8 @@ def run(args: argparse.Namespace) -> int:
     print("\n" + "=" * 60)
     print("Próximos passos:")
     print("  1. Revisar candidatos acima.")
-    print("  2. Para cada ADR relevante, criar decisions/NNNN-slug.md.")
+    print("  2. Para cada ADR relevante, criar .agent-memory/decisions/NNNN-slug.md.")
     print("  3. Para cada entrypoint público, criar arquivo em")
-    print("     manifest/features/F-NNNN-slug.md com status: shipped.")
+    print("     .agent-memory/manifest/features/F-NNNN-slug.md com status: shipped.")
     print("  4. Rodar `agent-memory audit` para validar e gerar índices.")
     return 0

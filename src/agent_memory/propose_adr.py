@@ -5,11 +5,12 @@ Examina o diff atual contra um commit base (HEAD~1 por padrão) e
 aplica heurísticas para identificar sinais de decisão arquitetural:
 volume de mudança, alterações em arquivos de dependência, padrões
 em mensagens de commit. Quando detecta sinais relevantes, gera um
-draft pré-preenchido em decisions/proposals/.
+draft pré-preenchido em .agent-memory/decisions/proposals/.
 
 Drafts NÃO são ADRs — eles vivem em uma subpasta separada e são
 ignorados pelo audit. Cabe ao humano revisar, completar as
-seções TODO, renomear com slug definitivo e mover para decisions/.
+seções TODO, renomear com slug definitivo e mover para
+.agent-memory/decisions/.
 
 Subcomando da CLI: `agent-memory propose-adr`. Os artefatos ficam
 em .agent-memory/ no project root, descoberto via git.
@@ -252,7 +253,7 @@ tags: []
 
 > **DRAFT — proposta gerada automaticamente.**
 > Revise, complete as seções TODO, renomeie com slug definitivo
-> e mova de `decisions/proposals/` para `decisions/`.
+> e mova de `.agent-memory/decisions/proposals/` para `.agent-memory/decisions/`.
 
 ## Sinais que motivaram esta proposta
 
@@ -388,7 +389,7 @@ def has_enough_history(base: str) -> tuple[bool, str]:
 def add_subparser(subparsers: argparse._SubParsersAction) -> None:
     p = subparsers.add_parser(
         "propose-adr",
-        help="Detecta mudanças que merecem ADR e gera draft em decisions/proposals/",
+        help="Detecta mudanças que merecem ADR e gera draft em .agent-memory/decisions/proposals/",
     )
     p.add_argument("--base", default="HEAD~1",
                    help="commit de referência (padrão: HEAD~1)")
@@ -448,7 +449,7 @@ def run(args: argparse.Namespace) -> int:
     print("Próximos passos:")
     print(f"  1. Editar {rel} preenchendo as seções TODO")
     print("  2. Renomear o arquivo com slug descritivo")
-    print(f"  3. mv {rel} decisions/<NNNN>-<slug>.md")
-    print("  4. git add decisions/<NNNN>-<slug>.md")
+    print(f"  3. mv {rel} .agent-memory/decisions/<NNNN>-<slug>.md")
+    print("  4. git add .agent-memory/decisions/<NNNN>-<slug>.md")
 
     return 0

@@ -1,6 +1,6 @@
 ---
 name: memory-pull-brief
-description: Use após git pull em projeto cliente quando o usuário pergunta o que mudou no remote (frases como "o que veio do pull?", "brifa as mudanças do main", "atualizei meu branch, o que mudou?", "ressincroniza o STATE com o que veio"). Examina o diff do pull, identifica mudanças em features e decisions e no bloco metodológico de AGENT.md, cruza com STATE.md local, e propõe ajustes para refletir a nova realidade. Read-only sobre manifest/ e decisions/ — só escreve em STATE.md após aprovação do usuário.
+description: Use após git pull em projeto cliente quando o usuário pergunta o que mudou no remote (frases como "o que veio do pull?", "brifa as mudanças do main", "atualizei meu branch, o que mudou?", "ressincroniza o STATE com o que veio"). Examina o diff do pull, identifica mudanças em features e decisions e no bloco metodológico de AGENT.md, cruza com .agent-memory/STATE.md local, e propõe ajustes para refletir a nova realidade. Read-only sobre .agent-memory/manifest/ e .agent-memory/decisions/ — só escreve em .agent-memory/STATE.md após aprovação do usuário.
 ---
 
 # Memory pull-brief
@@ -16,7 +16,7 @@ Esta skill se aplica quando o usuário diz coisas como:
 - "ressincroniza o STATE com o que veio"
 - "fiz pull, o que mudou nos artefatos?"
 
-Também se aplica por delegação a partir de `memory-bootstrap` quando o último commit é merge **e** o merge tocou `manifest/features/`, `decisions/`, ou o bloco entre sentinelas de `AGENT.md`. Nesse caso, a pull-brief roda antes do briefing tático normal da bootstrap.
+Também se aplica por delegação a partir de `memory-bootstrap` quando o último commit é merge **e** o merge tocou `.agent-memory/manifest/features/`, `.agent-memory/decisions/`, ou o bloco entre sentinelas de `AGENT.md`. Nesse caso, a pull-brief roda antes do briefing tático normal da bootstrap.
 
 Não se aplica para:
 - Pulls que só trouxeram código (nenhum artefato da metodologia tocado) — termine cedo, em uma frase
@@ -67,7 +67,7 @@ Para arquivos modificados: compare o frontmatter antes (via `git show <base>:<pa
 
 Para arquivos removidos: registre o ID e o slug do arquivo.
 
-### 4. Cruze com o STATE.md local
+### 4. Cruze com o `.agent-memory/STATE.md` local
 
 Carregue `STATE.md::active_features` e `STATE.md::active_decisions`. Para cada ID listado lá, verifique se mudou upstream:
 
@@ -88,7 +88,7 @@ Formato curto, similar ao da bootstrap:
 - F-YYYY (slug) — status: in_progress → shipped
 - ADR-NNNN (slug) — nova, affects: F-YYYY
 
-**Ajustes propostos no STATE.md:**
+**Ajustes propostos no `.agent-memory/STATE.md`:**
 - Remover F-YYYY de active_features (agora shipped upstream)
 - Adicionar entrada Recent: "rebased on N upstream changes: F-YYYY shipped, ADR-NNNN added"
 
@@ -100,7 +100,7 @@ Aguarde aprovação explícita antes de escrever.
 ### 6. Aplique e valide
 
 Após aprovação:
-- Escreva `STATE.md` com `active_features` / `active_decisions` ajustados
+- Escreva `.agent-memory/STATE.md` com `active_features` / `active_decisions` ajustados
 - Adicione uma linha em `Recent` (buffer circular de 5)
 - Atualize `updated_at` (ISO 8601 UTC) e `updated_by` (seu modelo, ex. `claude-opus-4.7`)
 - Não toque em `Current` nem em `Next` — esses são foco do usuário, não do colega
@@ -109,7 +109,7 @@ Rode `agent-memory audit --strict` para detectar drift entre STATE local e os ar
 
 ## O que evitar
 
-- Não modifique `manifest/features/*.md` nem `decisions/*.md`. Esses já vieram corretos do pull — escrever neles seria reverter trabalho de colegas.
+- Não modifique `.agent-memory/manifest/features/*.md` nem `.agent-memory/decisions/*.md`. Esses já vieram corretos do pull — escrever neles seria reverter trabalho de colegas.
 - Não adicione IDs em `active_features` ou `active_decisions` automaticamente. Novidades do colega entram em foco do usuário só por decisão explícita dele.
 - Não force entrada em `Recent` se o pull não tocou nenhum artefato da metodologia. Buffer circular é caro.
 - Não execute se o branch local tem commits feitos depois do pull (passo 1 detecta isso) — o range fica ambíguo. Peça base explícita.

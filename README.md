@@ -30,7 +30,7 @@ Em qualquer projeto consumidor, rode:
 agent-memory deploy /caminho/do/projeto
 ```
 
-Isso monta `AGENT.md`, `CLAUDE.md`, `STATE.md`, `manifest/`, `decisions/`, `skills/`, `.gitattributes`, e instala o pre-commit hook.
+Isso monta `AGENT.md`, `CLAUDE.md`, `.agent-memory/STATE.md`, `.agent-memory/manifest/`, `.agent-memory/decisions/`, `skills/`, `.gitattributes`, e instala o pre-commit hook.
 
 Depois, abra uma sessão com seu agente preferido (Claude Code, Cursor, ou outro que reconheça `AGENT.md`) e peça:
 
@@ -40,7 +40,7 @@ instale a metodologia neste projeto
 
 A skill `memory-deploy` detecta se o projeto é greenfield (novo, pouco código) ou legacy (com história substancial). Em greenfield, ela apenas executa o deploy mecânico — identidade, restrições, convenções e demais conteúdos específicos do projeto são autoria do mantenedor humano, escritos diretamente no `AGENT.md` quando ele decidir que vale registrar.
 
-Para projetos legacy, a skill conduz adicionalmente gênese retroativa em três fases sequenciais com revisão humana entre cada uma: ADRs candidatos a partir do git log, Manifest a partir dos entrypoints públicos, e `STATE.md` inicial. A skill nunca escreve no corpo da `AGENT.md` fora do bloco delimitado por sentinelas — esse bloco é gerenciado mecanicamente pelo `agent-memory deploy`.
+Para projetos legacy, a skill conduz adicionalmente gênese retroativa em três fases sequenciais com revisão humana entre cada uma: ADRs candidatos a partir do git log, Manifest a partir dos entrypoints públicos, e `.agent-memory/STATE.md` inicial. A skill nunca escreve no corpo da `AGENT.md` fora do bloco delimitado por sentinelas — esse bloco é gerenciado mecanicamente pelo `agent-memory deploy`.
 
 ## Comportamento com arquivos pré-existentes
 
@@ -55,11 +55,11 @@ O `agent-memory deploy` é idempotente em todas as superfícies que ele instala.
 
 Quando o `AGENT.md` já existe, o deploy só toca o conteúdo entre essas sentinelas — todo o resto (frontmatter, seções específicas do projeto, comentários do usuário) é preservado. Quando ainda não existe, o template completo é escrito (frontmatter scaffold + bloco). O `CLAUDE.md` (redirect mínimo `@AGENT.md`) é copiado se ausente e deixado quieto se existe.
 
-O `STATE.md` segue semântica diferente: como o conteúdo dele é volátil por construção, não há valor real em mesclar. Se já existe, é simplesmente pulado.
+O `.agent-memory/STATE.md` segue semântica diferente: como o conteúdo dele é volátil por construção, não há valor real em mesclar. Se já existe, é simplesmente pulado.
 
 As skills em `skills/` são sempre reescritas a cada deploy, porque elas são conteúdo de metodologia (não de usuário). Se você quiser uma skill customizada, copie-a para um nome diferente (`skills/memory-debrief` → `skills/my-debrief`) — a versão renomeada é preservada. O `.gitattributes` segue a mesma lógica via bloco com sentinelas: o que estiver fora do bloco é preservado, o bloco em si é refrescado.
 
-A flag `--force` reescreve `AGENT.md`, `CLAUDE.md` e `STATE.md` inteiros a partir do template, descartando conteúdo do usuário fora do bloco. A flag `--no-merge` pula a refresh do bloco em `AGENT.md`/`CLAUDE.md` existentes (útil em CI onde nenhuma modificação é desejada).
+A flag `--force` reescreve `AGENT.md`, `CLAUDE.md` e `.agent-memory/STATE.md` inteiros a partir do template, descartando conteúdo do usuário fora do bloco. A flag `--no-merge` pula a refresh do bloco em `AGENT.md`/`CLAUDE.md` existentes (útil em CI onde nenhuma modificação é desejada).
 
 ## Versionamento e atualizações
 
@@ -123,7 +123,7 @@ agent-memory/                         # clone do projeto na sua máquina
 │       ├── install_hooks.py          # helper de instalação de hooks
 │       └── data/                     # package data (vai no wheel)
 │           ├── templates/            # AGENT.md, CLAUDE.md, STATE.md, .gitattributes
-│           ├── skills/               # memory-deploy, memory-bootstrap, memory-debrief
+│           ├── skills/               # memory-deploy, memory-bootstrap, memory-debrief, memory-pull-brief
 │           └── hooks/                # pre-commit
 ├── tests/                            # suite pytest
 └── examples/                         # exemplos pedagógicos (não vão no wheel)
@@ -134,7 +134,7 @@ agent-memory/                         # clone do projeto na sua máquina
 
 ## Estrutura final no project root
 
-Depois da instalação, o seu repositório tem isto. Os artefatos versionados em Git são `AGENT.md`, `CLAUDE.md`, `STATE.md`, `manifest/`, `decisions/`, `skills/`, `.gitattributes`, e o bloco em `.gitignore`.
+Depois da instalação, o seu repositório tem isto. Os artefatos versionados em Git são `AGENT.md`, `CLAUDE.md`, `.agent-memory/STATE.md`, `.agent-memory/manifest/`, `.agent-memory/decisions/`, `skills/`, `.gitattributes`, e o bloco em `.gitignore`.
 
 ```text
 seu-projeto/
@@ -142,19 +142,21 @@ seu-projeto/
 ├── .gitattributes                    # bloco com sentinelas (regras de merge)
 ├── AGENT.md                          # constituição (com bloco agent-memory delimitado por sentinelas)
 ├── CLAUDE.md                         # redirect para AGENT.md (Claude Code)
-├── STATE.md                          # foco da sessão
 ├── skills/
 │   ├── memory-deploy/SKILL.md
 │   ├── memory-bootstrap/SKILL.md
-│   └── memory-debrief/SKILL.md
-├── manifest/
-│   ├── INDEX.md                      # gerado por agent-memory audit
-│   └── features/
-│       └── (vazio até primeira feature)
-├── decisions/
-│   ├── INDEX.md                      # gerado por agent-memory audit
-│   ├── proposals/                    # drafts de agent-memory propose-adr
-│   └── (vazio até primeiro ADR)
+│   ├── memory-debrief/SKILL.md
+│   └── memory-pull-brief/SKILL.md
+├── .agent-memory/
+│   ├── STATE.md                      # foco da sessão
+│   ├── manifest/
+│   │   ├── INDEX.md                  # gerado por agent-memory audit
+│   │   └── features/
+│   │       └── (vazio até primeira feature)
+│   └── decisions/
+│       ├── INDEX.md                  # gerado por agent-memory audit
+│       ├── proposals/                # drafts de agent-memory propose-adr
+│       └── (vazio até primeiro ADR)
 └── (seu código de sempre)
 ```
 
@@ -168,7 +170,7 @@ A skill `memory-bootstrap` cobre o início de cada sessão de trabalho. Frases c
 
 A skill `memory-debrief` é a mais usada no dia-a-dia. Frases como "vou commitar" ou "atualize o STATE" ativam a skill, que examina o diff, atualiza o Manifest, reescreve o State, e gera proposta de ADR se necessário. Invoque-a antes de cada commit relevante.
 
-A skill `memory-pull-brief` cobre o quarto momento crítico: depois de `git pull` que trouxe commits de colegas. Frases como "o que veio do pull" ou "brifa as mudanças do main" ativam a skill, que examina o diff trazido, identifica mudanças semânticas em `manifest/`, `decisions/` e no bloco metodológico de `AGENT.md`, e propõe ajustes em `STATE.md` para ressincronizar o foco local. É read-only sobre `manifest/` e `decisions/` — esses já vieram corretos do pull.
+A skill `memory-pull-brief` cobre o quarto momento crítico: depois de `git pull` que trouxe commits de colegas. Frases como "o que veio do pull" ou "brifa as mudanças do main" ativam a skill, que examina o diff trazido, identifica mudanças semânticas em `.agent-memory/manifest/`, `.agent-memory/decisions/` e no bloco metodológico de `AGENT.md`, e propõe ajustes em `.agent-memory/STATE.md` para ressincronizar o foco local. É read-only sobre `.agent-memory/manifest/` e `.agent-memory/decisions/` — esses já vieram corretos do pull.
 
 ## Comandos úteis
 
@@ -180,7 +182,7 @@ agent-memory audit --strict       # warnings viram errors
 agent-memory audit --json         # output para CI
 ```
 
-O gerador de propostas examina o diff atual e detecta sinais de mudança arquitetural não-trivial, gerando draft em `decisions/proposals/` para revisão. É invocado pela skill `memory-debrief` mas pode ser chamado diretamente.
+O gerador de propostas examina o diff atual e detecta sinais de mudança arquitetural não-trivial, gerando draft em `.agent-memory/decisions/proposals/` para revisão. É invocado pela skill `memory-debrief` mas pode ser chamado diretamente.
 
 ```bash
 agent-memory propose-adr             # examina HEAD~1..HEAD

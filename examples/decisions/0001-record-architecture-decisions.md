@@ -19,7 +19,7 @@ O custo de não registrar não aparece imediatamente. Ele se manifesta seis mese
 
 ## Decisão
 
-Adotar Architecture Decision Records (ADRs) como forma única de registrar decisões arquiteturais não-triviais. Cada ADR é um arquivo markdown imutável em `decisions/NNNN-slug.md`, com frontmatter YAML estruturado e seções padronizadas: Contexto, Decisão, Consequências, Alternativas rejeitadas.
+Adotar Architecture Decision Records (ADRs) como forma única de registrar decisões arquiteturais não-triviais. Cada ADR é um arquivo markdown imutável em `.agent-memory/decisions/NNNN-slug.md`, com frontmatter YAML estruturado e seções padronizadas: Contexto, Decisão, Consequências, Alternativas rejeitadas.
 
 ADRs nunca são editados após `status: accepted`. Mudanças de direção exigem um novo ADR com `supersedes: ADR-XXXX`, e o ADR original tem apenas seu campo `superseded_by` atualizado — o conteúdo original é preservado.
 

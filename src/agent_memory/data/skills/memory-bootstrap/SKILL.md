@@ -26,7 +26,7 @@ Não se aplica para:
 
 Se ainda não estão no contexto da sessão atual, leia:
 - `AGENT.md` (constituição do projeto — geralmente já está no contexto via auto-load)
-- `STATE.md` (foco atual da sessão)
+- `.agent-memory/STATE.md` (foco atual da sessão)
 - `.agent-memory/manifest/INDEX.md` (mapa resumido de capacidades)
 - `.agent-memory/decisions/INDEX.md` (decisões arquiteturais resumidas)
 

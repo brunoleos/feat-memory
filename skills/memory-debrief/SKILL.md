@@ -27,7 +27,7 @@ Execute os passos em ordem. Cada passo é condicional ao que mudou na sessão.
 
 Rode `git status` e `git diff --staged` (ou `git diff HEAD` se não há staging). Identifique:
 - Quais arquivos foram modificados, adicionados, ou removidos
-- Quais features do Manifest foram tocadas (cruze com `manifest/features/F-*.md::contracts`)
+- Quais features do Manifest foram tocadas (cruze com `.agent-memory/manifest/features/F-*.md::contracts`)
 - Se houve mudança de comportamento observável (não apenas refactor mecânico)
 
 ### 2. Atualize entradas do Manifest
@@ -39,7 +39,7 @@ Para cada feature cujo código foi tocado:
 - Atualize `status` se a feature transitou (`planned` → `in_progress` → `shipped` → `deprecated`)
 
 Se uma capacidade nova foi adicionada e não tem entrada no Manifest, **crie uma**:
-- ID monotônico (próximo número disponível em `manifest/features/`)
+- ID monotônico (próximo número disponível em `.agent-memory/manifest/features/`)
 - `status: in_progress` se ainda não está completa, `shipped` se está
 - Critérios de aceitação em notação EARS (ver seção "Notação EARS" abaixo)
 
@@ -59,9 +59,9 @@ Mantenha o STATE.md abaixo de 4KB. Se está crescendo, é sinal de que algo deve
 ### 4. Decida sobre ADR
 
 Se a sessão produziu uma decisão arquitetural não-trivial:
-- Rode `agent-memory propose-adr --staged` para gerar um draft em `decisions/proposals/`
+- Rode `agent-memory propose-adr --staged` para gerar um draft em `.agent-memory/decisions/proposals/`
 - Examine o draft, complete as seções TODO (Contexto, Decisão, Consequências, Alternativas rejeitadas)
-- Quando completo, mova de `decisions/proposals/NNNN-draft.md` para `decisions/NNNN-slug-final.md`
+- Quando completo, mova de `.agent-memory/decisions/proposals/NNNN-draft.md` para `.agent-memory/decisions/NNNN-slug-final.md`
 - Atualize `affects_features` no frontmatter do ADR para listar features impactadas
 
 Regra prática: se um futuro contribuidor olhando o commit em seis meses precisaria de explicação para entender a escolha, é ADR. Se a explicação cabe na mensagem de commit, não é.
@@ -81,7 +81,7 @@ Se a sessão atual está em uma branch que será mesclada de volta para uma bran
 Antes de fazer o commit (ou pedir ao usuário para fazê-lo), mostre:
 - Arquivos do Manifest atualizados ou criados (com IDs)
 - Como o STATE.md ficou (Current e Next)
-- Status do ADR, se aplicável (proposto em `proposals/` ou finalizado em `decisions/`)
+- Status do ADR, se aplicável (proposto em `.agent-memory/decisions/proposals/` ou finalizado em `.agent-memory/decisions/`)
 - Resultado da auditoria (compliance, drift, cobertura)
 
 ## Notação EARS
@@ -112,7 +112,7 @@ Não invente features apenas para preencher o Manifest. Se a mudança não intro
 
 Não pule a atualização do STATE.md mesmo quando parece pequena. O STATE é o cursor da próxima sessão, e perder uma atualização força o próximo agente a reconstruir contexto a partir do código.
 
-Não promova drafts de ADR (`decisions/proposals/`) para `decisions/` sem revisão humana. Se você é o próprio agente preenchendo o draft, está apenas redigindo — a aprovação para mover para `decisions/` deve vir do usuário.
+Não promova drafts de ADR (`.agent-memory/decisions/proposals/`) para `.agent-memory/decisions/` sem revisão humana. Se você é o próprio agente preenchendo o draft, está apenas redigindo — a aprovação para mover para `.agent-memory/decisions/` deve vir do usuário.
 
 Não force criação de ADR para mudanças mecânicas (rename de variável, fix de typo, ajuste de imports, refactor sem mudança comportamental).
 

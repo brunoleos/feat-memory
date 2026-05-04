@@ -12,7 +12,7 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto ader
 
 Quarta skill `memory-pull-brief` (F-0009) cobre o gap cognitivo pós-pull em projetos cliente. Quando o desenvolvedor faz `git pull` e recebe commits de colegas, a skill examina o diff trazido, identifica mudanças semânticas em `manifest/features/`, `decisions/` e no bloco metodológico de `AGENT.md`, e propõe ajustes em `STATE.md` (remoção de IDs em `active_*` cuja semântica upstream invalida o foco local, entrada nova no buffer `Recent`). É read-only sobre `manifest/` e `decisions/` por design — esses já vieram corretos do pull, escrever neles seria reverter trabalho de colegas. Trigger duplo: manual (frases como "o que veio do pull", "brifa as mudanças do main") e por delegação a partir de `memory-bootstrap` quando o último commit é merge que tocou artefatos.
 
-Decisão formalizada em [ADR-0012](decisions/0012-skill-memory-pull-brief.md).
+Decisão formalizada em [ADR-0012](.agent-memory/decisions/0012-skill-memory-pull-brief.md).
 
 ### Mudado
 
@@ -28,7 +28,7 @@ Bloco "Skills disponíveis" do template `AGENT.md` atualizado de "três skills" 
 
 A skill `memory-deploy` perde a Etapa 3 (merge) e a Etapa 4 (personalização) inteiras. Em greenfield, a skill apenas roda o deploy mecânico — não pergunta sobre identidade/stack/restrições nem popula o frontmatter. Em legacy, conduz três fases de gênese retroativa: ADRs do git log, Manifest dos entrypoints, e `STATE.md::Current` descrevendo a gênese. A skill nunca toca em `AGENT.md` fora do bloco.
 
-Decisão formalizada em [ADR-0011](decisions/proposals/0011-draft.md), que supersede [ADR-0010](decisions/0010-merge-separates-methodology-from-project-sections.md).
+Decisão formalizada em [ADR-0011](.agent-memory/decisions/0011-deploy-replaces-agent-md-block-via-sentinels.md), que supersede [ADR-0010](.agent-memory/decisions/0010-merge-separates-methodology-from-project-sections.md).
 
 ### Removido
 
@@ -52,7 +52,7 @@ Skill `memory-deploy` (Etapa 3) tinha bug de concatenação no merge do `AGENT.m
 
 ### Mudado
 
-Template `AGENT.md` deixa de carregar placeholders para as seções de projeto (`## Identidade`, `## Restrições não-negociáveis`, `## Convenções de código`) — apenas um comentário HTML marca o ponto de inserção. A skill `memory-deploy` escreve essas seções a partir da investigação do repositório durante a Etapa 4 (personalização ou gênese retroativa). Decisão formalizada em [ADR-0010](decisions/0010-merge-separates-methodology-from-project-sections.md).
+Template `AGENT.md` deixa de carregar placeholders para as seções de projeto (`## Identidade`, `## Restrições não-negociáveis`, `## Convenções de código`) — apenas um comentário HTML marca o ponto de inserção. A skill `memory-deploy` escreve essas seções a partir da investigação do repositório durante a Etapa 4 (personalização ou gênese retroativa). Decisão formalizada em [ADR-0010](.agent-memory/decisions/0010-merge-separates-methodology-from-project-sections.md).
 
 ## [0.3.0] - 2026-04-29
 

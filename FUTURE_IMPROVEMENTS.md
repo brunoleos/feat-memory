@@ -16,7 +16,7 @@ O hook em `src/agent_memory/data/hooks/pre-commit` é instalado pelo `agent-memo
 
 ### Geração automática de propostas de ADR
 
-A ferramenta `agent-memory propose-adr` examina o diff atual e detecta sinais de mudança arquitetural não-trivial: volume, dependências alteradas, mudanças em múltiplos diretórios, padrões linguísticos em mensagens de commit. Quando detecta sinais, gera um draft em `decisions/proposals/`, subpasta que o `agent-memory audit` ignora explicitamente para preservar a invariante de imutabilidade dos ADRs reais. O modo `--prompt` emite um prompt estruturado para um agente LLM em vez do template direto, separando detecção determinística de redação que exige julgamento.
+A ferramenta `agent-memory propose-adr` examina o diff atual e detecta sinais de mudança arquitetural não-trivial: volume, dependências alteradas, mudanças em múltiplos diretórios, padrões linguísticos em mensagens de commit. Quando detecta sinais, gera um draft em `.agent-memory/decisions/proposals/`, subpasta que o `agent-memory audit` ignora explicitamente para preservar a invariante de imutabilidade dos ADRs reais. O modo `--prompt` emite um prompt estruturado para um agente LLM em vez do template direto, separando detecção determinística de redação que exige julgamento.
 
 ### Portabilidade total via Python
 
@@ -60,7 +60,7 @@ A METHODOLOGY descreve `version` (semver da release que tocou) apenas para featu
 
 ### Coordenação multi-agente
 
-A versão atual assume sessão única em série. Quando duas sessões de Claude Code rodam em paralelo no mesmo repositório, há risco de conflito no `STATE.md` e de duplicação de IDs em features novas. A proposta é um protocolo simples de lock: o agente cria um arquivo `.state.lock` com sua identidade ao iniciar uma sessão; outros agentes detectam o lock e operam em modo read-only no Manifest até o lock ser liberado. Para IDs novos, uma reserva atômica via Git push força resolução de conflito explícita.
+A versão atual assume sessão única em série. Quando duas sessões de Claude Code rodam em paralelo no mesmo repositório, há risco de conflito no `.agent-memory/STATE.md` e de duplicação de IDs em features novas. A proposta é um protocolo simples de lock: o agente cria um arquivo `.state.lock` com sua identidade ao iniciar uma sessão; outros agentes detectam o lock e operam em modo read-only no Manifest até o lock ser liberado. Para IDs novos, uma reserva atômica via Git push força resolução de conflito explícita.
 
 ### Coverage real ligado a pytest-cov
 
@@ -72,7 +72,7 @@ Para features de API, o campo `contracts.api` aponta para a função handler e `
 
 ### Snapshot histórico do State
 
-O `STATE.md` é reescrito a cada sessão e a história fica no Git. Para análises retrospectivas — "qual era o foco do time em janeiro?", "quanto tempo passamos em F-0007?" — fazer `git log STATE.md` é viável mas inconveniente. A proposta é um script que extrai snapshots semanais do `STATE.md` e produz uma timeline navegável. Nada que não dê para fazer ad-hoc, mas a presença da ferramenta induz a hábito.
+O `.agent-memory/STATE.md` é reescrito a cada sessão e a história fica no Git. Para análises retrospectivas — "qual era o foco do time em janeiro?", "quanto tempo passamos em F-0007?" — fazer `git log .agent-memory/STATE.md` é viável mas inconveniente. A proposta é um script que extrai snapshots semanais do `.agent-memory/STATE.md` e produz uma timeline navegável. Nada que não dê para fazer ad-hoc, mas a presença da ferramenta induz a hábito.
 
 ## Longo prazo
 
@@ -104,6 +104,6 @@ A geração automática completa de ADRs a partir de diffs foi rejeitada porque 
 
 Migração automática silenciosa do Manifest a partir do código foi rejeitada pelo mesmo motivo da migração de ADRs: cristaliza interpretações erradas como verdades. O agente pode propor, o humano decide.
 
-Webhooks que disparam em cada commit do State foram rejeitados por baixo retorno: a frequência seria alta, o sinal seria ruidoso, e o problema que resolveriam (notificar pessoas sobre mudanças) é melhor resolvido por hábito de leitura semanal do `git log STATE.md` ou pelo dashboard de drift histórico.
+Webhooks que disparam em cada commit do State foram rejeitados por baixo retorno: a frequência seria alta, o sinal seria ruidoso, e o problema que resolveriam (notificar pessoas sobre mudanças) é melhor resolvido por hábito de leitura semanal do `git log .agent-memory/STATE.md` ou pelo dashboard de drift histórico.
 
 Substituir os arquivos markdown por banco de dados foi avaliado e rejeitado. A simplicidade de markdown mais Git é o que torna a metodologia portável e auditável; mover para um banco perde a propriedade de "tudo está no repositório, versionado, sem dependência externa". Para projetos onde isso muda — federação entre dezenas de equipes, por exemplo — o item de federação acima é o caminho preferível, não substituição completa.

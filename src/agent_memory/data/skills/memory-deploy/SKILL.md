@@ -37,7 +37,7 @@ Em ambos os cenários (greenfield e legacy), rode `agent-memory deploy <projeto>
 
 - Cria `AGENT.md` com frontmatter scaffold + bloco com sentinelas, ou — se já existe — anexa o bloco preservando todo o resto do conteúdo do usuário. Em re-deploys, o bloco é refrescado de forma idempotente.
 - Cria `CLAUDE.md` (redirect mínimo `@AGENT.md`) se ausente; deixa quieto se existe.
-- Cria `STATE.md` se ausente.
+- Cria `.agent-memory/STATE.md` se ausente.
 - Copia as skills para `skills/` (sempre sobrescritas; conteúdo de metodologia).
 - Cria pastas `.agent-memory/manifest/features/` e `.agent-memory/decisions/proposals/`.
 - Instala o pre-commit hook se for repositório Git.
@@ -51,13 +51,13 @@ A partir deste ponto a skill não escreve mais em `AGENT.md`. Em greenfield, o t
 
 ### Etapa 3 (apenas legacy): gênese retroativa de ADRs e Manifest
 
-Esta etapa só executa em projetos legacy. Ela popula `decisions/` e `manifest/features/` a partir do que já existe no repositório, mas **não toca em `AGENT.md`**. Identidade, restrições e convenções específicas do projeto continuam sendo responsabilidade do mantenedor humano, em sessão posterior.
+Esta etapa só executa em projetos legacy. Ela popula `.agent-memory/decisions/` e `.agent-memory/manifest/features/` a partir do que já existe no repositório, mas **não toca em `AGENT.md`**. Identidade, restrições e convenções específicas do projeto continuam sendo responsabilidade do mantenedor humano, em sessão posterior.
 
 #### Fase 3.1: ADRs candidatos a partir do git log
 
 Rode `agent-memory migrate` para detectar candidatos automáticos. Para cada candidato, examine o commit completo via `git show <sha>` e os arquivos tocados. Avalie se a mudança realmente representa decisão arquitetural ou apenas correção de bug ou refactor mecânico. Para os candidatos que sobrevivem ao filtro, redija um ADR no formato padrão com as quatro seções (Contexto, Decisão, Consequências, Alternativas rejeitadas), usando a data do commit original como `date` e marcando `status: accepted` porque a decisão já está em produção.
 
-Apresente cada ADR proposto individualmente para revisão humana. Não gere uma fila sem aprovação intermediária — o cansaço do revisor é o inimigo. Ao aprovar, escreva diretamente em `decisions/NNNN-slug.md` (não em `proposals/`, porque são reconstruções de decisões já tomadas, não propostas novas).
+Apresente cada ADR proposto individualmente para revisão humana. Não gere uma fila sem aprovação intermediária — o cansaço do revisor é o inimigo. Ao aprovar, escreva diretamente em `.agent-memory/decisions/NNNN-slug.md` (não em `proposals/`, porque são reconstruções de decisões já tomadas, não propostas novas).
 
 #### Fase 3.2: Manifest a partir dos entrypoints públicos
 
@@ -65,9 +65,9 @@ Identifique os entrypoints examinando padrões comuns como routers, handlers e c
 
 Não inclua `metrics` na gênese inicial — métricas só aparecem quando há medições reais. Apresente as features em lotes pequenos (cinco por vez no máximo). Lotes grandes desencorajam revisão crítica.
 
-#### Fase 3.3: STATE.md inicial e auditoria
+#### Fase 3.3: `.agent-memory/STATE.md` inicial e auditoria
 
-Reescreva `STATE.md` com `Current` registrando algo como "Memória inicial estabelecida via gênese retroativa. Última feature mapeada: F-NNNN." Em `Next`, escreva uma frase neutra do tipo "Aguardando definição do próximo foco pelo usuário." — não pergunte ao usuário e não invente um foco; ele rescreve quando começar a trabalhar. Em `Recent`, adicione uma linha sobre a gênese com timestamp atual. Deixe `active_features` vazio ou apenas com features em foco no momento.
+Reescreva `.agent-memory/STATE.md` com `Current` registrando algo como "Memória inicial estabelecida via gênese retroativa. Última feature mapeada: F-NNNN." Em `Next`, escreva uma frase neutra do tipo "Aguardando definição do próximo foco pelo usuário." — não pergunte ao usuário e não invente um foco; ele rescreve quando começar a trabalhar. Em `Recent`, adicione uma linha sobre a gênese com timestamp atual. Deixe `active_features` vazio ou apenas com features em foco no momento.
 
 Rode `agent-memory audit` para validar a estrutura completa e sugira o commit inicial.
 
@@ -91,4 +91,4 @@ Não invente `metrics` ou medições estimadas. Se não há valor real medido, o
 
 Não inclua features para detalhes de implementação puramente internos. A unidade do Manifest é capacidade nomeável com `user_value` em uma frase.
 
-Não confunda os dois fluxos de criação de ADR. Na gênese retroativa, ADRs vão diretamente para `decisions/` porque são reconstruções históricas. Em uso normal (skill `memory-debrief`), ADRs novos vão para `decisions/proposals/` primeiro.
+Não confunda os dois fluxos de criação de ADR. Na gênese retroativa, ADRs vão diretamente para `.agent-memory/decisions/` porque são reconstruções históricas. Em uso normal (skill `memory-debrief`), ADRs novos vão para `.agent-memory/decisions/proposals/` primeiro.
