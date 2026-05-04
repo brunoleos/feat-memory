@@ -43,18 +43,26 @@ Se uma capacidade nova foi adicionada e não tem entrada no Manifest, **crie uma
 - `status: in_progress` se ainda não está completa, `shipped` se está
 - Critérios de aceitação em notação EARS (ver seção "Notação EARS" abaixo)
 
-### 3. Reescreva o STATE.md
+### 3. Grave um checkpoint
 
-- `Current`: descrição do estado real agora, em uma frase. Não confunda com estado planejado.
-- `Next`: próxima ação concreta, em uma frase. Específica o suficiente para começar imediatamente.
-- `Recent`: adicione uma linha nova com timestamp ISO, agente (você), features tocadas, e resumo curto. Remova a linha mais antiga se já há cinco linhas — buffer circular.
-- `active_features`: atualize com IDs das features sendo tocadas agora
-- `active_decisions`: IDs de ADRs relevantes para o trabalho atual
-- `updated_at`: timestamp ISO atual
-- `updated_by`: identifique seu modelo (ex.: `claude-opus-4.7`)
-- `blocked_on`: se há bloqueio externo, registre; senão, `null`
+A partir de F-0015 (ADR-0018), `STATE.md` é view derivada de checkpoints append-only — você nunca o reescreve diretamente. Em vez disso, invoque:
 
-Mantenha o STATE.md abaixo de 4KB. Se está crescendo, é sinal de que algo deveria virar Manifest ou ADR em vez de detalhe efêmero.
+```bash
+agent-memory checkpoint \
+  --summary "resumo da sessão (1-3 frases)" \
+  --current "estado real agora, em uma frase" \
+  --next "próxima ação concreta, em uma frase" \
+  --features F-NNNN,F-NNNN \
+  --decisions ADR-NNNN \
+  --blocked-on "se houver bloqueio externo (ou omita)" \
+  --author claude-opus-4.7
+```
+
+Flags omitidas herdam do checkpoint anterior (continuidade trivial). O comando anexa um arquivo imutável em `.agent-memory/checkpoints/YYYY-MM-DD-HHMMSS.md` e regera `STATE.md` automaticamente — `Current`, `Next`, `active_*`, `blocked_on` são derivados do último checkpoint; a tabela `Recent` é gerada a partir dos 5 anteriores. Reescritas destrutivas tornam-se impossíveis por construção.
+
+Em projetos pré-v0.6 sem `.agent-memory/checkpoints/`, rode `agent-memory migrate --to=checkpoints` uma vez para criar o checkpoint inicial a partir do `STATE.md` legado (idempotente, não-destrutivo).
+
+Se o STATE.md ficou inconsistente por edição manual indevida, `agent-memory state-rebuild` regera sem criar novo checkpoint (recovery).
 
 ### 4. Decida sobre ADR
 
