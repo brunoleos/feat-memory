@@ -296,6 +296,47 @@ def validate_feature(path: Path) -> tuple[dict, list[Issue]]:
     return fm, issues
 
 
+def validate_state_crosscheck(state_fm: dict,
+                              features: list[dict],
+                              decisions: list[dict]) -> list[Issue]:
+    """Verifica que cada ID em active_features/active_decisions existe.
+
+    Não detecta drift de contracts (isso é responsabilidade de
+    `validate_feature`); aqui o foco é "memória mentirosa" — STATE.md
+    citando IDs que não têm arquivo correspondente. ADR-0014.
+
+    Para features, busca em `manifest/features/` E `manifest/archive/`
+    (o último previsto por F-0012). Para ADRs, busca apenas em `decisions/`.
+    """
+    issues: list[Issue] = []
+    feature_ids = {f.get("id") for f in features if f.get("id")}
+    archive_dir = MANIFEST_DIR / "archive"
+    if archive_dir.exists():
+        for fp in archive_dir.glob("F-*.md"):
+            m = re.match(r"^(F-\d{4})-", fp.name)
+            if m:
+                feature_ids.add(m.group(1))
+    decision_ids = {d.get("id") for d in decisions if d.get("id")}
+
+    for fid in state_fm.get("active_features") or []:
+        if fid not in feature_ids:
+            issues.append(Issue(
+                "STATE.md", "error",
+                f"active_features cita {fid} mas nenhum arquivo "
+                f"F-NNNN-*.md existe em manifest/features/ ou archive/",
+            ))
+
+    for did in state_fm.get("active_decisions") or []:
+        if did not in decision_ids:
+            issues.append(Issue(
+                "STATE.md", "error",
+                f"active_decisions cita {did} mas nenhum arquivo "
+                f"NNNN-*.md existe em decisions/",
+            ))
+
+    return issues
+
+
 def validate_decision(path: Path) -> tuple[dict, list[Issue]]:
     issues: list[Issue] = []
     name = path.name
@@ -560,6 +601,10 @@ def run_audit(write_indices: bool = True,
             all_issues.extend(issues)
             if fm:
                 decisions.append(fm)
+
+    # Cross-check de IDs ativos contra arquivos existentes (ADR-0014).
+    # Roda por default; falhas viram errors e bloqueiam o pre-commit hook.
+    all_issues.extend(validate_state_crosscheck(state_fm, features, decisions))
 
     # Detecção de colisões pré-merge (opcional)
     if check_collisions_against:
