@@ -6,6 +6,8 @@
 # - Índices gerados (regenerados pelo `agent-memory audit` após merge)
 # - STATE.md (foco da sessão é volátil; tentativa de mesclar produz texto
 #   incoerente sem ganho operacional)
+# - .meta.yaml (cli_path e deployed_at variam por máquina/deploy; cada
+#   dev mantém o reflexo do seu próprio último deploy)
 #
 # IMPORTANTE: para que `merge=ours` funcione, é necessário configurar
 # o driver no Git local. O `agent-memory deploy` faz isso automaticamente,
@@ -16,3 +18,4 @@
 .agent-memory/manifest/INDEX.md   merge=ours
 .agent-memory/decisions/INDEX.md  merge=ours
 .agent-memory/STATE.md            merge=ours
+.agent-memory/.meta.yaml          merge=ours

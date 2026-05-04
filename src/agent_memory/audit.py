@@ -3,10 +3,9 @@ audit.py — Auditoria dos quatro artefatos de memória do projeto.
 
 Valida schemas, gera índices e produz relatório de saúde.
 
-Subcomando da CLI: `agent-memory audit`. Os artefatos auditados
-(AGENT.md, STATE.md, manifest/, decisions/) ficam dentro de .agent-memory/
-no project root,
-descoberto via `git rev-parse --show-toplevel`.
+Subcomando da CLI: `agent-memory audit`. AGENT.md fica na raiz do
+project root; STATE.md, manifest/ e decisions/ ficam em .agent-memory/.
+O project root é descoberto via `git rev-parse --show-toplevel`.
 
 Uso:
     agent-memory audit              # relatório + índices
@@ -142,6 +141,23 @@ def parse_frontmatter(path: Path) -> tuple[dict, str]:
         raise ValueError(f"YAML inválido em {path}: {e}") from e
     body = text[end + 5:]
     return fm, body
+
+
+def read_meta(root: Path) -> dict | None:
+    """Lê `.agent-memory/.meta.yaml` no consumidor.
+
+    Retorna o dict YAML ou `None` se o arquivo não existe (consumidor
+    instalado antes de v0.6.0). Schema definido em ADR-0013. Tolerância
+    a ausência é deliberada — chamadores degradam graciosamente.
+    """
+    path = root / ".agent-memory" / ".meta.yaml"
+    if not path.exists():
+        return None
+    yaml = _yaml()
+    try:
+        return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError as e:
+        raise ValueError(f"YAML inválido em {path}: {e}") from e
 
 
 # --- validation ------------------------------------------------------------

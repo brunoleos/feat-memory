@@ -8,7 +8,7 @@ Comportamento por arquivo:
                             deploy; conteúdo do usuário fora do bloco nunca
                             é tocado
     CLAUDE.md            → copia se ausente; deixa quieto se existe
-    STATE.md             → pula se existe (conteúdo é volátil)
+    .agent-memory/STATE.md → pula se existe (conteúdo é volátil)
     skills/              → sempre atualizadas (conteúdo de metodologia)
     .gitattributes       → bloco com sentinelas, refrescado a cada deploy
     .gitignore           → bloco com sentinelas garantindo .agent-memory-deploy/
@@ -172,6 +172,55 @@ def deploy_constitution(target: Path, force: bool, merge: bool) -> None:
         print("  sobrescrito: CLAUDE.md (--force)")
     else:
         print("  pulado: CLAUDE.md (já existe)")
+
+
+META_HEADER = (
+    "# Metadata de instalação do agent-memory.\n"
+    "#\n"
+    "# Regenerado a cada `agent-memory deploy`. Versionado no Git do consumidor\n"
+    "# para que ferramentas externas e a própria CLI (audit, telemetria) saibam\n"
+    "# contra qual versão a estrutura foi produzida.\n"
+    "#\n"
+    "# Schema documentado em ADR-0013. Não edite manualmente — re-rode deploy.\n"
+    "\n"
+)
+
+
+def deploy_meta(target: Path) -> None:
+    """Grava .agent-memory/.meta.yaml com versão, timestamp e cli_path.
+
+    Idempotente por construção: cada deploy sobrescreve o arquivo com os
+    valores correntes. Schema definido em ADR-0013.
+    """
+    print("Metadata (.agent-memory/.meta.yaml):")
+
+    import shutil as _shutil
+    from datetime import datetime, timezone
+
+    import yaml
+
+    from agent_memory import __version__
+
+    cli_path = _shutil.which("agent-memory") or sys.executable
+
+    data = {
+        "schema_version": 1,
+        "version": __version__,
+        "deployed_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "cli_path": str(Path(cli_path).resolve()),
+        "telemetry_enabled": True,
+    }
+
+    agent_memory_dir = target / ".agent-memory"
+    agent_memory_dir.mkdir(parents=True, exist_ok=True)
+    dst = agent_memory_dir / ".meta.yaml"
+
+    existed = dst.exists()
+    body = yaml.safe_dump(data, sort_keys=False, default_flow_style=False)
+    dst.write_text(META_HEADER + body, encoding="utf-8")
+
+    verb = "atualizado" if existed else "criado"
+    print(f"  {verb}: .agent-memory/.meta.yaml (v{__version__})")
 
 
 def deploy_state(target: Path, force: bool) -> None:
@@ -424,6 +473,9 @@ def run(args: argparse.Namespace) -> int:
         shutil.rmtree(deploy_dir, ignore_errors=True)
 
     deploy_constitution(target, args.force, not args.no_merge)
+    print()
+
+    deploy_meta(target)
     print()
 
     deploy_state(target, args.force)
