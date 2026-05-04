@@ -386,10 +386,10 @@ def deploy_skills(target: Path, force: bool) -> None:
 
 
 def create_directories(target: Path) -> None:
-    """Cria estrutura de pastas .agent-memory/manifest/ e .agent-memory/decisions/."""
+    """Cria estrutura de pastas .agent-memory/manifest/, decisions/, checkpoints/."""
     print("Estrutura de pastas:")
     base = target / ".agent-memory"
-    for rel in ("manifest/features", "decisions/proposals"):
+    for rel in ("manifest/features", "decisions/proposals", "checkpoints"):
         full = base / rel
         if full.exists():
             print(f"  já existe: .agent-memory/{rel}/")
