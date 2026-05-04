@@ -56,3 +56,13 @@ def test_no_subcommand_errors():
     with pytest.raises(SystemExit) as exc:
         cli.main([])
     assert exc.value.code != 0
+
+
+def test_version_flag_prints_and_exits(capsys):
+    """`agent-memory --version` imprime versão e sai com 0 sem subcomando."""
+    from agent_memory import __version__
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["--version"])
+    assert exc.value.code == 0
+    out = capsys.readouterr().out
+    assert f"agent-memory {__version__}" in out
