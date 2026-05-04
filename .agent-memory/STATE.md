@@ -1,26 +1,25 @@
 ---
 schema_version: 2
-updated_at: 2026-04-30T17:58:00Z
+updated_at: '2026-05-04T21:41:04+00:00'
 updated_by: claude-opus-4.7
-active_features: [F-0007, F-0009]
-active_decisions: [ADR-0011, ADR-0012]
+active_features:
+- F-0015
+active_decisions:
+- ADR-0018
+- ADR-0019
 blocked_on: null
 ---
 
 ## Current
 
-Implementação de F-0009 (skill-memory-pull-brief) completa: nova skill para briefing pós-pull que examina o diff do pull, identifica mudanças semânticas em features/decisions/bloco sentinela de AGENT.md, cruza com STATE.md local e propõe ajustes. F-0007 atualizado com A4 delegando para pull-brief quando merge toca artefatos de metodologia. Doutrina e templates sincronizados (AGENT.md, README, METHODOLOGY.md, USER_GUIDE.md). Testes passando. Audit limpo.
+F-0015 (state-from-checkpoints) recém-implementada, dogfood acabou de migrar este repo para o modelo append-only
 
 ## Next
 
-Revisão final e commit da v0.5.0 (adição da quarta skill).
+commitar F-0015 em commits granulares e revisar overall do plano
 
 ## Recent
 
-| ts         | agent            | features touched | summary                                                              |
-|------------|------------------|------------------|----------------------------------------------------------------------|
-| 2026-04-30 | claude-opus-4.7  | F-0007, F-0009   | skill-memory-pull-brief para briefing pós-pull; F-0007 delega A4     |
-| 2026-04-30 | claude-opus-4.7  | F-0001, F-0006   | sentinel-block para metodologia em AGENT.md; merge-queue removido    |
-| 2026-04-30 | claude-opus-4.7  | F-0006           | deploy não escreve mais corpo da AGENT.md; só frontmatter; ADR-0011  |
-| 2026-04-30 | claude-opus-4.7  | F-0006           | merge AGENT.md: metodologia sync, projeto preservado; ADR-0010       |
-| 2026-04-29 | claude-opus-4.7  | F-0001..F-0008   | gênese retroativa via skill memory-deploy: AGENT, 9 ADRs, 8 features |
+| ts | author | features tocadas | summary |
+|---|---|---|---|
+| 2026-04-30T17:58:00 | claude-opus-4.7 | F-0007,F-0009 | Implementação de F-0009 (skill-memory-pull-brief) completa: nova skill para b... |

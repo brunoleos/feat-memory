@@ -9,5 +9,6 @@
 | F-0012 | archive-shipped | in_progress | 0.6.0 | ADR-0015 | F-0002,F-0011 |
 | F-0013 | hook-staleness-staged | in_progress | 0.6.0 | ADR-0016 | F-0005,F-0011 |
 | F-0014 | local-telemetry | in_progress | 0.6.0 | ADR-0013,ADR-0017 | F-0010 |
+| F-0015 | state-from-checkpoints | in_progress | 0.6.0 | ADR-0018,ADR-0019 | F-0008,F-0014 |
 
-_Gerado por `agent-memory audit` em 2026-05-04T19:22:44+00:00. Não edite manualmente._
+_Gerado por `agent-memory audit` em 2026-05-04T21:41:54+00:00. Não edite manualmente._
