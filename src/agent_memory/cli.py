@@ -9,7 +9,15 @@ from __future__ import annotations
 import argparse
 import sys
 
-from agent_memory import __version__, archive, audit, deploy, migrate, propose_adr
+from agent_memory import (
+    __version__,
+    archive,
+    audit,
+    check_staleness,
+    deploy,
+    migrate,
+    propose_adr,
+)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -26,6 +34,7 @@ def main(argv: list[str] | None = None) -> int:
     propose_adr.add_subparser(sub)
     migrate.add_subparser(sub)
     archive.add_subparser(sub)
+    check_staleness.add_subparser(sub)
 
     args = parser.parse_args(argv)
     return args.func(args)
