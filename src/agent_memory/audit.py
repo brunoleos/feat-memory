@@ -337,6 +337,63 @@ def validate_state_crosscheck(state_fm: dict,
     return issues
 
 
+# Paths considerados "código" para staleness check. Tudo que NÃO tem
+# um destes prefixos / não é um destes nomes exatos é tratado como
+# código (ADR-0014). Lista deliberadamente conservadora.
+STALENESS_NONCODE_PREFIXES = (".agent-memory/", "tests/", "docs/")
+STALENESS_NONCODE_EXACT = {
+    "README.md", "CHANGELOG.md", "METHODOLOGY.md",
+    "USER_GUIDE.md", "FUTURE_IMPROVEMENTS.md", "LICENSE",
+    ".gitignore", ".gitattributes",
+}
+
+
+def _is_code_path(path: str) -> bool:
+    p = path.replace("\\", "/")
+    if p in STALENESS_NONCODE_EXACT:
+        return False
+    return not any(p.startswith(prefix) for prefix in STALENESS_NONCODE_PREFIXES)
+
+
+def validate_state_freshness(root: Path, days: int = 7) -> list[Issue]:
+    """Detecta sessões que tocaram código sem atualizar STATE.md.
+
+    Opt-in via `agent-memory audit --check-staleness[=N]`. Heurística
+    descrita em ADR-0014. Fail-soft: sem git ou sem commits no período,
+    retorna lista vazia (não promove ausência de histórico a sinal).
+    """
+    try:
+        out = subprocess.check_output(
+            ["git", "log", f"--since={days} days ago",
+             "--name-only", "--pretty=format:"],
+            text=True, stderr=subprocess.DEVNULL, cwd=root,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return []
+
+    touched = {line.strip() for line in out.splitlines() if line.strip()}
+    if not touched:
+        return []
+
+    state_relpath = ".agent-memory/STATE.md"
+    state_was_touched = any(
+        p.replace("\\", "/") == state_relpath for p in touched
+    )
+    if state_was_touched:
+        return []
+
+    code_files = [p for p in touched if _is_code_path(p)]
+    if not code_files:
+        return []
+
+    return [Issue(
+        "STATE.md", "warning",
+        f"sem update há {days}+ dia(s) enquanto código foi commitado "
+        f"({len(code_files)} arquivo(s) tocado(s) — ex: "
+        f"{sorted(code_files)[0]}); considere /memory-debrief",
+    )]
+
+
 def validate_decision(path: Path) -> tuple[dict, list[Issue]]:
     issues: list[Issue] = []
     name = path.name
@@ -572,7 +629,8 @@ def compute_metrics(state_fm: dict, features: list[dict],
 # --- entry points ----------------------------------------------------------
 
 def run_audit(write_indices: bool = True,
-              check_collisions_against: str | None = None) -> dict:
+              check_collisions_against: str | None = None,
+              check_staleness_days: int | None = None) -> dict:
     all_issues: list[Issue] = []
 
     agent_fm, issues = validate_agent(AGENT)
@@ -609,6 +667,10 @@ def run_audit(write_indices: bool = True,
     # Detecção de colisões pré-merge (opcional)
     if check_collisions_against:
         all_issues.extend(check_collisions(check_collisions_against))
+
+    # Staleness check (opt-in via --check-staleness; ADR-0014).
+    if check_staleness_days is not None:
+        all_issues.extend(validate_state_freshness(ROOT, check_staleness_days))
 
     if write_indices:
         if MANIFEST_DIR.exists():
@@ -678,6 +740,10 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
     p.add_argument("--check-collisions", metavar="REF",
                    help="detecta colisões de IDs contra REF "
                    "(ex: origin/main) antes de merge")
+    p.add_argument("--check-staleness", nargs="?", const=7, type=int,
+                   metavar="DAYS",
+                   help="warning se commits dos últimos N dias (default 7) "
+                   "tocaram código sem atualizar STATE.md (ADR-0014)")
     p.set_defaults(func=run)
 
 
@@ -687,6 +753,7 @@ def run(args: argparse.Namespace) -> int:
     result = run_audit(
         write_indices=not args.no_index,
         check_collisions_against=args.check_collisions,
+        check_staleness_days=args.check_staleness,
     )
 
     if args.json:
