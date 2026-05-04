@@ -57,6 +57,14 @@ def main() -> int:
               "Para contornar: git commit --no-verify",
               file=sys.stderr)
 
+    # Aviso soft (sempre exit 0) sobre commits que tocam código sem
+    # atualizar STATE.md. Roda independentemente do returncode do audit:
+    # o sinal é informativo, não condicional. ADR-0016, F-0013.
+    subprocess.run(
+        ["agent-memory", "check-staleness-staged"],
+        cwd=root,
+    )
+
     return result.returncode
 
 
