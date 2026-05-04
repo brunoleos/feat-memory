@@ -16,5 +16,6 @@
 | ADR-0012 | 2026-04-30 | accepted | skills,methodology,post-pull,surface | F-0009 |
 | ADR-0013 | 2026-05-03 | accepted | deploy,meta,version,observability | F-0010,F-0011,F-0014 |
 | ADR-0014 | 2026-05-04 | accepted | audit,schema,validation,freshness,dogfooding | F-0011 |
+| ADR-0015 | 2026-05-04 | accepted | manifest,archive,retention,retomada,dogfooding | F-0012 |
 
-_Gerado por `agent-memory audit` em 2026-05-04T04:22:47+00:00. Não edite manualmente._
+_Gerado por `agent-memory audit` em 2026-05-04T16:32:38+00:00. Não edite manualmente._
