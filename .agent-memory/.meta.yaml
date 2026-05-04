@@ -1,0 +1,13 @@
+# Metadata de instalação do agent-memory.
+#
+# Regenerado a cada `agent-memory deploy`. Versionado no Git do consumidor
+# para que ferramentas externas e a própria CLI (audit, telemetria) saibam
+# contra qual versão a estrutura foi produzida.
+#
+# Schema documentado em ADR-0013. Não edite manualmente — re-rode deploy.
+
+schema_version: 1
+version: 0.5.0
+deployed_at: '2026-05-04T02:53:39+00:00'
+cli_path: C:\Users\brunols\pipx\venvs\agent-memory\Scripts\agent-memory.exe
+telemetry_enabled: true

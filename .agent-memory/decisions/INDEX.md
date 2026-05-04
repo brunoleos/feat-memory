@@ -14,5 +14,6 @@
 | ADR-0010 | 2026-04-30 | superseded | deploy,merge,template,skill | F-0001,F-0006 |
 | ADR-0011 | 2026-04-30 | proposed | deploy,sentinels,scope,skill | F-0001,F-0006 |
 | ADR-0012 | 2026-04-30 | accepted | skills,methodology,post-pull,surface | F-0009 |
+| ADR-0013 | 2026-05-03 | accepted | deploy,meta,version,observability | F-0010,F-0011,F-0014 |
 
-_Gerado por `agent-memory audit` em 2026-05-01T02:41:03+00:00. Não edite manualmente._
+_Gerado por `agent-memory audit` em 2026-05-04T02:53:41+00:00. Não edite manualmente._
