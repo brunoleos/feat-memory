@@ -17,6 +17,7 @@ from agent_memory import (
     deploy,
     migrate,
     propose_adr,
+    telemetry,
 )
 
 
@@ -35,6 +36,7 @@ def main(argv: list[str] | None = None) -> int:
     migrate.add_subparser(sub)
     archive.add_subparser(sub)
     check_staleness.add_subparser(sub)
+    telemetry.add_subparser(sub)
 
     args = parser.parse_args(argv)
     return args.func(args)
