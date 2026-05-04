@@ -84,6 +84,16 @@ Antes de fazer o commit (ou pedir ao usuário para fazê-lo), mostre:
 - Status do ADR, se aplicável (proposto em `.agent-memory/decisions/proposals/` ou finalizado em `.agent-memory/decisions/`)
 - Resultado da auditoria (compliance, drift, cobertura)
 
+### 7. Registre adesão na telemetria local
+
+Após o resumo, invoque (silencioso, falha não bloqueia):
+
+```bash
+agent-memory record debrief_run features=F-NNNN,F-NNNN
+```
+
+Substitua pela lista de IDs efetivamente tocados nesta sessão. A telemetria é local-only (`.agent-memory/.telemetry.jsonl`, gitignored) e opt-out via `.meta.yaml::telemetry_enabled=false` — F-0014, ADR-0017. O sinal alimenta `agent-memory log --summary` para o mantenedor verificar adesão.
+
 ## Notação EARS
 
 Critérios de aceitação no Manifest seguem a notação EARS. Cada critério tem `id`, `pattern`, e os campos exigidos pelo padrão escolhido:

@@ -56,6 +56,16 @@ Mantenha o briefing em até cinco linhas. Detalhes vão por demanda.
 
 Encerre o briefing perguntando se o usuário quer prosseguir a partir do `Next` registrado, ou se tem outra prioridade. Não assuma — o `Next` reflete a última sessão, e a prioridade pode ter mudado.
 
+### 5. Registre adesão na telemetria local
+
+Após o briefing, invoque (silencioso, falha não bloqueia):
+
+```bash
+agent-memory record session_start state_read=true
+```
+
+Use `state_read=false` apenas se você pulou o passo 1 (não chegou a ler `STATE.md`). A telemetria é local-only (`.agent-memory/.telemetry.jsonl`, gitignored) e opt-out via `.meta.yaml::telemetry_enabled=false` — F-0014, ADR-0017. Sem rede, sem agregação central. O sinal serve ao mantenedor checar adesão via `agent-memory log --summary`.
+
 ## Saída esperada
 
 ```
