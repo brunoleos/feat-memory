@@ -18,5 +18,6 @@
 | ADR-0014 | 2026-05-04 | accepted | audit,schema,validation,freshness,dogfooding | F-0011 |
 | ADR-0015 | 2026-05-04 | accepted | manifest,archive,retention,retomada,dogfooding | F-0012 |
 | ADR-0016 | 2026-05-04 | accepted | hooks,audit,ux,fail-open | F-0013 |
+| ADR-0017 | 2026-05-04 | accepted | telemetry,observability,privacy,dogfooding | F-0014 |
 
-_Gerado por `agent-memory audit` em 2026-05-04T17:26:50+00:00. Não edite manualmente._
+_Gerado por `agent-memory audit` em 2026-05-04T19:22:44+00:00. Não edite manualmente._

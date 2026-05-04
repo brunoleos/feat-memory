@@ -8,6 +8,6 @@
 
 schema_version: 1
 version: 0.5.0
-deployed_at: '2026-05-04T17:26:49+00:00'
+deployed_at: '2026-05-04T19:22:44+00:00'
 cli_path: C:\Users\brunols\pipx\venvs\agent-memory\Scripts\agent-memory.exe
 telemetry_enabled: true
