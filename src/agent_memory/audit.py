@@ -86,6 +86,7 @@ CLAUDE: Path = None  # type: ignore[assignment]
 STATE: Path = None  # type: ignore[assignment]
 MANIFEST_DIR: Path = None  # type: ignore[assignment]
 FEATURES_DIR: Path = None  # type: ignore[assignment]
+ARCHIVE_DIR: Path = None  # type: ignore[assignment]
 DECISIONS_DIR: Path = None  # type: ignore[assignment]
 PROPOSALS_DIR: Path = None  # type: ignore[assignment]
 
@@ -93,7 +94,7 @@ PROPOSALS_DIR: Path = None  # type: ignore[assignment]
 def _init_paths() -> None:
     """Resolve ROOT e dependentes a partir do cwd. Idempotente."""
     global ROOT, AGENT, CLAUDE, STATE
-    global MANIFEST_DIR, FEATURES_DIR, DECISIONS_DIR, PROPOSALS_DIR
+    global MANIFEST_DIR, FEATURES_DIR, ARCHIVE_DIR, DECISIONS_DIR, PROPOSALS_DIR
     if ROOT is not None:
         return
     ROOT = find_project_root()
@@ -102,6 +103,7 @@ def _init_paths() -> None:
     STATE = ROOT / ".agent-memory" / "STATE.md"
     MANIFEST_DIR = ROOT / ".agent-memory" / "manifest"
     FEATURES_DIR = MANIFEST_DIR / "features"
+    ARCHIVE_DIR = MANIFEST_DIR / "archive"
     DECISIONS_DIR = ROOT / ".agent-memory" / "decisions"
     PROPOSALS_DIR = DECISIONS_DIR / "proposals"
 
@@ -305,17 +307,12 @@ def validate_state_crosscheck(state_fm: dict,
     `validate_feature`); aqui o foco é "memória mentirosa" — STATE.md
     citando IDs que não têm arquivo correspondente. ADR-0014.
 
-    Para features, busca em `manifest/features/` E `manifest/archive/`
-    (o último previsto por F-0012). Para ADRs, busca apenas em `decisions/`.
+    `features` deve ser a lista combinada de features ativas e
+    arquivadas (run_audit faz a união antes de chamar). Cobertura
+    histórica completa por F-0012.
     """
     issues: list[Issue] = []
     feature_ids = {f.get("id") for f in features if f.get("id")}
-    archive_dir = MANIFEST_DIR / "archive"
-    if archive_dir.exists():
-        for fp in archive_dir.glob("F-*.md"):
-            m = re.match(r"^(F-\d{4})-", fp.name)
-            if m:
-                feature_ids.add(m.group(1))
     decision_ids = {d.get("id") for d in decisions if d.get("id")}
 
     for fid in state_fm.get("active_features") or []:
@@ -505,6 +502,39 @@ def gen_manifest_index(features: list[dict]) -> str:
     return "\n".join(rows) + "\n"
 
 
+def gen_archive_index(features: list[dict]) -> str:
+    """Mesma estrutura de gen_manifest_index, mas para features arquivadas.
+
+    Existência separada (em manifest/archive/INDEX.md) reduz o tamanho
+    do INDEX principal carregado por `memory-bootstrap`. F-0012, ADR-0015.
+    """
+    rows = [
+        "# Índice de features arquivadas", "",
+        "Features `shipped` e fora de `STATE.md::active_features` movidas",
+        "por `agent-memory archive --apply`. IDs continuam resolvíveis pelo",
+        "cross-check; mantenha aqui o registro histórico, sem onerar o INDEX",
+        "principal.", "",
+        "| ID | Nome | Status | Versão | ADRs | Depende |",
+        "|---|---|---|---|---|---|",
+    ]
+    for f in sorted(features, key=lambda x: str(x.get("id", ""))):
+        rows.append(
+            f"| {f.get('id', '?')} "
+            f"| {f.get('name', '?')} "
+            f"| {f.get('status', '?')} "
+            f"| {f.get('version', '—')} "
+            f"| {','.join(f.get('decisions') or []) or '—'} "
+            f"| {','.join(f.get('depends_on') or []) or '—'} |"
+        )
+    rows += [
+        "",
+        f"_Gerado por `agent-memory audit` em "
+        f"{datetime.now(timezone.utc).isoformat(timespec='seconds')}. "
+        f"Não edite manualmente._",
+    ]
+    return "\n".join(rows) + "\n"
+
+
 def gen_decisions_index(decisions: list[dict]) -> str:
     rows = [
         "# Índice de decisões", "",
@@ -650,6 +680,16 @@ def run_audit(write_indices: bool = True,
             if fm:
                 features.append(fm)
 
+    # Features arquivadas (F-0012, ADR-0015) — mesma validação de schema
+    # e drift, mas índice separado em manifest/archive/INDEX.md.
+    archived_features: list[dict] = []
+    if ARCHIVE_DIR.exists():
+        for fp in sorted(ARCHIVE_DIR.glob("F-*.md")):
+            fm, issues = validate_feature(fp)
+            all_issues.extend(issues)
+            if fm:
+                archived_features.append(fm)
+
     decisions: list[dict] = []
     if DECISIONS_DIR.exists():
         for dp in sorted(DECISIONS_DIR.glob("[0-9]*.md")):
@@ -660,9 +700,11 @@ def run_audit(write_indices: bool = True,
             if fm:
                 decisions.append(fm)
 
+    all_features = features + archived_features
+
     # Cross-check de IDs ativos contra arquivos existentes (ADR-0014).
     # Roda por default; falhas viram errors e bloqueiam o pre-commit hook.
-    all_issues.extend(validate_state_crosscheck(state_fm, features, decisions))
+    all_issues.extend(validate_state_crosscheck(state_fm, all_features, decisions))
 
     # Detecção de colisões pré-merge (opcional)
     if check_collisions_against:
@@ -677,12 +719,17 @@ def run_audit(write_indices: bool = True,
             (MANIFEST_DIR / "INDEX.md").write_text(
                 gen_manifest_index(features), encoding="utf-8"
             )
+            if archived_features:
+                ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
+                (ARCHIVE_DIR / "INDEX.md").write_text(
+                    gen_archive_index(archived_features), encoding="utf-8"
+                )
         if DECISIONS_DIR.exists():
             (DECISIONS_DIR / "INDEX.md").write_text(
                 gen_decisions_index(decisions), encoding="utf-8"
             )
 
-    metrics = compute_metrics(state_fm, features, decisions, all_issues)
+    metrics = compute_metrics(state_fm, all_features, decisions, all_issues)
     return {
         "metrics": metrics,
         "issues": [asdict(i) for i in all_issues],

@@ -62,14 +62,12 @@ def test_crosscheck_flags_orphan_decision(audit_with_tmp_root):
     assert "active_decisions" in issues[0].message
 
 
-def test_crosscheck_finds_feature_in_archive(audit_with_tmp_root):
-    """F-0011 A3: archive/ conta como localização válida (preview de F-0012)."""
-    archive_dir = audit_with_tmp_root / ".agent-memory" / "manifest" / "archive"
-    archive_dir.mkdir(parents=True)
-    (archive_dir / "F-0099-old-feature.md").write_text("---\nid: F-0099\n---\n")
-
+def test_crosscheck_resolves_archived_feature_via_merged_list(audit_with_tmp_root):
+    """F-0011 A3 + F-0012: a caller (run_audit) passa active+archived
+    já mergeados; crosscheck só verifica presença na lista recebida."""
     state_fm = {"active_features": ["F-0099"], "active_decisions": []}
-    issues = audit.validate_state_crosscheck(state_fm, [], [])
+    archived = [{"id": "F-0099"}]
+    issues = audit.validate_state_crosscheck(state_fm, archived, [])
     assert issues == []
 
 
