@@ -273,10 +273,16 @@ def deploy_gitattributes(target: Path) -> None:
 
 
 def ensure_gitignore(target: Path) -> None:
-    """Garante que .agent-memory-deploy/ está no .gitignore do target."""
-    print("Gitignore (.agent-memory-deploy/ ignorada):")
+    """Garante que paths transientes/locais estão no .gitignore.
+
+    `.agent-memory-deploy/` — diretório transiente do deploy legado.
+    `.agent-memory/.telemetry.jsonl` — telemetria local opt-out (F-0014,
+    ADR-0017): dado pessoal de adoção do dev, não memória do projeto;
+    versionar distribuiria padrões de uso individual.
+    """
+    print("Gitignore (.agent-memory-deploy/, .telemetry.jsonl ignorados):")
     dst = target / ".gitignore"
-    payload = ".agent-memory-deploy/\n"
+    payload = ".agent-memory-deploy/\n.agent-memory/.telemetry.jsonl\n"
     existing = dst.read_text(encoding="utf-8") if dst.exists() else ""
     new_content, changed = _replace_sentinel_block(existing, payload)
 

@@ -18,4 +18,5 @@ venv/
 
 # >>> agent-memory >>>
 .agent-memory-deploy/
+.agent-memory/.telemetry.jsonl
 # <<< agent-memory <<<
