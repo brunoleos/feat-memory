@@ -17,5 +17,6 @@
 | ADR-0013 | 2026-05-03 | accepted | deploy,meta,version,observability | F-0010,F-0011,F-0014 |
 | ADR-0014 | 2026-05-04 | accepted | audit,schema,validation,freshness,dogfooding | F-0011 |
 | ADR-0015 | 2026-05-04 | accepted | manifest,archive,retention,retomada,dogfooding | F-0012 |
+| ADR-0016 | 2026-05-04 | accepted | hooks,audit,ux,fail-open | F-0013 |
 
-_Gerado por `agent-memory audit` em 2026-05-04T17:07:21+00:00. Não edite manualmente._
+_Gerado por `agent-memory audit` em 2026-05-04T17:26:50+00:00. Não edite manualmente._
