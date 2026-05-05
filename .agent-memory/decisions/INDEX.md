@@ -23,5 +23,6 @@
 | ADR-0019 | 2026-05-04 | accepted | state,checkpoint,schema,migration | F-0015 |
 | ADR-0020 | 2026-05-04 | accepted | hooks,semver,release,fail-open-exception | F-0016 |
 | ADR-0021 | 2026-05-05 | accepted | architecture,separation-of-concerns,refactor,packaging | F-0017 |
+| ADR-0022 | 2026-05-05 | accepted | governance,observability,consumer-notice,soft-warning | F-0018 |
 
-_Gerado por `agent-memory audit` em 2026-05-05T05:41:26+00:00. Não edite manualmente._
+_Gerado por `agent-memory audit` em 2026-05-05T06:09:43+00:00. Não edite manualmente._
