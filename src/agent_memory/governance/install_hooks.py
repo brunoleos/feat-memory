@@ -26,7 +26,7 @@ def install(target: Path) -> int:
     hooks_dst = git_dir / "hooks"
     hooks_dst.mkdir(parents=True, exist_ok=True)
 
-    hooks_src = files("agent_memory") / "data" / "hooks"
+    hooks_src = files("agent_memory.governance") / "data" / "hooks"
 
     installed = 0
     for entry in sorted(hooks_src.iterdir(), key=lambda e: e.name):

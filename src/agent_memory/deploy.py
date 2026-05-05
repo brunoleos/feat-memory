@@ -25,7 +25,7 @@ from importlib.resources import as_file, files
 from importlib.resources.abc import Traversable
 from pathlib import Path
 
-from agent_memory import install_hooks
+from agent_memory.governance import install_hooks
 
 
 SENTINEL_BEGIN = "# >>> agent-memory >>>"
@@ -39,8 +39,19 @@ MD_SENTINEL_END = "<!-- <<< agent-memory <<< -->"
 
 
 def _data_path(*parts: str) -> Traversable:
-    """Retorna um Traversable em src/agent_memory/data/<parts>."""
-    p = files("agent_memory") / "data"
+    """Retorna um Traversable em memory/data/<parts> ou governance/data/<parts>.
+
+    F-0017 / ADR-0021 moveu data/ para os subpacotes correspondentes:
+    - templates/, skills/  → memory/data/
+    - hooks/               → governance/data/
+
+    Esta função roteia automaticamente baseado no primeiro componente.
+    """
+    if parts and parts[0] == "hooks":
+        base = files("agent_memory.governance") / "data"
+    else:
+        base = files("agent_memory.memory") / "data"
+    p = base
     for part in parts:
         p = p / part
     return p

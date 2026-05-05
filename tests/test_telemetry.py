@@ -9,7 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from agent_memory import audit, telemetry
+from agent_memory.governance import audit, telemetry
+from agent_memory.shared import paths as _paths
 
 
 # --- helpers -------------------------------------------------------------
@@ -126,7 +127,7 @@ def test_parse_field_args_skips_invalid():
 
 
 def test_run_record_writes_event_via_args(telemetry_root, monkeypatch):
-    monkeypatch.setattr(audit, "ROOT", None, raising=False)
+    monkeypatch.setattr(_paths, "ROOT", None, raising=False)
     monkeypatch.chdir(telemetry_root)
     args = argparse.Namespace(
         event="session_start",
@@ -234,7 +235,7 @@ def test_summarize_handles_empty():
 
 
 def test_run_log_summary_outputs_human_format(telemetry_root, capsys, monkeypatch):
-    monkeypatch.setattr(audit, "ROOT", None, raising=False)
+    monkeypatch.setattr(_paths, "ROOT", None, raising=False)
     monkeypatch.chdir(telemetry_root)
     telemetry.record(telemetry_root, "session_start", state_read=True)
 
@@ -250,7 +251,7 @@ def test_run_log_summary_outputs_human_format(telemetry_root, capsys, monkeypatc
 
 
 def test_run_log_json_outputs_per_line(telemetry_root, capsys, monkeypatch):
-    monkeypatch.setattr(audit, "ROOT", None, raising=False)
+    monkeypatch.setattr(_paths, "ROOT", None, raising=False)
     monkeypatch.chdir(telemetry_root)
     telemetry.record(telemetry_root, "session_start", state_read=True)
     telemetry.record(telemetry_root, "debrief_run")
@@ -269,7 +270,7 @@ def test_run_log_json_outputs_per_line(telemetry_root, capsys, monkeypatch):
 
 
 def test_run_log_empty_state(telemetry_root, capsys, monkeypatch):
-    monkeypatch.setattr(audit, "ROOT", None, raising=False)
+    monkeypatch.setattr(_paths, "ROOT", None, raising=False)
     monkeypatch.chdir(telemetry_root)
 
     args = argparse.Namespace(

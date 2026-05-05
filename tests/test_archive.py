@@ -8,7 +8,9 @@ from pathlib import Path
 
 import pytest
 
-from agent_memory import archive, audit
+from agent_memory.governance import audit
+from agent_memory.memory import archive
+from agent_memory.shared import paths as _paths
 
 
 # --- helpers -------------------------------------------------------------
@@ -46,20 +48,20 @@ def _args(*, apply: bool = False) -> argparse.Namespace:
 def archive_repo(tmp_project, monkeypatch):
     """Aponta os globals do audit para um tmp repo Git limpo."""
     am = tmp_project / ".agent-memory"
-    monkeypatch.setattr(audit, "ROOT", tmp_project, raising=False)
-    monkeypatch.setattr(audit, "AGENT", tmp_project / "AGENT.md", raising=False)
-    monkeypatch.setattr(audit, "CLAUDE", tmp_project / "CLAUDE.md", raising=False)
-    monkeypatch.setattr(audit, "STATE", am / "STATE.md", raising=False)
-    monkeypatch.setattr(audit, "MANIFEST_DIR", am / "manifest", raising=False)
+    monkeypatch.setattr(_paths, "ROOT", tmp_project, raising=False)
+    monkeypatch.setattr(_paths, "AGENT", tmp_project / "AGENT.md", raising=False)
+    monkeypatch.setattr(_paths, "CLAUDE", tmp_project / "CLAUDE.md", raising=False)
+    monkeypatch.setattr(_paths, "STATE", am / "STATE.md", raising=False)
+    monkeypatch.setattr(_paths, "MANIFEST_DIR", am / "manifest", raising=False)
     monkeypatch.setattr(
-        audit, "FEATURES_DIR", am / "manifest" / "features", raising=False,
+        _paths, "FEATURES_DIR", am / "manifest" / "features", raising=False,
     )
     monkeypatch.setattr(
-        audit, "ARCHIVE_DIR", am / "manifest" / "archive", raising=False,
+        _paths, "ARCHIVE_DIR", am / "manifest" / "archive", raising=False,
     )
-    monkeypatch.setattr(audit, "DECISIONS_DIR", am / "decisions", raising=False)
+    monkeypatch.setattr(_paths, "DECISIONS_DIR", am / "decisions", raising=False)
     monkeypatch.setattr(
-        audit, "PROPOSALS_DIR", am / "decisions" / "proposals", raising=False,
+        _paths, "PROPOSALS_DIR", am / "decisions" / "proposals", raising=False,
     )
     return tmp_project
 
@@ -68,7 +70,7 @@ def archive_repo(tmp_project, monkeypatch):
 
 
 def test_collect_eligible_picks_shipped_not_active(archive_repo):
-    feat_dir = audit.FEATURES_DIR
+    feat_dir = _paths.FEATURES_DIR
     _write_feature(feat_dir, "F-0001", "old", status="shipped")
     _write_feature(feat_dir, "F-0002", "wip", status="in_progress")
     _write_feature(feat_dir, "F-0003", "active-shipped", status="shipped")
@@ -82,7 +84,7 @@ def test_collect_eligible_picks_shipped_not_active(archive_repo):
 
 def test_collect_eligible_active_overrides_shipped(archive_repo):
     """A3: active vence shipped — feature ativa não é elegível."""
-    feat_dir = audit.FEATURES_DIR
+    feat_dir = _paths.FEATURES_DIR
     _write_feature(feat_dir, "F-0001", "active", status="shipped")
     state_fm = {"active_features": ["F-0001"]}
     eligible = archive.collect_eligible(feat_dir, state_fm)
@@ -90,7 +92,7 @@ def test_collect_eligible_active_overrides_shipped(archive_repo):
 
 
 def test_collect_eligible_skips_non_shipped(archive_repo):
-    feat_dir = audit.FEATURES_DIR
+    feat_dir = _paths.FEATURES_DIR
     _write_feature(feat_dir, "F-0001", "wip", status="in_progress")
     _write_feature(feat_dir, "F-0002", "planned", status="planned")
     _write_feature(feat_dir, "F-0003", "deprecated-feat", status="deprecated")
@@ -107,9 +109,9 @@ def test_collect_eligible_handles_missing_dir(tmp_path):
 
 
 def test_run_dry_run_does_not_move(archive_repo, capsys):
-    feat_dir = audit.FEATURES_DIR
-    audit.STATE.parent.mkdir(parents=True, exist_ok=True)
-    audit.STATE.write_text(
+    feat_dir = _paths.FEATURES_DIR
+    _paths.STATE.parent.mkdir(parents=True, exist_ok=True)
+    _paths.STATE.write_text(
         "---\nschema_version: 2\nupdated_at: 2026-05-04T00:00:00Z\n"
         "active_features: []\n---\n", encoding="utf-8",
     )
@@ -122,17 +124,17 @@ def test_run_dry_run_does_not_move(archive_repo, capsys):
     assert "[dry-run]" in out
     assert "F-0001" in out
     assert (feat_dir / "F-0001-old.md").exists()
-    assert not (audit.ARCHIVE_DIR / "F-0001-old.md").exists()
+    assert not (_paths.ARCHIVE_DIR / "F-0001-old.md").exists()
 
 
 def test_run_apply_moves_via_git_mv(archive_repo, capsys):
-    feat_dir = audit.FEATURES_DIR
-    audit.STATE.parent.mkdir(parents=True, exist_ok=True)
-    audit.STATE.write_text(
+    feat_dir = _paths.FEATURES_DIR
+    _paths.STATE.parent.mkdir(parents=True, exist_ok=True)
+    _paths.STATE.write_text(
         "---\nschema_version: 2\nupdated_at: 2026-05-04T00:00:00Z\n"
         "active_features: []\n---\n", encoding="utf-8",
     )
-    audit.AGENT.write_text(
+    _paths.AGENT.write_text(
         "---\nschema_version: 1\nproject: x\nconstraints: []\n"
         "references: {}\nbudgets: {}\n---\n", encoding="utf-8",
     )
@@ -147,84 +149,84 @@ def test_run_apply_moves_via_git_mv(archive_repo, capsys):
     assert rc == 0
     assert "git mv" in out
     assert not feat_path.exists()
-    assert (audit.ARCHIVE_DIR / "F-0001-old.md").exists()
+    assert (_paths.ARCHIVE_DIR / "F-0001-old.md").exists()
 
 
 def test_run_apply_falls_back_to_fs_when_no_git(tmp_path, monkeypatch):
     """A6: git mv falha (não-tracked / sem git) → shutil.move."""
     am = tmp_path / ".agent-memory"
-    monkeypatch.setattr(audit, "ROOT", tmp_path, raising=False)
-    monkeypatch.setattr(audit, "AGENT", tmp_path / "AGENT.md", raising=False)
-    monkeypatch.setattr(audit, "CLAUDE", tmp_path / "CLAUDE.md", raising=False)
-    monkeypatch.setattr(audit, "STATE", am / "STATE.md", raising=False)
-    monkeypatch.setattr(audit, "MANIFEST_DIR", am / "manifest", raising=False)
+    monkeypatch.setattr(_paths, "ROOT", tmp_path, raising=False)
+    monkeypatch.setattr(_paths, "AGENT", tmp_path / "AGENT.md", raising=False)
+    monkeypatch.setattr(_paths, "CLAUDE", tmp_path / "CLAUDE.md", raising=False)
+    monkeypatch.setattr(_paths, "STATE", am / "STATE.md", raising=False)
+    monkeypatch.setattr(_paths, "MANIFEST_DIR", am / "manifest", raising=False)
     monkeypatch.setattr(
-        audit, "FEATURES_DIR", am / "manifest" / "features", raising=False,
+        _paths, "FEATURES_DIR", am / "manifest" / "features", raising=False,
     )
     monkeypatch.setattr(
-        audit, "ARCHIVE_DIR", am / "manifest" / "archive", raising=False,
+        _paths, "ARCHIVE_DIR", am / "manifest" / "archive", raising=False,
     )
-    monkeypatch.setattr(audit, "DECISIONS_DIR", am / "decisions", raising=False)
+    monkeypatch.setattr(_paths, "DECISIONS_DIR", am / "decisions", raising=False)
     monkeypatch.setattr(
-        audit, "PROPOSALS_DIR", am / "decisions" / "proposals", raising=False,
+        _paths, "PROPOSALS_DIR", am / "decisions" / "proposals", raising=False,
     )
 
-    audit.STATE.parent.mkdir(parents=True, exist_ok=True)
-    audit.STATE.write_text(
+    _paths.STATE.parent.mkdir(parents=True, exist_ok=True)
+    _paths.STATE.write_text(
         "---\nschema_version: 2\nupdated_at: 2026-05-04T00:00:00Z\n"
         "active_features: []\n---\n", encoding="utf-8",
     )
-    audit.AGENT.write_text(
+    _paths.AGENT.write_text(
         "---\nschema_version: 1\nproject: x\nconstraints: []\n"
         "references: {}\nbudgets: {}\n---\n", encoding="utf-8",
     )
-    feat_path = _write_feature(audit.FEATURES_DIR, "F-0001", "old",
+    feat_path = _write_feature(_paths.FEATURES_DIR, "F-0001", "old",
                                status="shipped")
 
     rc = archive.run(_args(apply=True))
     assert rc == 0
     assert not feat_path.exists()
-    assert (audit.ARCHIVE_DIR / "F-0001-old.md").exists()
+    assert (_paths.ARCHIVE_DIR / "F-0001-old.md").exists()
 
 
 # --- audit integration ---------------------------------------------------
 
 
 def test_audit_scans_archive_dir(archive_repo):
-    audit.STATE.parent.mkdir(parents=True, exist_ok=True)
-    audit.STATE.write_text(
+    _paths.STATE.parent.mkdir(parents=True, exist_ok=True)
+    _paths.STATE.write_text(
         "---\nschema_version: 2\nupdated_at: 2026-05-04T00:00:00Z\n"
         "active_features: []\n---\n", encoding="utf-8",
     )
-    audit.AGENT.write_text(
+    _paths.AGENT.write_text(
         "---\nschema_version: 1\nproject: x\nconstraints: []\n"
         "references: {}\nbudgets: {}\n---\n", encoding="utf-8",
     )
-    _write_feature(audit.FEATURES_DIR, "F-0001", "active",
+    _write_feature(_paths.FEATURES_DIR, "F-0001", "active",
                    status="in_progress")
-    _write_feature(audit.ARCHIVE_DIR, "F-0099", "old", status="shipped")
+    _write_feature(_paths.ARCHIVE_DIR, "F-0099", "old", status="shipped")
 
     result = audit.run_audit(write_indices=True)
 
-    assert (audit.ARCHIVE_DIR / "INDEX.md").exists()
-    archive_index = (audit.ARCHIVE_DIR / "INDEX.md").read_text(encoding="utf-8")
+    assert (_paths.ARCHIVE_DIR / "INDEX.md").exists()
+    archive_index = (_paths.ARCHIVE_DIR / "INDEX.md").read_text(encoding="utf-8")
     assert "F-0099" in archive_index
-    main_index = (audit.MANIFEST_DIR / "INDEX.md").read_text(encoding="utf-8")
+    main_index = (_paths.MANIFEST_DIR / "INDEX.md").read_text(encoding="utf-8")
     assert "F-0001" in main_index
     assert "F-0099" not in main_index
 
 
 def test_audit_crosscheck_resolves_archived_id(archive_repo):
-    audit.STATE.parent.mkdir(parents=True, exist_ok=True)
-    audit.STATE.write_text(
+    _paths.STATE.parent.mkdir(parents=True, exist_ok=True)
+    _paths.STATE.write_text(
         "---\nschema_version: 2\nupdated_at: 2026-05-04T00:00:00Z\n"
         "active_features: [F-0099]\n---\n", encoding="utf-8",
     )
-    audit.AGENT.write_text(
+    _paths.AGENT.write_text(
         "---\nschema_version: 1\nproject: x\nconstraints: []\n"
         "references: {}\nbudgets: {}\n---\n", encoding="utf-8",
     )
-    _write_feature(audit.ARCHIVE_DIR, "F-0099", "old", status="shipped")
+    _write_feature(_paths.ARCHIVE_DIR, "F-0099", "old", status="shipped")
 
     result = audit.run_audit(write_indices=False)
     errors = [i for i in result["issues"] if i["severity"] == "error"]

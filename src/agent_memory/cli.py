@@ -9,16 +9,17 @@ from __future__ import annotations
 import argparse
 import sys
 
-from agent_memory import (
-    __version__,
+from agent_memory import __version__, deploy
+from agent_memory.memory import (
     archive,
+    checkpoints,
+    migrate,
+    propose_adr,
+)
+from agent_memory.governance import (
     audit,
     check_staleness,
     check_version_bump,
-    checkpoints,
-    deploy,
-    migrate,
-    propose_adr,
     telemetry,
 )
 
@@ -26,21 +27,33 @@ from agent_memory import (
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="agent-memory",
-        description="Persistent memory methodology for LLM agents.",
+        description=(
+            "Persistent memory methodology for LLM agents.\n\n"
+            "Subcomandos agrupados por concern (F-0017, ADR-0021):\n"
+            "  Memória:    deploy, audit, propose-adr, migrate, archive,\n"
+            "              checkpoint, state-rebuild\n"
+            "  Governança: record, log, check-staleness-staged,\n"
+            "              check-version-bump-staged"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
         "--version", action="version", version=f"agent-memory {__version__}",
     )
     sub = parser.add_subparsers(dest="cmd", required=True)
+
+    # Subcomandos de memória (artefatos canônicos, ciclo de vida)
     deploy.add_subparser(sub)
     audit.add_subparser(sub)
     propose_adr.add_subparser(sub)
     migrate.add_subparser(sub)
     archive.add_subparser(sub)
+    checkpoints.add_subparser(sub)
+
+    # Subcomandos de governança (telemetria, hooks)
     check_staleness.add_subparser(sub)
     check_version_bump.add_subparser(sub)
     telemetry.add_subparser(sub)
-    checkpoints.add_subparser(sub)
 
     args = parser.parse_args(argv)
     return args.func(args)

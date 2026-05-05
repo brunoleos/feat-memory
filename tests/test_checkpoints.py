@@ -10,7 +10,9 @@ from pathlib import Path
 import pytest
 import yaml
 
-from agent_memory import audit, checkpoints, migrate
+from agent_memory.governance import audit
+from agent_memory.memory import checkpoints, migrate
+from agent_memory.shared import paths as _paths
 
 
 # --- helpers -------------------------------------------------------------
@@ -37,7 +39,7 @@ def _seed_meta(root: Path, *, state_view_window: int | None = None) -> None:
 def cp_root(tmp_path, monkeypatch):
     """Tmp project com audit.ROOT apontado e .meta.yaml semeado."""
     _seed_meta(tmp_path)
-    monkeypatch.setattr(audit, "ROOT", tmp_path, raising=False)
+    monkeypatch.setattr(_paths, "ROOT", tmp_path, raising=False)
     return tmp_path
 
 
@@ -232,7 +234,7 @@ def test_render_state_handles_no_checkpoints(cp_root):
 
 def test_render_state_window_from_meta_yaml(tmp_path, monkeypatch):
     _seed_meta(tmp_path, state_view_window=2)
-    monkeypatch.setattr(audit, "ROOT", tmp_path, raising=False)
+    monkeypatch.setattr(_paths, "ROOT", tmp_path, raising=False)
 
     fixed1 = datetime(2026, 5, 4, 10, 0, 0, tzinfo=timezone.utc)
     fixed2 = datetime(2026, 5, 4, 11, 0, 0, tzinfo=timezone.utc)
@@ -267,7 +269,7 @@ def test_write_state_overwrites_state_md(cp_root):
 
 
 def test_run_checkpoint_appends_and_renders(cp_root, monkeypatch, capsys):
-    monkeypatch.setattr(audit, "ROOT", cp_root, raising=False)
+    monkeypatch.setattr(_paths, "ROOT", cp_root, raising=False)
     args = argparse.Namespace(
         summary="test sess",
         current="doing it",
@@ -292,7 +294,7 @@ def test_run_checkpoint_appends_and_renders(cp_root, monkeypatch, capsys):
 
 
 def test_run_state_rebuild_without_checkpoints_errors(cp_root, monkeypatch, capsys):
-    monkeypatch.setattr(audit, "ROOT", cp_root, raising=False)
+    monkeypatch.setattr(_paths, "ROOT", cp_root, raising=False)
     rc = checkpoints.run_state_rebuild(argparse.Namespace())
     assert rc == 1
     err = capsys.readouterr().err
@@ -300,7 +302,7 @@ def test_run_state_rebuild_without_checkpoints_errors(cp_root, monkeypatch, caps
 
 
 def test_run_state_rebuild_regenerates_state(cp_root, monkeypatch, capsys):
-    monkeypatch.setattr(audit, "ROOT", cp_root, raising=False)
+    monkeypatch.setattr(_paths, "ROOT", cp_root, raising=False)
     checkpoints.append_checkpoint(cp_root, summary="x", current="y", author="t")
     state_path = cp_root / ".agent-memory" / "STATE.md"
     # apaga STATE.md para verificar re-render
@@ -340,7 +342,7 @@ def test_migrate_to_checkpoints_creates_initial(tmp_project, monkeypatch):
         encoding="utf-8",
     )
 
-    monkeypatch.setattr(audit, "ROOT", None, raising=False)
+    monkeypatch.setattr(_paths, "ROOT", None, raising=False)
     monkeypatch.chdir(tmp_project)
 
     args = argparse.Namespace(to="checkpoints", limit=100, json=False)
@@ -367,7 +369,7 @@ def test_migrate_to_checkpoints_is_idempotent(tmp_project, monkeypatch, capsys):
         "---\nschema_version: 1\n---\n", encoding="utf-8",
     )
     _seed_meta(tmp_project)
-    monkeypatch.setattr(audit, "ROOT", None, raising=False)
+    monkeypatch.setattr(_paths, "ROOT", None, raising=False)
     monkeypatch.chdir(tmp_project)
 
     args = argparse.Namespace(to="checkpoints", limit=100, json=False)
@@ -382,7 +384,7 @@ def test_migrate_to_checkpoints_without_state_md_errors(tmp_project, monkeypatch
     am = tmp_project / ".agent-memory"
     am.mkdir(parents=True, exist_ok=True)
     _seed_meta(tmp_project)
-    monkeypatch.setattr(audit, "ROOT", None, raising=False)
+    monkeypatch.setattr(_paths, "ROOT", None, raising=False)
     monkeypatch.chdir(tmp_project)
 
     args = argparse.Namespace(to="checkpoints", limit=100, json=False)

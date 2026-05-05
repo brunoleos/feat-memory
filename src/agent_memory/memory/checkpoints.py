@@ -23,7 +23,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from agent_memory import audit
+from agent_memory.shared import paths as _paths
+from agent_memory.shared.parsing import parse_frontmatter, read_meta
 
 
 CHECKPOINT_SCHEMA_VERSION = 1
@@ -64,7 +65,7 @@ def _parse_csv(value: str | None) -> list[str]:
 
 
 def _state_view_window(root: Path) -> int:
-    meta = audit.read_meta(root) or {}
+    meta = read_meta(root) or {}
     raw = meta.get("state_view_window", DEFAULT_STATE_VIEW_WINDOW)
     try:
         n = int(raw)
@@ -84,7 +85,7 @@ def list_checkpoints(root: Path) -> list[Path]:
 
 def load_checkpoint(path: Path) -> tuple[dict, str]:
     """Frontmatter + body do checkpoint."""
-    return audit.parse_frontmatter(path)
+    return parse_frontmatter(path)
 
 
 # --- append --------------------------------------------------------------
@@ -333,12 +334,12 @@ def _features_arg(raw: str | None, fallback: object) -> list[str] | None:
 
 
 def run_checkpoint(args: argparse.Namespace) -> int:
-    audit._init_paths()
+    _paths._init_paths()
     features = _features_arg(args.features, None) if args.features is not None else None
     decisions = _parse_csv(args.decisions) if args.decisions is not None else None
 
     cp_path = append_checkpoint(
-        audit.ROOT,
+        _paths.ROOT,
         summary=args.summary,
         current=args.current,
         next_=args.next_,
@@ -347,17 +348,17 @@ def run_checkpoint(args: argparse.Namespace) -> int:
         blocked_on=args.blocked_on,
         author=args.author,
     )
-    state_path = write_state(audit.ROOT)
-    rel_cp = cp_path.relative_to(audit.ROOT)
-    rel_st = state_path.relative_to(audit.ROOT)
+    state_path = write_state(_paths.ROOT)
+    rel_cp = cp_path.relative_to(_paths.ROOT)
+    rel_st = state_path.relative_to(_paths.ROOT)
     print(f"✓ checkpoint gravado: {rel_cp}")
     print(f"✓ STATE.md regerado:  {rel_st}")
     return 0
 
 
 def run_state_rebuild(args: argparse.Namespace) -> int:
-    audit._init_paths()
-    checkpoints = list_checkpoints(audit.ROOT)
+    _paths._init_paths()
+    checkpoints = list_checkpoints(_paths.ROOT)
     if not checkpoints:
         print("Nenhum checkpoint encontrado em .agent-memory/checkpoints/.",
               file=sys.stderr)
@@ -366,7 +367,7 @@ def run_state_rebuild(args: argparse.Namespace) -> int:
         print("ou `agent-memory migrate --to=checkpoints` para migrar de STATE.md legado.",
               file=sys.stderr)
         return 1
-    state_path = write_state(audit.ROOT)
-    rel_st = state_path.relative_to(audit.ROOT)
+    state_path = write_state(_paths.ROOT)
+    rel_st = state_path.relative_to(_paths.ROOT)
     print(f"✓ STATE.md regerado a partir de {len(checkpoints)} checkpoint(s): {rel_st}")
     return 0

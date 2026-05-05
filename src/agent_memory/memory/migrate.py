@@ -35,16 +35,18 @@ def _run_to_checkpoints() -> int:
     sem mexer. Não-destrutivo: o STATE.md original é preservado (regerado
     com mesmo conteúdo, agora derivado do checkpoint). ADR-0019.
     """
-    from agent_memory import audit, checkpoints as cp
+    from agent_memory.shared import paths as _paths
+    from agent_memory.shared.parsing import parse_frontmatter
+    from agent_memory.memory import checkpoints as cp
 
-    audit._init_paths()
-    cp_dir = cp._checkpoints_dir(audit.ROOT)
+    _paths._init_paths()
+    cp_dir = cp._checkpoints_dir(_paths.ROOT)
     if cp_dir.exists() and any(cp_dir.glob("*.md")):
         print("Checkpoints já existem em .agent-memory/checkpoints/. "
               "Migração é idempotente — nada a fazer.")
         return 0
 
-    state_path = cp._state_path(audit.ROOT)
+    state_path = cp._state_path(_paths.ROOT)
     if not state_path.exists():
         print("STATE.md não existe em .agent-memory/. "
               "Crie um com `agent-memory deploy` ou rode "
@@ -53,7 +55,7 @@ def _run_to_checkpoints() -> int:
         return 1
 
     try:
-        fm, body = audit.parse_frontmatter(state_path)
+        fm, body = parse_frontmatter(state_path)
     except ValueError as e:
         print(f"ERRO ao ler STATE.md: {e}", file=sys.stderr)
         return 1
@@ -75,7 +77,7 @@ def _run_to_checkpoints() -> int:
             now = None
 
     cp_path = cp.append_checkpoint(
-        audit.ROOT,
+        _paths.ROOT,
         summary=summary,
         current=current,
         next_=next_,
@@ -86,10 +88,10 @@ def _run_to_checkpoints() -> int:
         body=f"_(corpo preservado do STATE.md legado durante migração)_\n\n{body.strip()}\n",
         now=now,
     )
-    state_new = cp.write_state(audit.ROOT)
+    state_new = cp.write_state(_paths.ROOT)
 
-    rel_cp = cp_path.relative_to(audit.ROOT)
-    rel_st = state_new.relative_to(audit.ROOT)
+    rel_cp = cp_path.relative_to(_paths.ROOT)
+    rel_st = state_new.relative_to(_paths.ROOT)
     print("✓ migração concluída.")
     print(f"  checkpoint inicial: {rel_cp}")
     print(f"  STATE.md regerado:  {rel_st}")

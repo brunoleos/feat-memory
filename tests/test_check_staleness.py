@@ -8,7 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from agent_memory import audit, check_staleness
+from agent_memory.governance import audit, check_staleness
+from agent_memory.shared import paths as _paths
 
 
 # --- helpers -------------------------------------------------------------
@@ -69,7 +70,7 @@ def test_staged_warning_silent_when_not_a_git_repo(tmp_path):
 
 def test_run_always_exits_zero_with_warning(tmp_project, capsys, monkeypatch):
     """A4: soft sempre — exit 0 mesmo emitindo aviso."""
-    monkeypatch.setattr(audit, "ROOT", None, raising=False)
+    monkeypatch.setattr(_paths, "ROOT", None, raising=False)
     monkeypatch.chdir(tmp_project)
     _stage(tmp_project, {"src/foo.py": "x = 1\n"})
 
@@ -82,7 +83,7 @@ def test_run_always_exits_zero_with_warning(tmp_project, capsys, monkeypatch):
 
 
 def test_run_exits_zero_silent_when_clean(tmp_project, capsys, monkeypatch):
-    monkeypatch.setattr(audit, "ROOT", None, raising=False)
+    monkeypatch.setattr(_paths, "ROOT", None, raising=False)
     monkeypatch.chdir(tmp_project)
     _stage(tmp_project, {".agent-memory/STATE.md": "# state\n"})
 

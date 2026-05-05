@@ -17,7 +17,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-from agent_memory import audit
+from agent_memory.shared import paths as _paths
+from agent_memory.governance import audit
 
 
 WARNING_TEXT = (
@@ -70,8 +71,8 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
-    audit._init_paths()
-    text = staged_warning(audit.ROOT)
+    _paths._init_paths()
+    text = staged_warning(_paths.ROOT)
     if text is None:
         return 0
 

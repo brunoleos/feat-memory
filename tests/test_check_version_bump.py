@@ -8,7 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from agent_memory import audit, check_version_bump
+from agent_memory.governance import audit, check_version_bump
+from agent_memory.shared import paths as _paths
 
 
 # --- helpers -------------------------------------------------------------
@@ -100,7 +101,7 @@ def test_run_exits_one_when_bump_needed(tmp_project, capsys, monkeypatch):
     subprocess.run(["git", "commit", "-q", "-m", "seed"],
                    cwd=tmp_project, check=True)
 
-    monkeypatch.setattr(audit, "ROOT", None, raising=False)
+    monkeypatch.setattr(_paths, "ROOT", None, raising=False)
     monkeypatch.chdir(tmp_project)
     _stage(tmp_project, {"src/foo.py": "x = 1\n"})
 
@@ -119,7 +120,7 @@ def test_run_exits_zero_silent_when_clean(tmp_project, capsys, monkeypatch):
     subprocess.run(["git", "add", "VERSION"], cwd=tmp_project, check=True)
     subprocess.run(["git", "commit", "-q", "-m", "seed"],
                    cwd=tmp_project, check=True)
-    monkeypatch.setattr(audit, "ROOT", None, raising=False)
+    monkeypatch.setattr(_paths, "ROOT", None, raising=False)
     monkeypatch.chdir(tmp_project)
     _stage(tmp_project, {
         "src/foo.py": "x = 1\n",
@@ -135,7 +136,7 @@ def test_run_exits_zero_silent_when_clean(tmp_project, capsys, monkeypatch):
 
 def test_run_exits_zero_when_no_version_file(tmp_project, capsys, monkeypatch):
     """A4: sem VERSION na raiz, é no-op silencioso."""
-    monkeypatch.setattr(audit, "ROOT", None, raising=False)
+    monkeypatch.setattr(_paths, "ROOT", None, raising=False)
     monkeypatch.chdir(tmp_project)
     _stage(tmp_project, {"src/foo.py": "x = 1\n"})
 

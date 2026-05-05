@@ -20,7 +20,8 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from agent_memory import audit
+from agent_memory.shared import paths as _paths
+from agent_memory.shared.parsing import read_meta
 
 
 TELEMETRY_FILENAME = ".telemetry.jsonl"
@@ -73,7 +74,7 @@ def record(root: Path, event: str, **fields) -> None:
     com header de privacidade se ainda não existe.
     """
     try:
-        meta = audit.read_meta(root) or {}
+        meta = read_meta(root) or {}
         if meta.get("telemetry_enabled") is False:
             return
 
@@ -212,15 +213,15 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
 
 
 def run_record(args: argparse.Namespace) -> int:
-    audit._init_paths()
+    _paths._init_paths()
     fields = _parse_field_args(getattr(args, "fields", []) or [])
-    record(audit.ROOT, args.event, **fields)
+    record(_paths.ROOT, args.event, **fields)
     return 0
 
 
 def run_log(args: argparse.Namespace) -> int:
-    audit._init_paths()
-    events = _read_events(audit.ROOT)
+    _paths._init_paths()
+    events = _read_events(_paths.ROOT)
     events = _filter_events(events, _parse_since(args.since), args.event)
 
     if args.summary:

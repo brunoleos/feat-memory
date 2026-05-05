@@ -7,29 +7,31 @@ from pathlib import Path
 
 import pytest
 
-from agent_memory import audit
+from agent_memory.governance import audit
+from agent_memory.shared import paths as _paths
 
 
 @pytest.fixture
 def audit_with_tmp_root(tmp_project, monkeypatch):
-    """Aponta os globals de path do módulo audit para tmp_project.
+    """Aponta os globals de path para tmp_project.
 
-    O audit guarda ROOT/MANIFEST_DIR/etc como módulo-globals porque o
-    fluxo normal é via CLI (um processo, um project). Para testes
+    Os paths globais (ROOT/MANIFEST_DIR/etc) vivem em
+    `agent_memory.shared.paths` (F-0017, ADR-0021). Para testes
     unitários precisamos resetar entre execuções.
     """
-    monkeypatch.setattr(audit, "ROOT", tmp_project, raising=False)
-    monkeypatch.setattr(audit, "AGENT", tmp_project / "AGENT.md", raising=False)
-    monkeypatch.setattr(audit, "CLAUDE", tmp_project / "CLAUDE.md", raising=False)
+    monkeypatch.setattr(_paths, "ROOT", tmp_project, raising=False)
+    monkeypatch.setattr(_paths, "AGENT", tmp_project / "AGENT.md", raising=False)
+    monkeypatch.setattr(_paths, "CLAUDE", tmp_project / "CLAUDE.md", raising=False)
     monkeypatch.setattr(
-        audit, "STATE", tmp_project / ".agent-memory" / "STATE.md", raising=False,
+        _paths, "STATE", tmp_project / ".agent-memory" / "STATE.md", raising=False,
     )
     manifest_dir = tmp_project / ".agent-memory" / "manifest"
     decisions_dir = tmp_project / ".agent-memory" / "decisions"
-    monkeypatch.setattr(audit, "MANIFEST_DIR", manifest_dir, raising=False)
-    monkeypatch.setattr(audit, "FEATURES_DIR", manifest_dir / "features", raising=False)
-    monkeypatch.setattr(audit, "DECISIONS_DIR", decisions_dir, raising=False)
-    monkeypatch.setattr(audit, "PROPOSALS_DIR", decisions_dir / "proposals", raising=False)
+    monkeypatch.setattr(_paths, "MANIFEST_DIR", manifest_dir, raising=False)
+    monkeypatch.setattr(_paths, "FEATURES_DIR", manifest_dir / "features", raising=False)
+    monkeypatch.setattr(_paths, "ARCHIVE_DIR", manifest_dir / "archive", raising=False)
+    monkeypatch.setattr(_paths, "DECISIONS_DIR", decisions_dir, raising=False)
+    monkeypatch.setattr(_paths, "PROPOSALS_DIR", decisions_dir / "proposals", raising=False)
     return tmp_project
 
 

@@ -21,7 +21,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-from agent_memory import audit
+from agent_memory.shared import paths as _paths
+from agent_memory.governance import audit
 
 
 VERSION_FILE = "VERSION"
@@ -81,8 +82,8 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
-    audit._init_paths()
-    if not needs_bump(audit.ROOT):
+    _paths._init_paths()
+    if not needs_bump(_paths.ROOT):
         return 0
 
     if sys.stderr.isatty():

@@ -6,6 +6,30 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto ader
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-05-05
+
+Refactor arquitetural: separação completa entre **memória de agente** e **governança** em três subpacotes hierarquicamente desacoplados (`shared`, `memory`, `governance`). Sem mudança de comportamento observável — mesmo CLI, mesmos subcomandos, mesmo hook. A separação vive na estrutura de código e no `--help` agrupado por categoria.
+
+### Mudado
+
+**BREAKING** (interno, para consumidores que importavam módulos diretamente). O pacote `agent_memory` agora expõe três subpacotes públicos:
+
+- `agent_memory.shared.{paths, parsing}` — utilitários sem dependências do projeto (lazy-init de paths, parse_frontmatter, read_meta).
+- `agent_memory.memory.{schemas, indexing, archive, checkpoints, propose_adr, migrate}` — artefatos canônicos da metodologia, validação de schema, geração de INDEX, ciclo de vida.
+- `agent_memory.governance.{audit, telemetry, check_staleness, check_version_bump, install_hooks}` — enforcement, métricas, telemetria, hooks.
+
+Regra de dependência hierárquica: `shared ⇐ memory ⇐ governance`. **Memória nunca importa governança** — é o invariante que torna `deploy --no-hooks` uma operação puramente memória. Verificável mecanicamente.
+
+Templates e skills migraram para `src/agent_memory/memory/data/`; hooks para `src/agent_memory/governance/data/`. `deploy.py` resolve automaticamente via `_data_path` baseado no primeiro componente do path solicitado.
+
+CLI mesmo binário (`agent-memory`), mesmos subcomandos. O `--help` agora descreve subcomandos agrupados por categoria (Memória / Governança) na descrição do parser raiz.
+
+ADR-0021 documenta a política. F-0017 declara o invariante e os critérios de aceitação.
+
+### Adicionado
+
+**F-0017 (memory-governance-split) + ADR-0021.** Separação arquitetural acima.
+
 ## [0.6.0] - 2026-05-04
 
 Sete features novas (F-0010..F-0016) cobrindo lacunas onde o ritual da metodologia ainda dependia de boa vontade do agente. Sete ADRs novos (ADR-0013..ADR-0020) registram as decisões. Conjunto entregue em uma sessão intensiva, dogfooded na própria estrutura deste repo (7 features iniciais arquivadas para `manifest/archive/`, STATE.md migrado para o modelo de checkpoints append-only).

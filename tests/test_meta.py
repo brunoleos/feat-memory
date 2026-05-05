@@ -7,7 +7,8 @@ import argparse
 import pytest
 import yaml
 
-from agent_memory import __version__, audit, deploy
+from agent_memory import __version__, deploy
+from agent_memory.governance import audit
 
 
 def _args(target):
