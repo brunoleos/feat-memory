@@ -6,6 +6,34 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto ader
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-05-04
+
+Sete features novas (F-0010..F-0016) cobrindo lacunas onde o ritual da metodologia ainda dependia de boa vontade do agente. Sete ADRs novos (ADR-0013..ADR-0020) registram as decisões. Conjunto entregue em uma sessão intensiva, dogfooded na própria estrutura deste repo (7 features iniciais arquivadas para `manifest/archive/`, STATE.md migrado para o modelo de checkpoints append-only).
+
+### Adicionado
+
+**F-0010 (version-meta) + ADR-0013.** Flag `--version` no parser raiz (`agent-memory --version`) e gravação de `.agent-memory/.meta.yaml` no consumidor a cada deploy, registrando `version`, `deployed_at`, `cli_path` e `telemetry_enabled`. Habilita audit reportar contra versão e telemetria anotar eventos com a versão real. `audit.read_meta(root)` é o helper compartilhado, tolerante a ausência (consumidores pré-v0.6).
+
+**F-0011 (audit-state-crosscheck) + ADR-0014.** Cross-check (hard, default-on) que verifica se cada `F-NNNN` em `STATE.md::active_features` tem arquivo correspondente em `manifest/features/` ou `manifest/archive/`, e cada `ADR-NNNN` em `active_decisions` tem arquivo em `decisions/`. Falhas viram errors que bloqueiam o pre-commit hook — captura "memória mentirosa" antes que o agente confie em IDs órfãos. Plus: `agent-memory audit --check-staleness[=N]` (soft, opt-in) emite warning se commits dos últimos N dias tocaram código sem atualizar STATE.md.
+
+**F-0012 (archive-shipped) + ADR-0015.** Novo subcomando `agent-memory archive [--apply]` move features `shipped` (e fora de `STATE.md::active_features`) para `.agent-memory/manifest/archive/` via `git mv` (fallback `shutil.move`). Reduz o orçamento de retomada que `memory-bootstrap` carrega. Default dry-run para evitar movimentação acidental. ADRs nunca são arquivados (registro histórico imutável). Audit valida e gera INDEX separado para o archive.
+
+**F-0013 (hook-staleness-staged) + ADR-0016.** Novo subcomando `agent-memory check-staleness-staged` invocado pelo pre-commit hook após o audit. Inspeciona `git diff --cached --name-only` e emite warning amarelo na stderr (sempre exit 0, soft) quando o commit toca código sem incluir `.agent-memory/STATE.md`. Captura debrief esquecido no momento de máxima alavancagem.
+
+**F-0014 (local-telemetry) + ADR-0017.** `agent-memory record EVENT [k=v ...]` anexa eventos JSONL em `.agent-memory/.telemetry.jsonl` (gitignored). `agent-memory log [--since 7d] [--summary]` lê e agrega; `--summary` deriva taxa de adesão (`session_start` com `state_read=true` / total). Default ligado, kill switch via `.meta.yaml::telemetry_enabled=false`. Skills `memory-bootstrap` e `memory-debrief` atualizadas para invocar `agent-memory record` ao final dos rituais. 100% local, nunca enviado pela rede.
+
+**F-0015 (state-from-checkpoints) + ADR-0018 + ADR-0019.** Inverte o modelo de `STATE.md`: deixa de ser autorado em-place, vira view derivada de checkpoints append-only em `.agent-memory/checkpoints/YYYY-MM-DD-HHMMSS.md`. Cada sessão grava um arquivo imutável; `STATE.md` é regerado pelos N últimos (window configurável via `.meta.yaml::state_view_window`, default 1). `memory-bootstrap` continua lendo o mesmo arquivo, mesmo schema (Liskov-safe). Reescrita destrutiva fica impossível por construção. Comandos novos: `agent-memory checkpoint --summary "..."`, `agent-memory state-rebuild` (recovery), `agent-memory migrate --to=checkpoints` (migração não-destrutiva e idempotente do STATE.md legado). Skill `memory-debrief` reescrita para invocar `checkpoint`.
+
+**F-0016 (check-version-bump) + ADR-0020.** Novo subcomando `agent-memory check-version-bump-staged` invocado pelo pre-commit hook após `check-staleness-staged`. Bloqueia (hard, exit 1) commits que tocam código sem incluir `VERSION` no staging. Auto opt-in: no-op em projetos sem arquivo `VERSION` na raiz. Bypass deliberado via `git commit --no-verify`. Exceção justificada à fail-open de ADR-0008 — soft tornaria a versão mentirosa silenciosa, quebrando F-0010, F-0014 e F-0018 (em planejamento).
+
+### Mudado
+
+`audit` ganha cross-check de IDs ativos (default-on, hard) e flag `--check-staleness[=N]` (opt-in, soft). Templates `.gitattributes` ganham regras `merge=ours` para `.agent-memory/.meta.yaml` e geração separada de `.agent-memory/manifest/archive/INDEX.md`. Pre-commit hook agora invoca três checks em sequência (`audit`, `check-staleness-staged`, `check-version-bump-staged`).
+
+Skill `memory-debrief` passa a invocar `agent-memory checkpoint` em vez de reescrever `STATE.md` diretamente. Skill `memory-bootstrap` e `memory-debrief` invocam `agent-memory record` ao final para alimentar telemetria de adesão. Templates `.gitignore` ganham `.agent-memory/.telemetry.jsonl` (telemetria é local, nunca versionada). Deploy cria `.agent-memory/checkpoints/.gitkeep` na inicialização.
+
+`compute_metrics` em audit conta features ativas e arquivadas no denominador de cobertura, refletindo a separação introduzida por F-0012. INDEX principal lista só ativas (menor, mais rápido para `memory-bootstrap`); archive INDEX lista as arquivadas (discoverability preservada).
+
 ## [0.5.0] - 2026-04-30
 
 ### Adicionado
