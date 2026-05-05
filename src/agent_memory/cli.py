@@ -14,6 +14,7 @@ from agent_memory import (
     archive,
     audit,
     check_staleness,
+    check_version_bump,
     checkpoints,
     deploy,
     migrate,
@@ -37,6 +38,7 @@ def main(argv: list[str] | None = None) -> int:
     migrate.add_subparser(sub)
     archive.add_subparser(sub)
     check_staleness.add_subparser(sub)
+    check_version_bump.add_subparser(sub)
     telemetry.add_subparser(sub)
     checkpoints.add_subparser(sub)
 

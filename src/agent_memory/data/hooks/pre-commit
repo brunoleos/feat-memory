@@ -65,7 +65,14 @@ def main() -> int:
         cwd=root,
     )
 
-    return result.returncode
+    # Guard hard (exit 1) que bloqueia commits tocando código sem bumpar
+    # VERSION. No-op em projetos sem arquivo VERSION na raiz.
+    bump_check = subprocess.run(
+        ["agent-memory", "check-version-bump-staged"],
+        cwd=root,
+    )
+
+    return result.returncode or bump_check.returncode
 
 
 if __name__ == "__main__":
