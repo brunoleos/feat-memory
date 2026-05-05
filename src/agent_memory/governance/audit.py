@@ -457,6 +457,14 @@ def run(args: argparse.Namespace) -> int:
         print(json.dumps(result, indent=2, default=str))
     else:
         print_report(result)
+        # F-0018: notice soft se consumer está desatualizado em relação ao CLI.
+        # Não muda exit code (ADR-0022 + ADR-0008 fail-open).
+        from agent_memory.governance.version_check import (
+            consumer_version_notice, _print_notice,
+        )
+        notice = consumer_version_notice(_paths.ROOT)
+        if notice:
+            _print_notice(notice)
 
     issues = result["issues"]
     errors = sum(1 for i in issues if i["severity"] == "error")

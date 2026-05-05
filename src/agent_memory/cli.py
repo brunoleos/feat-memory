@@ -21,6 +21,7 @@ from agent_memory.governance import (
     check_staleness,
     check_version_bump,
     telemetry,
+    version_check,
 )
 
 
@@ -50,10 +51,11 @@ def main(argv: list[str] | None = None) -> int:
     archive.add_subparser(sub)
     checkpoints.add_subparser(sub)
 
-    # Subcomandos de governança (telemetria, hooks)
+    # Subcomandos de governança (telemetria, hooks, version-check)
     check_staleness.add_subparser(sub)
     check_version_bump.add_subparser(sub)
     telemetry.add_subparser(sub)
+    version_check.add_subparser(sub)
 
     args = parser.parse_args(argv)
     return args.func(args)

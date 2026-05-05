@@ -6,6 +6,20 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto ader
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-05-05
+
+Notificação ao consumidor quando o CLI está em versão diferente da que produziu sua estrutura. Fecha o loop de feedback que F-0010 (`.meta.yaml::version`) e F-0016 (VERSION-bump-on-code) abriram.
+
+### Adicionado
+
+**F-0018 (consumer-version-notice) + ADR-0022.** Novo módulo `governance/version_check.py` com `consumer_version_notice(root)` que compara `.agent-memory/.meta.yaml::version` a `agent_memory.__version__`. Se diferentes, retorna texto sugerindo `agent-memory deploy .`.
+
+Integração em `agent-memory audit`: após o relatório, imprime o notice na stderr (amarelo com `isatty`, plain em CI). **Não muda o exit code** — soft sempre, ADR-0008 fail-open preservado para o sinal de notificação.
+
+Subcomando standalone `agent-memory version-check`: invoca a função direto, útil para CI/scripts. Imprime o notice ou `✓ agent-memory atualizado (vX.Y.Z)`. Sai com 0 sempre.
+
+Disable via `.agent-memory/.meta.yaml::version_check_enabled: false` (default `true`). Coerente com `telemetry_enabled` de F-0014.
+
 ## [0.7.0] - 2026-05-05
 
 Refactor arquitetural: separação completa entre **memória de agente** e **governança** em três subpacotes hierarquicamente desacoplados (`shared`, `memory`, `governance`). Sem mudança de comportamento observável — mesmo CLI, mesmos subcomandos, mesmo hook. A separação vive na estrutura de código e no `--help` agrupado por categoria.
