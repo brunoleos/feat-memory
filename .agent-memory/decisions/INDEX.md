@@ -21,5 +21,6 @@
 | ADR-0017 | 2026-05-04 | accepted | telemetry,observability,privacy,dogfooding | F-0014 |
 | ADR-0018 | 2026-05-04 | accepted | state,checkpoint,model,retomada,dogfooding | F-0015 |
 | ADR-0019 | 2026-05-04 | accepted | state,checkpoint,schema,migration | F-0015 |
+| ADR-0020 | 2026-05-04 | accepted | hooks,semver,release,fail-open-exception | F-0016 |
 
-_Gerado por `agent-memory audit` em 2026-05-04T21:41:54+00:00. Não edite manualmente._
+_Gerado por `agent-memory audit` em 2026-05-05T03:59:09+00:00. Não edite manualmente._
