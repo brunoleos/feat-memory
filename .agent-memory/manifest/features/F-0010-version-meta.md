@@ -14,7 +14,7 @@ contracts:
   api:
     - src/agent_memory/cli.py::main
     - src/agent_memory/deploy.py::deploy_meta
-    - src/agent_memory/audit.py::read_meta
+    - src/agent_memory/governance/audit.py::read_meta
   tests:
     - tests/test_cli.py
     - tests/test_deploy.py
@@ -65,6 +65,6 @@ Adiciona dois mecanismos complementares para expor a versão do `agent-memory` a
 
 2. **Arquivo `.agent-memory/.meta.yaml`** ([src/agent_memory/deploy.py](src/agent_memory/deploy.py) via nova função `deploy_meta()`): gravado a cada `agent-memory deploy`, contém `schema_version: 1`, `version`, `deployed_at`, `cli_path`, `telemetry_enabled`. Schema definido em ADR-0013.
 
-3. **Helper `read_meta(root)`** ([src/agent_memory/audit.py](src/agent_memory/audit.py)): lê e devolve o dict; retorna `None` se arquivo ausente. Reusado por F-0011 (cross-check) e F-0014 (telemetria).
+3. **Helper `read_meta(root)`** ([src/agent_memory/governance/audit.py](src/agent_memory/governance/audit.py)): lê e devolve o dict; retorna `None` se arquivo ausente. Reusado por F-0011 (cross-check) e F-0014 (telemetria).
 
 O `.meta.yaml` é versionado no Git do consumidor — é metadata de instalação, paralelo a `package.json` ou `pyproject.toml`. Re-deploy sobrescreve o arquivo sem flag adicional (idempotente por construção).

@@ -9,7 +9,7 @@ user_value: >
   Manifest e código, e gera índices automaticamente — produzindo um
   relatório de saúde que orienta manutenção.
 contracts:
-  api: src/agent_memory/audit.py::run
+  api: src/agent_memory/governance/audit.py::run
   tests:
     - tests/test_cli.py
     - tests/test_entrypoint.py
@@ -56,7 +56,7 @@ decisions: [ADR-0002, ADR-0003]
 
 ## Comportamento
 
-Subcomando `agent-memory audit` da CLI, em [src/agent_memory/audit.py](src/agent_memory/audit.py). Descobre o project root via `git rev-parse --show-toplevel` (com fallback para CWD) e valida os quatro artefatos.
+Subcomando `agent-memory audit` da CLI, em [src/agent_memory/governance/audit.py](src/agent_memory/governance/audit.py). Descobre o project root via `git rev-parse --show-toplevel` (com fallback para CWD) e valida os quatro artefatos.
 
 O relatório padrão lista sete indicadores: conformidade de schema, custo de retomada, frescor de estado, cobertura do manifest, drift do manifest, velocity de features `in_progress`, e saúde de decisões (razão de substituição). PyYAML é importado preguiçosamente — `agent-memory --help` não paga o custo de carregá-lo.
 

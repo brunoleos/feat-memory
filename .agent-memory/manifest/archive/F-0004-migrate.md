@@ -9,7 +9,7 @@ user_value: >
   detecta a stack principal, materializando matéria-prima para a gênese
   retroativa conduzida pela skill memory-deploy.
 contracts:
-  api: src/agent_memory/migrate.py::run
+  api: src/agent_memory/memory/migrate.py::run
   tests:
     - tests/test_cli.py
     - tests/test_entrypoint.py
@@ -42,7 +42,7 @@ decisions: []
 
 ## Comportamento
 
-Subcomando `agent-memory migrate` da CLI, em [src/agent_memory/migrate.py](src/agent_memory/migrate.py). Padrões de detecção em mensagens de commit incluem: revert, "instead of", "switched from", "decided to", "replaced X with", "migrated from", "deprecated", "removed X support".
+Subcomando `agent-memory migrate` da CLI, em [src/agent_memory/memory/migrate.py](src/agent_memory/memory/migrate.py). Padrões de detecção em mensagens de commit incluem: revert, "instead of", "switched from", "decided to", "replaced X with", "migrated from", "deprecated", "removed X support".
 
 Stacks detectadas pela presença de manifestos: Python (pyproject, setup.py, requirements, Pipfile), Node.js/TypeScript (package.json, tsconfig.json), Rust (Cargo.toml), Go (go.mod), entre outros.
 

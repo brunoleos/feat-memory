@@ -9,7 +9,7 @@ user_value: >
   diff atual e gera draft de ADR pré-preenchido, reduzindo a barreira
   para registrar decisões importantes.
 contracts:
-  api: src/agent_memory/propose_adr.py::run
+  api: src/agent_memory/memory/propose_adr.py::run
   tests:
     - tests/test_cli.py
     - tests/test_entrypoint.py
@@ -61,7 +61,7 @@ decisions: []
 
 ## Comportamento
 
-Subcomando `agent-memory propose-adr` da CLI, em [src/agent_memory/propose_adr.py](src/agent_memory/propose_adr.py). Drafts vivem em `decisions/proposals/`, subpasta que o `audit` ignora explicitamente para preservar a invariante de imutabilidade dos ADRs reais.
+Subcomando `agent-memory propose-adr` da CLI, em [src/agent_memory/memory/propose_adr.py](src/agent_memory/memory/propose_adr.py). Drafts vivem em `decisions/proposals/`, subpasta que o `audit` ignora explicitamente para preservar a invariante de imutabilidade dos ADRs reais.
 
 A separação entre detecção determinística (heurísticas no código) e redação (humano ou LLM) é deliberada — manter as duas etapas separadas evita gerar ADRs vazios automaticamente quando heurísticas disparam por acidente. Modo `--prompt` é apropriado quando há agente Claude disponível para redigir o draft completo.
 

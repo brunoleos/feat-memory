@@ -9,7 +9,7 @@ user_value: >
   (schema inválido, EARS mal-formado, drift estrito) antes que cheguem
   ao histórico, mantendo a memória sempre auditável.
 contracts:
-  api: src/agent_memory/data/hooks/pre-commit
+  api: src/agent_memory/governance/data/hooks/pre-commit
   tests:
     - tests/test_deploy.py
 acceptance:
@@ -38,6 +38,6 @@ decisions: [ADR-0008]
 
 ## Comportamento
 
-Hook em [src/agent_memory/data/hooks/pre-commit](src/agent_memory/data/hooks/pre-commit), instalado em `<target>/.git/hooks/pre-commit` pelo deploy (F-0001). Como `.git/` não é versionado, cada clone do projeto consumidor precisa rodar `agent-memory deploy` uma vez para instalar o hook.
+Hook em [src/agent_memory/governance/data/hooks/pre-commit](src/agent_memory/governance/data/hooks/pre-commit), instalado em `<target>/.git/hooks/pre-commit` pelo deploy (F-0001). Como `.git/` não é versionado, cada clone do projeto consumidor precisa rodar `agent-memory deploy` uma vez para instalar o hook.
 
 Fail-open quando o binário ausente é decisão deliberada (ADR-0008): hooks que falham por estado do ambiente acabam sendo desinstalados por usuários frustrados. Em CI, a auditoria deve rodar como step explícito separado, não confiando apenas no hook.

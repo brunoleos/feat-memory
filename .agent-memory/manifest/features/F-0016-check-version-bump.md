@@ -13,9 +13,9 @@ user_value: >
   Auto opt-in: no-op em projetos sem arquivo VERSION na raiz.
 contracts:
   api:
-    - src/agent_memory/check_version_bump.py::needs_bump
-    - src/agent_memory/check_version_bump.py::run
-    - src/agent_memory/data/hooks/pre-commit
+    - src/agent_memory/governance/check_version_bump.py::needs_bump
+    - src/agent_memory/governance/check_version_bump.py::run
+    - src/agent_memory/governance/data/hooks/pre-commit
   tests:
     - tests/test_check_version_bump.py
 acceptance:
@@ -76,7 +76,7 @@ decisions: [ADR-0020]
 
 Adiciona um guard hard ao pre-commit hook capturando o cenário onde o commit toca código mas `VERSION` não foi atualizado — sintoma direto de release sem bump.
 
-**Subcomando.** `agent-memory check-version-bump-staged` em [src/agent_memory/check_version_bump.py](src/agent_memory/check_version_bump.py). Lê `git diff --cached --name-only`, classifica cada path com `_is_code_path` (importado de [audit.py](src/agent_memory/audit.py)). Se há paths de código E `VERSION` não está no staging, imprime na stderr (vermelho ANSI quando `isatty`):
+**Subcomando.** `agent-memory check-version-bump-staged` em [src/agent_memory/governance/check_version_bump.py](src/agent_memory/governance/check_version_bump.py). Lê `git diff --cached --name-only`, classifica cada path com `_is_code_path` (importado de [audit.py](src/agent_memory/governance/audit.py)). Se há paths de código E `VERSION` não está no staging, imprime na stderr (vermelho ANSI quando `isatty`):
 
 ```
 agent-memory: commit toca código mas VERSION não foi atualizado.
@@ -91,7 +91,7 @@ Sai com exit 1 (bloqueia o commit).
 
 **Auto opt-in.** Se `VERSION` não existe na raiz, é no-op (exit 0). Projetos que ainda não adotam SemVer estrito não pagam custo. Para ativar, basta criar o arquivo `VERSION` na raiz.
 
-**Hook.** [src/agent_memory/data/hooks/pre-commit](src/agent_memory/data/hooks/pre-commit) ganha invocação após o `check-staleness-staged` existente (F-0013). Propaga via `result.returncode or bump_check.returncode` — qualquer um falhando bloqueia.
+**Hook.** [src/agent_memory/governance/data/hooks/pre-commit](src/agent_memory/governance/data/hooks/pre-commit) ganha invocação após o `check-staleness-staged` existente (F-0013). Propaga via `result.returncode or bump_check.returncode` — qualquer um falhando bloqueia.
 
 **Reuso de F-0011.** Constantes `STALENESS_NONCODE_PREFIXES` e `STALENESS_NONCODE_EXACT` e função `_is_code_path` vivem em audit.py. Esta feature importa de lá — uma única definição de "código" para os três sinais (history-side em F-0011, staged-side em F-0013, version-bump-side em F-0016).
 

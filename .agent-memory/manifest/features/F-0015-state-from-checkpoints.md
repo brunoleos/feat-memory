@@ -13,11 +13,11 @@ user_value: >
   semana?" vira `ls .agent-memory/checkpoints/` em vez de `git log`.
 contracts:
   api:
-    - src/agent_memory/checkpoints.py::run_checkpoint
-    - src/agent_memory/checkpoints.py::run_state_rebuild
-    - src/agent_memory/checkpoints.py::render_state
-    - src/agent_memory/checkpoints.py::append_checkpoint
-    - src/agent_memory/migrate.py::run
+    - src/agent_memory/memory/checkpoints.py::run_checkpoint
+    - src/agent_memory/memory/checkpoints.py::run_state_rebuild
+    - src/agent_memory/memory/checkpoints.py::render_state
+    - src/agent_memory/memory/checkpoints.py::append_checkpoint
+    - src/agent_memory/memory/migrate.py::run
   tests:
     - tests/test_checkpoints.py
 acceptance:
@@ -85,7 +85,7 @@ decisions: [ADR-0018, ADR-0019]
 
 Inverte o modelo de `STATE.md`: deixa de ser fonte da verdade editada em-place, vira view derivada de checkpoints append-only em `.agent-memory/checkpoints/`. ADR-0018 explica o porquê; ADR-0019 fixa o schema dos arquivos e o caminho de migração.
 
-**Comandos novos.** Implementados em [src/agent_memory/checkpoints.py](src/agent_memory/checkpoints.py):
+**Comandos novos.** Implementados em [src/agent_memory/memory/checkpoints.py](src/agent_memory/memory/checkpoints.py):
 
 - `agent-memory checkpoint --summary "..." [--current ...] [--next ...] [--features ...] [--decisions ...] [--blocked-on ...] [--author ...]`: anexa novo checkpoint e regera STATE.md.
 - `agent-memory state-rebuild`: regera STATE.md sem criar checkpoint (recovery).
@@ -99,8 +99,8 @@ Inverte o modelo de `STATE.md`: deixa de ser fonte da verdade editada em-place, 
 
 **Skill atualizada.** [skills/memory-debrief/SKILL.md](skills/memory-debrief/SKILL.md) passo 3 passa a invocar `agent-memory checkpoint --summary '...'` em vez de reescrever STATE.md diretamente. Reescritas destrutivas tornam-se impossíveis por construção.
 
-**Migração.** [src/agent_memory/migrate.py](src/agent_memory/migrate.py) ganha modo `--to=checkpoints`. Não-destrutivo (não apaga STATE.md), idempotente (detecta migração já feita).
+**Migração.** [src/agent_memory/memory/migrate.py](src/agent_memory/memory/migrate.py) ganha modo `--to=checkpoints`. Não-destrutivo (não apaga STATE.md), idempotente (detecta migração já feita).
 
-**Audit.** [src/agent_memory/audit.py](src/agent_memory/audit.py) `validate_state` segue validando shape do frontmatter; nenhuma mudança de contrato (STATE.md gerado tem mesmo shape do STATE.md autorado).
+**Audit.** [src/agent_memory/governance/audit.py](src/agent_memory/governance/audit.py) `validate_state` segue validando shape do frontmatter; nenhuma mudança de contrato (STATE.md gerado tem mesmo shape do STATE.md autorado).
 
 **Deploy.** [src/agent_memory/deploy.py](src/agent_memory/deploy.py) cria `.agent-memory/checkpoints/.gitkeep` na inicialização.

@@ -12,9 +12,9 @@ user_value: >
   F-0011 para coerência entre os dois sinais.
 contracts:
   api:
-    - src/agent_memory/check_staleness.py::run
-    - src/agent_memory/check_staleness.py::staged_warning
-    - src/agent_memory/data/hooks/pre-commit
+    - src/agent_memory/governance/check_staleness.py::run
+    - src/agent_memory/governance/check_staleness.py::staged_warning
+    - src/agent_memory/governance/data/hooks/pre-commit
   tests:
     - tests/test_check_staleness.py
 acceptance:
@@ -64,7 +64,7 @@ decisions: [ADR-0016]
 
 Adiciona um sinal informativo ao pre-commit hook capturando o cenário onde o commit toca código mas STATE.md não foi atualizado — sintoma direto de `/memory-debrief` esquecido.
 
-**Subcomando.** `agent-memory check-staleness-staged` em [src/agent_memory/check_staleness.py](src/agent_memory/check_staleness.py). Lê `git diff --cached --name-only`, classifica cada path com `_is_code_path` (importado de [audit.py](src/agent_memory/audit.py) — mesma heurística que `--check-staleness` de F-0011). Se há paths de código E `.agent-memory/STATE.md` não está no staging, imprime na stderr:
+**Subcomando.** `agent-memory check-staleness-staged` em [src/agent_memory/governance/check_staleness.py](src/agent_memory/governance/check_staleness.py). Lê `git diff --cached --name-only`, classifica cada path com `_is_code_path` (importado de [audit.py](src/agent_memory/governance/audit.py) — mesma heurística que `--check-staleness` de F-0011). Se há paths de código E `.agent-memory/STATE.md` não está no staging, imprime na stderr:
 
 ```
 ⚠ agent-memory: commit toca código sem atualizar STATE.md — considere /memory-debrief
@@ -72,6 +72,6 @@ Adiciona um sinal informativo ao pre-commit hook capturando o cenário onde o co
 
 Cor amarela (ANSI) quando `stderr.isatty()`; plain em CI. Sempre exit 0.
 
-**Hook.** [src/agent_memory/data/hooks/pre-commit](src/agent_memory/data/hooks/pre-commit) ganha invocação adicional após o audit existente. Roda independentemente do returncode do audit (o aviso é informativo, não bloqueio condicional). O hook continua propagando o exit code do audit para falhas hard.
+**Hook.** [src/agent_memory/governance/data/hooks/pre-commit](src/agent_memory/governance/data/hooks/pre-commit) ganha invocação adicional após o audit existente. Roda independentemente do returncode do audit (o aviso é informativo, não bloqueio condicional). O hook continua propagando o exit code do audit para falhas hard.
 
 **Reuso de F-0011.** Constantes `STALENESS_NONCODE_PREFIXES` e `STALENESS_NONCODE_EXACT` e função `_is_code_path` vivem em audit.py. Esta feature importa de lá — uma única definição de "código" para os dois sinais (history-side em F-0011, staged-side em F-0013).

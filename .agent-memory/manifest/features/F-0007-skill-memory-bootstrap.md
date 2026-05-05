@@ -11,7 +11,7 @@ user_value: >
   merge que tocou artefatos da metodologia, delega para memory-pull-brief
   antes do briefing.
 contracts:
-  api: src/agent_memory/data/skills/memory-bootstrap/SKILL.md
+  api: src/agent_memory/memory/data/skills/memory-bootstrap/SKILL.md
 acceptance:
   - id: A1
     pattern: event
@@ -49,4 +49,4 @@ decisions: [ADR-0004, ADR-0012]
 
 ## Comportamento
 
-SKILL.md em [src/agent_memory/data/skills/memory-bootstrap/SKILL.md](src/agent_memory/data/skills/memory-bootstrap/SKILL.md). A skill mais barata em frequência de uso — ativa no início de cada sessão. Eficiência de carga é o objetivo principal: STATE + dois índices cabem em poucos KB e dão ao agente a posição inicial sem reler todo o repositório.
+SKILL.md em [src/agent_memory/memory/data/skills/memory-bootstrap/SKILL.md](src/agent_memory/memory/data/skills/memory-bootstrap/SKILL.md). A skill mais barata em frequência de uso — ativa no início de cada sessão. Eficiência de carga é o objetivo principal: STATE + dois índices cabem em poucos KB e dão ao agente a posição inicial sem reler todo o repositório.

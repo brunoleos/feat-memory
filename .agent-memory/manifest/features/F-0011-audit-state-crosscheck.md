@@ -12,9 +12,9 @@ user_value: >
   warning soft e opt-in via --check-staleness, respeitando ADR-0008.
 contracts:
   api:
-    - src/agent_memory/audit.py::validate_state_crosscheck
-    - src/agent_memory/audit.py::validate_state_freshness
-    - src/agent_memory/audit.py::run_audit
+    - src/agent_memory/governance/audit.py::validate_state_crosscheck
+    - src/agent_memory/governance/audit.py::validate_state_freshness
+    - src/agent_memory/governance/audit.py::run_audit
   tests:
     - tests/test_audit_anti_lying.py
 acceptance:
@@ -69,7 +69,7 @@ decisions: [ADR-0014]
 
 Adiciona duas validações ao `agent-memory audit`, cobrindo as duas formas mais comuns de "memória mentirosa" em STATE.md:
 
-1. **Cross-check de existência (hard, default-on).** Após carregar features e decisions, [audit.run_audit](src/agent_memory/audit.py) chama `validate_state_crosscheck(state_fm, features, decisions)` que verifica se cada `F-NNNN` em `active_features` tem arquivo em `manifest/features/` ou `manifest/archive/`, e cada `ADR-NNNN` em `active_decisions` tem arquivo em `decisions/`. Falhas viram erros que bloqueiam o pre-commit hook.
+1. **Cross-check de existência (hard, default-on).** Após carregar features e decisions, [audit.run_audit](src/agent_memory/governance/audit.py) chama `validate_state_crosscheck(state_fm, features, decisions)` que verifica se cada `F-NNNN` em `active_features` tem arquivo em `manifest/features/` ou `manifest/archive/`, e cada `ADR-NNNN` em `active_decisions` tem arquivo em `decisions/`. Falhas viram erros que bloqueiam o pre-commit hook.
 
 2. **Staleness check (soft, opt-in).** Nova `validate_state_freshness(repo_root, days=7)` é invocada apenas com `agent-memory audit --check-staleness[=N]`. Examina `git log` dos últimos N dias; se commits tocaram código (paths fora de `.agent-memory/`, `tests/`, `docs/`, e fora de docs raiz como `README.md`) e nenhum commit tocou `.agent-memory/STATE.md`, emite warning sugerindo `/memory-debrief`.
 

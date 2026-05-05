@@ -13,9 +13,9 @@ user_value: >
   Default ligado, kill switch em `.meta.yaml::telemetry_enabled=false`.
 contracts:
   api:
-    - src/agent_memory/telemetry.py::record
-    - src/agent_memory/telemetry.py::run_log
-    - src/agent_memory/telemetry.py::run_record
+    - src/agent_memory/governance/telemetry.py::record
+    - src/agent_memory/governance/telemetry.py::run_log
+    - src/agent_memory/governance/telemetry.py::run_record
   tests:
     - tests/test_telemetry.py
 acceptance:
@@ -70,7 +70,7 @@ decisions: [ADR-0013, ADR-0017]
 
 ## Comportamento
 
-Telemetria local opt-out via novo módulo [src/agent_memory/telemetry.py](src/agent_memory/telemetry.py).
+Telemetria local opt-out via novo módulo [src/agent_memory/governance/telemetry.py](src/agent_memory/governance/telemetry.py).
 
 **Gravação.** `agent-memory record <event> [field=value ...]` invoca `telemetry.record(event, **fields)` que lê `.meta.yaml`, respeita `telemetry_enabled: false`, e anexa linha JSON em `.agent-memory/.telemetry.jsonl` com `ts`, `version`, `event` e campos extras. Erros silenciosos.
 
@@ -78,4 +78,4 @@ Telemetria local opt-out via novo módulo [src/agent_memory/telemetry.py](src/ag
 
 **Skills atualizadas.** [skills/memory-bootstrap/SKILL.md](skills/memory-bootstrap/SKILL.md) emite `session_start` com `state_read=true|false`. [skills/memory-debrief/SKILL.md](skills/memory-debrief/SKILL.md) emite `debrief_run` com features tocadas. Acoplamento via shell call (`agent-memory record`), não dependência Python — qualquer agente capaz de invocar shell consegue gravar.
 
-**`.gitignore`.** [src/agent_memory/data/templates/.gitignore](src/agent_memory/data/templates/.gitignore) (novo) declara `.agent-memory/.telemetry.jsonl` ignorado. Atualmente o deploy só garante `.agent-memory-deploy/`; F-0014 estende com a regra de telemetria local. Telemetria é dado pessoal do dev, não memória do projeto.
+**`.gitignore`.** [src/agent_memory/memory/data/templates/.gitignore](src/agent_memory/memory/data/templates/.gitignore) (novo) declara `.agent-memory/.telemetry.jsonl` ignorado. Atualmente o deploy só garante `.agent-memory-deploy/`; F-0014 estende com a regra de telemetria local. Telemetria é dado pessoal do dev, não memória do projeto.

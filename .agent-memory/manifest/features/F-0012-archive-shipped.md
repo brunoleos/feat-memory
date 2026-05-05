@@ -12,10 +12,10 @@ user_value: >
   dry-run para evitar movimentação acidental.
 contracts:
   api:
-    - src/agent_memory/archive.py::run
-    - src/agent_memory/archive.py::collect_eligible
-    - src/agent_memory/audit.py::run_audit
-    - src/agent_memory/audit.py::gen_archive_index
+    - src/agent_memory/memory/archive.py::run
+    - src/agent_memory/memory/archive.py::collect_eligible
+    - src/agent_memory/governance/audit.py::run_audit
+    - src/agent_memory/governance/audit.py::gen_archive_index
   tests:
     - tests/test_archive.py
 acceptance:
@@ -70,7 +70,7 @@ Subcomando `agent-memory archive` move features `shipped` (e fora de `active_fea
 
 **Critério.** `status == "shipped"` E `id ∉ STATE.md::active_features`. As duas condições devem se manter; basta uma falhar para a feature ficar.
 
-**Movimento.** Tenta `git mv` primeiro (preserva blame); fallback `shutil.move` se falhar (projetos sem Git, arquivos não-tracked). Após mover, regenera `manifest/INDEX.md` e `manifest/archive/INDEX.md` chamando `gen_manifest_index` e `gen_archive_index` em [audit.py](src/agent_memory/audit.py).
+**Movimento.** Tenta `git mv` primeiro (preserva blame); fallback `shutil.move` se falhar (projetos sem Git, arquivos não-tracked). Após mover, regenera `manifest/INDEX.md` e `manifest/archive/INDEX.md` chamando `gen_manifest_index` e `gen_archive_index` em [audit.py](src/agent_memory/governance/audit.py).
 
 **Audit consciente do archive.** `run_audit` ganha varredura adicional de `manifest/archive/F-*.md` para validação de schema e drift de contracts. Cross-check de F-0011 já procura em ambos. INDEXes são gerados separadamente.
 
