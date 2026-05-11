@@ -25,4 +25,4 @@
 | ADR-0021 | 2026-05-05 | accepted | architecture,separation-of-concerns,refactor,packaging | F-0017 |
 | ADR-0022 | 2026-05-05 | accepted | governance,observability,consumer-notice,soft-warning | F-0018 |
 
-_Gerado por `agent-memory audit` em 2026-05-05T06:09:43+00:00. Não edite manualmente._
+_Gerado por `agent-memory audit` em 2026-05-05T17:58:13+00:00. Não edite manualmente._

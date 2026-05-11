@@ -13,5 +13,6 @@
 | F-0016 | check-version-bump | in_progress | 0.6.0 | ADR-0020 | F-0005,F-0011 |
 | F-0017 | memory-governance-split | in_progress | 0.7.0 | ADR-0021 | F-0001,F-0002 |
 | F-0018 | consumer-version-notice | in_progress | 0.7.0 | ADR-0022 | F-0010,F-0017 |
+| F-0019 | audit-resumption-budget-warning | in_progress | 0.8.1 | ADR-0014 | F-0010,F-0012 |
 
-_Gerado por `agent-memory audit` em 2026-05-05T06:09:43+00:00. Não edite manualmente._
+_Gerado por `agent-memory audit` em 2026-05-05T17:58:13+00:00. Não edite manualmente._

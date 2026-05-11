@@ -7,7 +7,7 @@
 # Schema documentado em ADR-0013. Não edite manualmente — re-rode deploy.
 
 schema_version: 1
-version: 0.8.0
-deployed_at: '2026-05-05T06:09:34+00:00'
+version: 0.8.1
+deployed_at: '2026-05-05T17:58:13+00:00'
 cli_path: C:\Users\brunols\pipx\venvs\agent-memory\Scripts\agent-memory.exe
 telemetry_enabled: true
