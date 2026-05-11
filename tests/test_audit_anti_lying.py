@@ -31,6 +31,7 @@ def audit_with_tmp_root(tmp_project, monkeypatch):
     monkeypatch.setattr(_paths, "FEATURES_DIR", manifest_dir / "features", raising=False)
     monkeypatch.setattr(_paths, "ARCHIVE_DIR", manifest_dir / "archive", raising=False)
     monkeypatch.setattr(_paths, "DECISIONS_DIR", decisions_dir, raising=False)
+    monkeypatch.setattr(_paths, "SUPERSEDED_DIR", decisions_dir / "superseded", raising=False)
     monkeypatch.setattr(_paths, "PROPOSALS_DIR", decisions_dir / "proposals", raising=False)
     return tmp_project
 

@@ -210,14 +210,13 @@ def detect_signals(stats: dict, files: list[str],
 
 def next_adr_number() -> int:
     nums: list[int] = []
-    for f in DECISIONS_DIR.glob("[0-9]*.md"):
-        if f.parent != DECISIONS_DIR:
+    superseded_dir = DECISIONS_DIR / "superseded"
+    for base in (DECISIONS_DIR, superseded_dir, PROPOSALS_DIR):
+        if not base.exists():
             continue
-        m = re.match(r"^(\d{4})-", f.name)
-        if m:
-            nums.append(int(m.group(1)))
-    if PROPOSALS_DIR.exists():
-        for f in PROPOSALS_DIR.glob("[0-9]*.md"):
+        for f in base.glob("[0-9]*.md"):
+            if f.parent != base:
+                continue
             m = re.match(r"^(\d{4})-", f.name)
             if m:
                 nums.append(int(m.group(1)))

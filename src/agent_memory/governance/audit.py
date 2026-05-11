@@ -40,7 +40,6 @@ from agent_memory.shared import paths as _paths
 from agent_memory.shared.parsing import parse_frontmatter, read_meta
 from agent_memory.memory import indexing
 from agent_memory.memory.schemas import (
-    DEFAULT_RESUMPTION_BUDGET,
     DEFAULT_STATE_BUDGET,
     Issue,
     validate_agent,
@@ -59,7 +58,6 @@ __all__ = [
     "read_meta",
     "validate_state_crosscheck",
     "validate_state_freshness",
-    "validate_resumption_budget",
     "_is_code_path",
     "STALENESS_NONCODE_PREFIXES",
     "STALENESS_NONCODE_EXACT",
@@ -258,14 +256,15 @@ def _resolve_active_feature_paths(state_fm: dict) -> list[Path]:
 def _resolve_active_decision_paths(state_fm: dict) -> list[Path]:
     """Resolve IDs de active_decisions para caminhos de arquivo.
 
-    Busca em DECISIONS_DIR (NNNN-*.md → ADR-NNNN).
+    Busca em DECISIONS_DIR e SUPERSEDED_DIR (NNNN-*.md → ADR-NNNN).
     """
     ids = state_fm.get("active_decisions") or []
     if not ids:
         return []
-    if not _paths.DECISIONS_DIR.exists():
-        return []
-    candidates = list(_paths.DECISIONS_DIR.glob("[0-9]*.md"))
+    candidates: list[Path] = []
+    for d in (_paths.DECISIONS_DIR, _paths.SUPERSEDED_DIR):
+        if d.exists():
+            candidates.extend(p for p in d.glob("[0-9]*.md") if p.parent == d)
     id_set = set(ids)
     result: list[Path] = []
     for p in candidates:
@@ -275,56 +274,9 @@ def _resolve_active_decision_paths(state_fm: dict) -> list[Path]:
     return result
 
 
-def _compute_resumption_cost(state_fm: dict | None = None) -> int:
-    """Soma em bytes os artefatos que o bootstrap do agente carrega.
-
-    Base: AGENTS.md + CLAUDE.md + STATE.md + manifest INDEX + decisions INDEX.
-    Ativo: features e decisions listadas em active_* no STATE.md.
-    Reusado por `compute_metrics` (relatório) e `validate_resumption_budget`
-    (warning quando excede o budget de AGENTS.md::budgets::resumption_max_bytes).
-    """
-    cost = 0
-    for p in (_paths.AGENT, _paths.CLAUDE, _paths.STATE,
-              _paths.MANIFEST_DIR / "INDEX.md",
-              _paths.DECISIONS_DIR / "INDEX.md"):
-        if p.exists():
-            cost += p.stat().st_size
-    if state_fm is not None:
-        for p in _resolve_active_feature_paths(state_fm):
-            if p.exists():
-                cost += p.stat().st_size
-        for p in _resolve_active_decision_paths(state_fm):
-            if p.exists():
-                cost += p.stat().st_size
-    return cost
-
-
-def validate_resumption_budget(cost: int, max_bytes: int) -> list[Issue]:
-    """Emite warning quando o custo de retomada excede o budget (F-0019).
-
-    AGENTS.md::budgets::resumption_max_bytes existe desde v0.1, mas até
-    F-0019 era apenas informativo: `compute_metrics` calculava o custo
-    e o relatório imprimia, sem comparação. Soft (severity=warning)
-    consistente com ADR-0008 e ADR-0014; remediação aponta para
-    `agent-memory archive` (F-0012).
-    """
-    if cost > max_bytes:
-        return [Issue(
-            "AGENTS.md", "warning",
-            f"custo de retomada ({cost:,} bytes) excede budget "
-            f"({max_bytes:,}) — considere arquivar features shipped "
-            f"antigas com 'agent-memory archive' ou reduzir corpo de "
-            f"features",
-        )]
-    return []
-
-
 def compute_metrics(state_fm: dict, features: list[dict],
                     decisions: list[dict], issues: list[Issue]) -> dict:
     errors = sum(1 for i in issues if i.severity == "error")
-
-    # Custo de retomada conta o que o agente carrega no bootstrap.
-    cost = _compute_resumption_cost(state_fm)
 
     freshness = None
     updated = _parse_dt(state_fm.get("updated_at"))
@@ -376,7 +328,6 @@ def compute_metrics(state_fm: dict, features: list[dict],
 
     return {
         "schema_compliance": 1.0 if errors == 0 else 0.0,
-        "resumption_cost_bytes": cost,
         "state_freshness_hours": freshness,
         "manifest_coverage": coverage,
         "manifest_drift": drift,
@@ -411,18 +362,6 @@ def run_audit(write_indices: bool = True,
     state_fm, issues = validate_state(_paths.STATE, max_state)
     all_issues.extend(issues)
 
-    # F-0019: warning quando custo de retomada excede budget. Soft
-    # (não muda exit code) — operador decide se arquiva, reduz corpo
-    # de features ou aumenta o budget em AGENTS.md.
-    max_resumption = (agent_fm.get("budgets") or {}).get(
-        "resumption_max_bytes", DEFAULT_RESUMPTION_BUDGET
-    )
-    all_issues.extend(
-        validate_resumption_budget(
-            _compute_resumption_cost(state_fm), max_resumption,
-        )
-    )
-
     features: list[dict] = []
     if _paths.FEATURES_DIR.exists():
         for fp in sorted(_paths.FEATURES_DIR.glob("F-*.md")):
@@ -450,10 +389,20 @@ def run_audit(write_indices: bool = True,
             if fm:
                 decisions.append(fm)
 
+    # ADRs superseded movidas para decisions/superseded/ (ADR-0023, F-0019).
+    superseded_decisions: list[dict] = []
+    if _paths.SUPERSEDED_DIR.exists():
+        for dp in sorted(_paths.SUPERSEDED_DIR.glob("[0-9]*.md")):
+            fm, issues = validate_decision(dp)
+            all_issues.extend(issues)
+            if fm:
+                superseded_decisions.append(fm)
+
     all_features = features + archived_features
+    all_decisions = decisions + superseded_decisions
 
     # Cross-check de IDs ativos contra arquivos existentes (ADR-0014).
-    all_issues.extend(validate_state_crosscheck(state_fm, all_features, decisions))
+    all_issues.extend(validate_state_crosscheck(state_fm, all_features, all_decisions))
 
     # Detecção de colisões pré-merge (opcional)
     if check_collisions_against:
@@ -465,11 +414,13 @@ def run_audit(write_indices: bool = True,
 
     if write_indices:
         indexing.regenerate_all_indexes(
-            _paths.MANIFEST_DIR, _paths.ARCHIVE_DIR, _paths.DECISIONS_DIR,
-            features, archived_features, decisions,
+            _paths.MANIFEST_DIR, _paths.ARCHIVE_DIR,
+            _paths.DECISIONS_DIR, _paths.SUPERSEDED_DIR,
+            features, archived_features,
+            decisions, superseded_decisions,
         )
 
-    metrics = compute_metrics(state_fm, all_features, decisions, all_issues)
+    metrics = compute_metrics(state_fm, all_features, all_decisions, all_issues)
     return {
         "metrics": metrics,
         "issues": [asdict(i) for i in all_issues],
@@ -483,7 +434,6 @@ def print_report(result: dict) -> None:
     print("=" * 60)
     print(f"Project root:              {_paths.ROOT}")
     print(f"Conformidade de schema:    {m['schema_compliance']:.2f}")
-    print(f"Custo de retomada:         {m['resumption_cost_bytes']:,} bytes")
     fresh = m["state_freshness_hours"]
     fresh_str = f"{fresh} h" if fresh is not None else "—"
     print(f"Frescor de estado:         {fresh_str}")

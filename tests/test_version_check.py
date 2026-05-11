@@ -144,6 +144,7 @@ def test_audit_emits_notice_when_versions_differ(tmp_project, capsys, monkeypatc
     monkeypatch.setattr(_paths, "FEATURES_DIR", am / "manifest" / "features", raising=False)
     monkeypatch.setattr(_paths, "ARCHIVE_DIR", am / "manifest" / "archive", raising=False)
     monkeypatch.setattr(_paths, "DECISIONS_DIR", am / "decisions", raising=False)
+    monkeypatch.setattr(_paths, "SUPERSEDED_DIR", am / "decisions" / "superseded", raising=False)
     monkeypatch.setattr(_paths, "PROPOSALS_DIR", am / "decisions" / "proposals", raising=False)
 
     args = argparse.Namespace(

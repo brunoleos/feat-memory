@@ -10,26 +10,19 @@ related: []
 tags: [skills, ux, methodology]
 ---
 
-# ADR-0004 · Três skills separadas (memory-deploy, memory-bootstrap, memory-debrief)
+# ADR-0004 · Skills separadas por momento (deploy, bootstrap, debrief)
 
 ## Contexto
 
-A metodologia tem três momentos qualitativamente diferentes em que o agente precisa ser orientado: instalar a metodologia em um projeto novo, retomar trabalho no início de uma sessão, e fechar uma unidade de trabalho antes do commit. Cada momento tem checklist própria, riscos próprios de execução errada, e triggers linguísticos próprios na conversa.
-
-A pergunta de design é como expor essa orientação ao agente: uma skill monolítica que cobre tudo, ou skills separadas por momento.
+A metodologia tem três momentos qualitativamente diferentes (instalar, iniciar sessão, fechar unidade de trabalho), cada um com checklist própria e riscos de execução errada distintos. Uma skill monolítica que cobre tudo tem trigger genérico e o agente erra a fase.
 
 ## Decisão
 
-Três skills independentes — `memory-deploy` (adoção inicial), `memory-bootstrap` (início de sessão) e `memory-debrief` (fim de unidade de trabalho). Cada skill tem `description` no frontmatter explicitando os triggers de ativação, e instruções autoritativas no corpo. As skills ficam em `skills/` na raiz do workspace consumidor (deployadas a partir de `src/agent_memory/data/skills/` no pacote) e são carregadas pelo agente sob demanda quando o trigger é detectado.
+Três skills independentes (`memory-deploy`, `memory-bootstrap`, `memory-debrief`), cada uma com `description` declarando triggers de ativação e instruções autoritativas no corpo. Skills curtas tendem a ser invocadas no momento certo; monolíticas tendem a ser ignoradas. Conteúdo de "porquê" vive em METHODOLOGY (fonte canônica); skills só cobrem "como executar" — reduz risco de drift entre elas.
 
-## Consequências
-
-Skills curtas e específicas tendem a ser invocadas no momento certo — o agente reconhece o trigger e dispara a skill apropriada. Cada skill cobre apenas seu fluxo, mantendo o conteúdo digerível para revisão e atualização.
-
-Custo: três arquivos para manter sincronizados quando a metodologia evolui. Mitigação: METHODOLOGY é a fonte de verdade canônica e cobre o "porquê"; as skills cobrem apenas o "como executar" de cada fluxo, reduzindo o risco de drift entre elas.
+(Uma quarta skill `memory-pull-brief` foi adicionada em ADR-0012, mantendo o mesmo princípio.)
 
 ## Alternativas rejeitadas
 
-Uma skill monolítica `memory-methodology` foi rejeitada porque o trigger ficaria genérico demais. O agente teria que decidir internamente qual fase aplicar e geralmente erra — executa debrief no início da sessão, ou bootstrap quando o usuário pediu para instalar do zero. A separação por momento elimina essa decisão.
-
-Nenhuma skill (apenas METHODOLOGY como referência) foi rejeitada porque deixar o agente reconstruir o protocolo a cada interação produz execução inconsistente. Agentes esquecem passos, pulam fases ou inventam variações. As skills funcionam como checklist autoritativa que evita esses desvios.
+- **Skill monolítica `memory-methodology`**: trigger ambíguo; agente erra a fase (executa debrief no início, bootstrap quando o usuário pediu install).
+- **Nenhuma skill, só METHODOLOGY**: agentes reconstroem o protocolo a cada interação, executam inconsistentemente.

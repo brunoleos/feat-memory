@@ -77,19 +77,24 @@ def _move(src: Path, dst: Path, root: Path) -> str:
 
 def _load_features_and_decisions(features_dir: Path,
                                   archive_dir: Path,
-                                  decisions_dir: Path) -> tuple[list[dict],
-                                                                list[dict],
-                                                                list[dict]]:
-    """Carrega frontmatters de features ativas, arquivadas e decisions.
+                                  decisions_dir: Path,
+                                  superseded_dir: Path) -> tuple[list[dict],
+                                                                  list[dict],
+                                                                  list[dict],
+                                                                  list[dict]]:
+    """Carrega frontmatters de features (ativas/arquivadas) e decisions
+    (principal/superseded).
 
     Sem validação — `audit` é quem valida. Aqui só precisamos dos dados
     para alimentar a regeneração de INDEXes pós-move.
     """
-    def _load(d: Path, glob: str) -> list[dict]:
+    def _load(d: Path, glob: str, *, only_direct: bool = False) -> list[dict]:
         out: list[dict] = []
         if not d.exists():
             return out
         for fp in sorted(d.glob(glob)):
+            if only_direct and fp.parent != d:
+                continue
             try:
                 fm, _ = parse_frontmatter(fp)
                 if fm:
@@ -100,8 +105,9 @@ def _load_features_and_decisions(features_dir: Path,
 
     features = _load(features_dir, "F-*.md")
     archived = _load(archive_dir, "F-*.md")
-    decisions = _load(decisions_dir, "[0-9]*.md")
-    return features, archived, decisions
+    decisions = _load(decisions_dir, "[0-9]*.md", only_direct=True)
+    superseded = _load(superseded_dir, "[0-9]*.md", only_direct=True)
+    return features, archived, decisions, superseded
 
 
 def add_subparser(subparsers: argparse._SubParsersAction) -> None:
@@ -155,15 +161,19 @@ def run(args: argparse.Namespace) -> int:
 
     print()
     print("Regenerando índices:")
-    features, archived, decisions = _load_features_and_decisions(
-        _paths.FEATURES_DIR, archive_dir, _paths.DECISIONS_DIR,
+    features, archived, decisions, superseded = _load_features_and_decisions(
+        _paths.FEATURES_DIR, archive_dir,
+        _paths.DECISIONS_DIR, _paths.SUPERSEDED_DIR,
     )
     indexing.regenerate_all_indexes(
-        _paths.MANIFEST_DIR, archive_dir, _paths.DECISIONS_DIR,
-        features, archived, decisions,
+        _paths.MANIFEST_DIR, archive_dir,
+        _paths.DECISIONS_DIR, _paths.SUPERSEDED_DIR,
+        features, archived, decisions, superseded,
     )
     print(f"  manifest/INDEX.md: {len(features)} features ativas")
     print(f"  manifest/archive/INDEX.md: {len(archived)} arquivadas")
     print(f"  decisions/INDEX.md: {len(decisions)} decisões")
+    if superseded:
+        print(f"  decisions/superseded/INDEX.md: {len(superseded)} superseded")
 
     return 0

@@ -35,7 +35,6 @@ EARS_PATTERN_FIELDS: dict[str, set[str]] = {
     "complex":    {"requirement"},
 }
 
-DEFAULT_RESUMPTION_BUDGET = 12288
 DEFAULT_STATE_BUDGET = 4096
 
 

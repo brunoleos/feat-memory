@@ -16,8 +16,10 @@
 #
 #   git config merge.ours.driver true
 
-.agent-memory/manifest/INDEX.md   merge=ours
-.agent-memory/decisions/INDEX.md  merge=ours
-.agent-memory/STATE.md            merge=ours
-.agent-memory/.meta.yaml          merge=ours
+.agent-memory/manifest/INDEX.md             merge=ours
+.agent-memory/manifest/archive/INDEX.md     merge=ours
+.agent-memory/decisions/INDEX.md            merge=ours
+.agent-memory/decisions/superseded/INDEX.md merge=ours
+.agent-memory/STATE.md                      merge=ours
+.agent-memory/.meta.yaml                    merge=ours
 # <<< agent-memory <<<

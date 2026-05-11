@@ -61,6 +61,9 @@ def archive_repo(tmp_project, monkeypatch):
     )
     monkeypatch.setattr(_paths, "DECISIONS_DIR", am / "decisions", raising=False)
     monkeypatch.setattr(
+        _paths, "SUPERSEDED_DIR", am / "decisions" / "superseded", raising=False,
+    )
+    monkeypatch.setattr(
         _paths, "PROPOSALS_DIR", am / "decisions" / "proposals", raising=False,
     )
     return tmp_project
@@ -167,6 +170,9 @@ def test_run_apply_falls_back_to_fs_when_no_git(tmp_path, monkeypatch):
         _paths, "ARCHIVE_DIR", am / "manifest" / "archive", raising=False,
     )
     monkeypatch.setattr(_paths, "DECISIONS_DIR", am / "decisions", raising=False)
+    monkeypatch.setattr(
+        _paths, "SUPERSEDED_DIR", am / "decisions" / "superseded", raising=False,
+    )
     monkeypatch.setattr(
         _paths, "PROPOSALS_DIR", am / "decisions" / "proposals", raising=False,
     )

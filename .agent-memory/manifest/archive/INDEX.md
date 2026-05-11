@@ -15,4 +15,4 @@ principal.
 | F-0006 | skill-memory-deploy | shipped | 0.4.0 | ADR-0004,ADR-0010,ADR-0011 | F-0001,F-0004 |
 | F-0008 | skill-memory-debrief | shipped | 0.3.0 | ADR-0004 | F-0003 |
 
-_Gerado por `agent-memory audit` em 2026-05-11T03:27:54+00:00. Não edite manualmente._
+_Gerado por `agent-memory audit` em 2026-05-11T04:35:22+00:00. Não edite manualmente._

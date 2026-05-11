@@ -47,13 +47,15 @@ MANIFEST_DIR: Path = None  # type: ignore[assignment]
 FEATURES_DIR: Path = None  # type: ignore[assignment]
 ARCHIVE_DIR: Path = None  # type: ignore[assignment]
 DECISIONS_DIR: Path = None  # type: ignore[assignment]
+SUPERSEDED_DIR: Path = None  # type: ignore[assignment]
 PROPOSALS_DIR: Path = None  # type: ignore[assignment]
 
 
 def _init_paths() -> None:
     """Resolve ROOT e dependentes a partir do cwd. Idempotente."""
     global ROOT, AGENT, CLAUDE, STATE
-    global MANIFEST_DIR, FEATURES_DIR, ARCHIVE_DIR, DECISIONS_DIR, PROPOSALS_DIR
+    global MANIFEST_DIR, FEATURES_DIR, ARCHIVE_DIR
+    global DECISIONS_DIR, SUPERSEDED_DIR, PROPOSALS_DIR
     if ROOT is not None:
         return
     ROOT = find_project_root()
@@ -64,4 +66,5 @@ def _init_paths() -> None:
     FEATURES_DIR = MANIFEST_DIR / "features"
     ARCHIVE_DIR = MANIFEST_DIR / "archive"
     DECISIONS_DIR = ROOT / ".agent-memory" / "decisions"
+    SUPERSEDED_DIR = DECISIONS_DIR / "superseded"
     PROPOSALS_DIR = DECISIONS_DIR / "proposals"
