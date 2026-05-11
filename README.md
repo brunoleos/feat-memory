@@ -8,7 +8,7 @@ Quatro artefatos versionados que dão a um agente LLM tudo que ele precisa para 
 
 | Artefato | Pergunta | Mutação |
 |---|---|---|
-| `AGENT.md` | Sob quais regras construímos? | Rara |
+| `AGENTS.md` | Sob quais regras construímos? | Rara |
 | `.agent-memory/manifest/` | O que existe hoje no sistema? | Append-only |
 | `.agent-memory/STATE.md` | Onde estamos agora? | Reescrita bounded |
 | `.agent-memory/decisions/` | Por que escolhemos assim? | Imutável + supersede |
@@ -30,21 +30,21 @@ Em qualquer projeto consumidor, rode:
 agent-memory deploy /caminho/do/projeto
 ```
 
-Isso monta `AGENT.md`, `CLAUDE.md`, `.agent-memory/STATE.md`, `.agent-memory/manifest/`, `.agent-memory/decisions/`, `skills/`, `.gitattributes`, e instala o pre-commit hook.
+Isso monta `AGENTS.md`, `CLAUDE.md`, `.agent-memory/STATE.md`, `.agent-memory/manifest/`, `.agent-memory/decisions/`, `skills/`, `.gitattributes`, e instala o pre-commit hook.
 
-Depois, abra uma sessão com seu agente preferido (Claude Code, Cursor, ou outro que reconheça `AGENT.md`) e peça:
+Depois, abra uma sessão com seu agente preferido (Claude Code, Cursor, ou outro que reconheça `AGENTS.md`) e peça:
 
 ```text
 instale a metodologia neste projeto
 ```
 
-A skill `memory-deploy` detecta se o projeto é greenfield (novo, pouco código) ou legacy (com história substancial). Em greenfield, ela apenas executa o deploy mecânico — identidade, restrições, convenções e demais conteúdos específicos do projeto são autoria do mantenedor humano, escritos diretamente no `AGENT.md` quando ele decidir que vale registrar.
+A skill `memory-deploy` detecta se o projeto é greenfield (novo, pouco código) ou legacy (com história substancial). Em greenfield, ela apenas executa o deploy mecânico — identidade, restrições, convenções e demais conteúdos específicos do projeto são autoria do mantenedor humano, escritos diretamente no `AGENTS.md` quando ele decidir que vale registrar.
 
-Para projetos legacy, a skill conduz adicionalmente gênese retroativa em três fases sequenciais com revisão humana entre cada uma: ADRs candidatos a partir do git log, Manifest a partir dos entrypoints públicos, e `.agent-memory/STATE.md` inicial. A skill nunca escreve no corpo da `AGENT.md` fora do bloco delimitado por sentinelas — esse bloco é gerenciado mecanicamente pelo `agent-memory deploy`.
+Para projetos legacy, a skill conduz adicionalmente gênese retroativa em três fases sequenciais com revisão humana entre cada uma: ADRs candidatos a partir do git log, Manifest a partir dos entrypoints públicos, e `.agent-memory/STATE.md` inicial. A skill nunca escreve no corpo da `AGENTS.md` fora do bloco delimitado por sentinelas — esse bloco é gerenciado mecanicamente pelo `agent-memory deploy`.
 
 ## Comportamento com arquivos pré-existentes
 
-O `agent-memory deploy` é idempotente em todas as superfícies que ele instala. A `AGENT.md` carrega um bloco delimitado por sentinelas markdown:
+O `agent-memory deploy` é idempotente em todas as superfícies que ele instala. A `AGENTS.md` carrega um bloco delimitado por sentinelas markdown:
 
 ```markdown
 <!-- >>> agent-memory >>> -->
@@ -53,13 +53,13 @@ O `agent-memory deploy` é idempotente em todas as superfícies que ele instala.
 <!-- <<< agent-memory <<< -->
 ```
 
-Quando o `AGENT.md` já existe, o deploy só toca o conteúdo entre essas sentinelas — todo o resto (frontmatter, seções específicas do projeto, comentários do usuário) é preservado. Quando ainda não existe, o template completo é escrito (frontmatter scaffold + bloco). O `CLAUDE.md` (redirect mínimo `@AGENT.md`) é copiado se ausente e deixado quieto se existe.
+Quando o `AGENTS.md` já existe, o deploy só toca o conteúdo entre essas sentinelas — todo o resto (frontmatter, seções específicas do projeto, comentários do usuário) é preservado. Quando ainda não existe, o template completo é escrito (frontmatter scaffold + bloco). O `CLAUDE.md` (redirect mínimo `@AGENTS.md`) é copiado se ausente e deixado quieto se existe.
 
 O `.agent-memory/STATE.md` segue semântica diferente: como o conteúdo dele é volátil por construção, não há valor real em mesclar. Se já existe, é simplesmente pulado.
 
 As skills em `skills/` são sempre reescritas a cada deploy, porque elas são conteúdo de metodologia (não de usuário). Se você quiser uma skill customizada, copie-a para um nome diferente (`skills/memory-debrief` → `skills/my-debrief`) — a versão renomeada é preservada. O `.gitattributes` segue a mesma lógica via bloco com sentinelas: o que estiver fora do bloco é preservado, o bloco em si é refrescado.
 
-A flag `--force` reescreve `AGENT.md`, `CLAUDE.md` e `.agent-memory/STATE.md` inteiros a partir do template, descartando conteúdo do usuário fora do bloco. A flag `--no-merge` pula a refresh do bloco em `AGENT.md`/`CLAUDE.md` existentes (útil em CI onde nenhuma modificação é desejada).
+A flag `--force` reescreve `AGENTS.md`, `CLAUDE.md` e `.agent-memory/STATE.md` inteiros a partir do template, descartando conteúdo do usuário fora do bloco. A flag `--no-merge` pula a refresh do bloco em `AGENTS.md`/`CLAUDE.md` existentes (útil em CI onde nenhuma modificação é desejada).
 
 ## Versionamento e atualizações
 
@@ -80,7 +80,7 @@ git fetch --tags
 git checkout v0.3.0
 ```
 
-Para reaplicar templates e skills em um projeto consumidor após upgrade, rode `agent-memory deploy <projeto>` novamente — ele é idempotente: refresca o bloco com sentinelas em `AGENT.md` (preservando todo o resto), atualiza skills e `.gitattributes`, garante a entrada em `.gitignore`, e reinstala o pre-commit hook.
+Para reaplicar templates e skills em um projeto consumidor após upgrade, rode `agent-memory deploy <projeto>` novamente — ele é idempotente: refresca o bloco com sentinelas em `AGENTS.md` (preservando todo o resto), atualiza skills e `.gitattributes`, garante a entrada em `.gitignore`, e reinstala o pre-commit hook.
 
 Quando o pacote estiver publicado na PyPI (planejado), o caminho de instalação para usuários finais será `pipx install agent-memory` (sem `-e`), e atualização será `pipx upgrade agent-memory`.
 
@@ -89,7 +89,7 @@ Quando o pacote estiver publicado na PyPI (planejado), o caminho de instalação
 Em CI ou automação sem intervenção humana, o `agent-memory deploy` pode ser invocado direto sem passar pela skill. Em ambientes onde refresh do bloco não é desejada, use `--no-merge`.
 
 ```bash
-agent-memory deploy <projeto>             # padrão: refresca bloco em AGENT.md, copia CLAUDE.md se ausente
+agent-memory deploy <projeto>             # padrão: refresca bloco em AGENTS.md, copia CLAUDE.md se ausente
 agent-memory deploy <projeto> --no-merge  # pula AGENT/CLAUDE existentes (sem refresh do bloco)
 agent-memory deploy <projeto> --force     # reescreve AGENT/CLAUDE/STATE inteiros do template
 agent-memory deploy <projeto> --no-hooks  # pula instalação de git hooks
@@ -122,7 +122,7 @@ agent-memory/                         # clone do projeto na sua máquina
 │       ├── migrate.py                # subcomando migrate
 │       ├── install_hooks.py          # helper de instalação de hooks
 │       └── data/                     # package data (vai no wheel)
-│           ├── templates/            # AGENT.md, CLAUDE.md, STATE.md, .gitattributes
+│           ├── templates/            # AGENTS.md, CLAUDE.md, STATE.md, .gitattributes
 │           ├── skills/               # memory-deploy, memory-bootstrap, memory-debrief, memory-pull-brief
 │           └── hooks/                # pre-commit
 ├── tests/                            # suite pytest
@@ -134,14 +134,14 @@ agent-memory/                         # clone do projeto na sua máquina
 
 ## Estrutura final no project root
 
-Depois da instalação, o seu repositório tem isto. Os artefatos versionados em Git são `AGENT.md`, `CLAUDE.md`, `.agent-memory/STATE.md`, `.agent-memory/manifest/`, `.agent-memory/decisions/`, `skills/`, `.gitattributes`, e o bloco em `.gitignore`.
+Depois da instalação, o seu repositório tem isto. Os artefatos versionados em Git são `AGENTS.md`, `CLAUDE.md`, `.agent-memory/STATE.md`, `.agent-memory/manifest/`, `.agent-memory/decisions/`, `skills/`, `.gitattributes`, e o bloco em `.gitignore`.
 
 ```text
 seu-projeto/
 ├── .gitignore                        # contém bloco com regras agent-memory
 ├── .gitattributes                    # bloco com sentinelas (regras de merge)
-├── AGENT.md                          # constituição (com bloco agent-memory delimitado por sentinelas)
-├── CLAUDE.md                         # redirect para AGENT.md (Claude Code)
+├── AGENTS.md                          # constituição (com bloco agent-memory delimitado por sentinelas)
+├── CLAUDE.md                         # redirect para AGENTS.md (Claude Code)
 ├── skills/
 │   ├── memory-deploy/SKILL.md
 │   ├── memory-bootstrap/SKILL.md
@@ -162,7 +162,7 @@ seu-projeto/
 
 ## Operação diária
 
-As quatro skills cobrem quatro momentos qualitativamente diferentes do uso da metodologia. Cada uma tem triggers próprios e instruções autoritativas no respectivo `SKILL.md`. O agente que entende essas skills (Claude Code via `CLAUDE.md`, Cursor via `AGENT.md`, e outros) descobre os triggers a partir do `description` no frontmatter de cada skill.
+As quatro skills cobrem quatro momentos qualitativamente diferentes do uso da metodologia. Cada uma tem triggers próprios e instruções autoritativas no respectivo `SKILL.md`. O agente que entende essas skills (Claude Code via `CLAUDE.md`, Cursor via `AGENTS.md`, e outros) descobre os triggers a partir do `description` no frontmatter de cada skill.
 
 A skill `memory-deploy` cobre a adoção inicial, executada uma única vez por projeto. Ela ativa quando o usuário pede para instalar a metodologia e conduz tanto greenfield quanto legacy, conforme detectado.
 
@@ -170,7 +170,7 @@ A skill `memory-bootstrap` cobre o início de cada sessão de trabalho. Frases c
 
 A skill `memory-debrief` é a mais usada no dia-a-dia. Frases como "vou commitar" ou "atualize o STATE" ativam a skill, que examina o diff, atualiza o Manifest, reescreve o State, e gera proposta de ADR se necessário. Invoque-a antes de cada commit relevante.
 
-A skill `memory-pull-brief` cobre o quarto momento crítico: depois de `git pull` que trouxe commits de colegas. Frases como "o que veio do pull" ou "brifa as mudanças do main" ativam a skill, que examina o diff trazido, identifica mudanças semânticas em `.agent-memory/manifest/`, `.agent-memory/decisions/` e no bloco metodológico de `AGENT.md`, e propõe ajustes em `.agent-memory/STATE.md` para ressincronizar o foco local. É read-only sobre `.agent-memory/manifest/` e `.agent-memory/decisions/` — esses já vieram corretos do pull.
+A skill `memory-pull-brief` cobre o quarto momento crítico: depois de `git pull` que trouxe commits de colegas. Frases como "o que veio do pull" ou "brifa as mudanças do main" ativam a skill, que examina o diff trazido, identifica mudanças semânticas em `.agent-memory/manifest/`, `.agent-memory/decisions/` e no bloco metodológico de `AGENTS.md`, e propõe ajustes em `.agent-memory/STATE.md` para ressincronizar o foco local. É read-only sobre `.agent-memory/manifest/` e `.agent-memory/decisions/` — esses já vieram corretos do pull.
 
 ## Comandos úteis
 

@@ -44,7 +44,7 @@ O hook continua exit-code-faithful em relação ao audit (returncode do audit pr
 
 - O sinal chega no momento de máxima alavancagem (commit em curso). Sem espera, sem polling, sem dashboard. O dev/agente vê a linha amarela na stderr e pode pausar para debriefar antes de fazer push.
 - Soft sempre: respeita ADR-0008 e evita `--no-verify` habitual. Bypass de aviso é mais difícil que bypass de erro porque não há fricção a contornar — o sinal aparece e o commit prossegue.
-- Reuso direto da heurística de F-0011: uma única definição de "código" para os dois mecanismos. Mudanças futuras (ex: incluir `apps/`, `packages/` para projetos monorepo via configuração no frontmatter de AGENT.md) propagam para ambos via mesma constante.
+- Reuso direto da heurística de F-0011: uma única definição de "código" para os dois mecanismos. Mudanças futuras (ex: incluir `apps/`, `packages/` para projetos monorepo via configuração no frontmatter de AGENTS.md) propagam para ambos via mesma constante.
 - Subcomando dedicado é testável e invocável avulso. O hook fica fino — só compõe `agent-memory audit` + `agent-memory check-staleness-staged`. Cada peça tem responsabilidade única.
 - O exit code 0 garante que o hook não promova staleness staged a bloqueio acidental se algum dia o framework de hook do Git mudar de comportamento.
 

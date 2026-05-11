@@ -25,7 +25,7 @@ acceptance:
     pattern: ubiquitous
     requirement: >
       respeita o orçamento resumption_max_bytes definido em
-      AGENT.md::budgets — não expande Manifest inteiro nem todos os ADRs
+      AGENTS.md::budgets — não expande Manifest inteiro nem todos os ADRs
   - id: A3
     pattern: event
     trigger: "o carregamento inicial conclui"
@@ -37,7 +37,7 @@ acceptance:
     pattern: state
     state: >
       último commit é merge que tocou manifest/features/, decisions/, ou
-      o bloco entre sentinelas de AGENT.md
+      o bloco entre sentinelas de AGENTS.md
     response: >
       delega para skill memory-pull-brief (F-0009) antes do briefing
       tático, deixando STATE.md consistente com a nova realidade upstream

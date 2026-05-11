@@ -28,7 +28,7 @@ def test_deploy_creates_all_artifacts(tmp_project):
     assert rc == 0
 
     for path in (
-        tmp_project / "AGENT.md",
+        tmp_project / "AGENTS.md",
         tmp_project / "CLAUDE.md",
         tmp_project / ".agent-memory" / "STATE.md",
         tmp_project / ".gitattributes",
@@ -57,14 +57,14 @@ def test_deploy_is_idempotent(tmp_project):
 
 
 def test_deploy_appends_methodology_block_to_existing_agent_md(tmp_project):
-    """AGENT.md já existente recebe o bloco com sentinelas anexado."""
+    """AGENTS.md já existente recebe o bloco com sentinelas anexado."""
     custom = "# Constituição custom do meu projeto\n\n## Identidade\n\nFoo.\n"
-    (tmp_project / "AGENT.md").write_text(custom, encoding="utf-8")
+    (tmp_project / "AGENTS.md").write_text(custom, encoding="utf-8")
 
     rc = deploy.run(_args(tmp_project))
     assert rc == 0
 
-    content = (tmp_project / "AGENT.md").read_text(encoding="utf-8")
+    content = (tmp_project / "AGENTS.md").read_text(encoding="utf-8")
     # Conteúdo original preservado
     assert "# Constituição custom do meu projeto" in content
     assert "## Identidade" in content
@@ -82,7 +82,7 @@ def test_deploy_redeploy_is_idempotent_on_block(tmp_project):
     deploy.run(_args(tmp_project))
     # Usuário adiciona seção própria fora do bloco
     extra = "\n## Identidade\n\nProjeto teste.\n"
-    agent_md = tmp_project / "AGENT.md"
+    agent_md = tmp_project / "AGENTS.md"
     agent_md.write_text(
         agent_md.read_text(encoding="utf-8") + extra, encoding="utf-8"
     )
@@ -100,25 +100,25 @@ def test_deploy_redeploy_is_idempotent_on_block(tmp_project):
 
 def test_deploy_force_overwrites_existing(tmp_project):
     custom = "# meu custom\n"
-    (tmp_project / "AGENT.md").write_text(custom, encoding="utf-8")
+    (tmp_project / "AGENTS.md").write_text(custom, encoding="utf-8")
 
     rc = deploy.run(_args(tmp_project, force=True))
     assert rc == 0
 
-    new_content = (tmp_project / "AGENT.md").read_text(encoding="utf-8")
+    new_content = (tmp_project / "AGENTS.md").read_text(encoding="utf-8")
     assert new_content != custom
     assert "Constituição" in new_content  # vem do template
 
 
 def test_deploy_no_merge_skips_existing_without_queueing(tmp_project):
     custom = "# meu custom\n"
-    (tmp_project / "AGENT.md").write_text(custom, encoding="utf-8")
+    (tmp_project / "AGENTS.md").write_text(custom, encoding="utf-8")
 
     rc = deploy.run(_args(tmp_project, no_merge=True))
     assert rc == 0
 
     # Conteúdo preservado
-    assert (tmp_project / "AGENT.md").read_text(encoding="utf-8") == custom
+    assert (tmp_project / "AGENTS.md").read_text(encoding="utf-8") == custom
     # Sem fila de merge gerada
     assert not (tmp_project / ".agent-memory-deploy" / "merge-queue").exists()
 
@@ -158,7 +158,7 @@ def test_deploy_substitutes_version_in_agent_md(tmp_project):
     """O placeholder {VERSION} deve ser substituído pela versão atual."""
     from agent_memory import __version__
     deploy.run(_args(tmp_project))
-    content = (tmp_project / "AGENT.md").read_text(encoding="utf-8")
+    content = (tmp_project / "AGENTS.md").read_text(encoding="utf-8")
     assert "{VERSION}" not in content
     assert f"v{__version__}/METHODOLOGY.md" in content
 

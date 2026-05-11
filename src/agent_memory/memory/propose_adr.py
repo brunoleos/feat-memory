@@ -46,7 +46,7 @@ def find_project_root() -> Path:
         pass
     current = Path.cwd().resolve()
     for _ in range(5):
-        if (current / "AGENT.md").exists():
+        if (current / "AGENTS.md").exists():
             return current
         if current.parent == current:
             break

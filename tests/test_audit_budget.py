@@ -13,7 +13,7 @@ from agent_memory.shared import paths as _paths
 @pytest.fixture
 def audit_with_tmp_root(tmp_project, monkeypatch):
     monkeypatch.setattr(_paths, "ROOT", tmp_project, raising=False)
-    monkeypatch.setattr(_paths, "AGENT", tmp_project / "AGENT.md", raising=False)
+    monkeypatch.setattr(_paths, "AGENT", tmp_project / "AGENTS.md", raising=False)
     monkeypatch.setattr(_paths, "CLAUDE", tmp_project / "CLAUDE.md", raising=False)
     monkeypatch.setattr(
         _paths, "STATE", tmp_project / ".agent-memory" / "STATE.md", raising=False,
@@ -43,16 +43,16 @@ def test_validate_resumption_budget_over_limit_returns_warning():
     issues = audit.validate_resumption_budget(cost=22437, max_bytes=12288)
     assert len(issues) == 1
     assert issues[0].severity == "warning"
-    assert issues[0].artifact == "AGENT.md"
+    assert issues[0].artifact == "AGENTS.md"
     assert "22,437" in issues[0].message
     assert "12,288" in issues[0].message
     assert "agent-memory archive" in issues[0].message
 
 
 def test_compute_resumption_cost_sums_all_bootstrap_files(audit_with_tmp_root):
-    """Cost = AGENT + CLAUDE + STATE + manifest INDEX + decisions INDEX."""
+    """Cost = AGENTS + CLAUDE + STATE + manifest INDEX + decisions INDEX."""
     root = audit_with_tmp_root
-    (root / "AGENT.md").write_text("a" * 100, encoding="utf-8")
+    (root / "AGENTS.md").write_text("a" * 100, encoding="utf-8")
     (root / "CLAUDE.md").write_text("c" * 50, encoding="utf-8")
     (root / ".agent-memory").mkdir()
     (root / ".agent-memory" / "STATE.md").write_text("s" * 200, encoding="utf-8")
@@ -72,6 +72,6 @@ def test_compute_resumption_cost_sums_all_bootstrap_files(audit_with_tmp_root):
 def test_compute_resumption_cost_handles_missing_files(audit_with_tmp_root):
     """Arquivos ausentes não devem quebrar — soma só o que existe."""
     root = audit_with_tmp_root
-    (root / "AGENT.md").write_text("a" * 100, encoding="utf-8")
+    (root / "AGENTS.md").write_text("a" * 100, encoding="utf-8")
     cost = audit._compute_resumption_cost()
     assert cost == 100

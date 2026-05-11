@@ -1,6 +1,6 @@
 ---
 name: memory-pull-brief
-description: Use após git pull em projeto cliente quando o usuário pergunta o que mudou no remote (frases como "o que veio do pull?", "brifa as mudanças do main", "atualizei meu branch, o que mudou?", "ressincroniza o STATE com o que veio"). Examina o diff do pull, identifica mudanças em features e decisions e no bloco metodológico de AGENT.md, cruza com .agent-memory/STATE.md local, e propõe ajustes para refletir a nova realidade. Read-only sobre .agent-memory/manifest/ e .agent-memory/decisions/ — só escreve em .agent-memory/STATE.md após aprovação do usuário.
+description: Use após git pull em projeto cliente quando o usuário pergunta o que mudou no remote (frases como "o que veio do pull?", "brifa as mudanças do main", "atualizei meu branch, o que mudou?", "ressincroniza o STATE com o que veio"). Examina o diff do pull, identifica mudanças em features e decisions e no bloco metodológico de AGENTS.md, cruza com .agent-memory/STATE.md local, e propõe ajustes para refletir a nova realidade. Read-only sobre .agent-memory/manifest/ e .agent-memory/decisions/ — só escreve em .agent-memory/STATE.md após aprovação do usuário.
 ---
 
 # Memory pull-brief
@@ -16,7 +16,7 @@ Esta skill se aplica quando o usuário diz coisas como:
 - "ressincroniza o STATE com o que veio"
 - "fiz pull, o que mudou nos artefatos?"
 
-Também se aplica por delegação a partir de `memory-bootstrap` quando o último commit é merge **e** o merge tocou `.agent-memory/manifest/features/`, `.agent-memory/decisions/`, ou o bloco entre sentinelas de `AGENT.md`. Nesse caso, a pull-brief roda antes do briefing tático normal da bootstrap.
+Também se aplica por delegação a partir de `memory-bootstrap` quando o último commit é merge **e** o merge tocou `.agent-memory/manifest/features/`, `.agent-memory/decisions/`, ou o bloco entre sentinelas de `AGENTS.md`. Nesse caso, a pull-brief roda antes do briefing tático normal da bootstrap.
 
 Não se aplica para:
 - Pulls que só trouxeram código (nenhum artefato da metodologia tocado) — termine cedo, em uma frase
@@ -49,7 +49,7 @@ git diff --name-only <base>..HEAD
 Filtre para os caminhos relevantes:
 - `.agent-memory/manifest/features/F-*.md` — novos, modificados, removidos
 - `.agent-memory/decisions/*.md` (incluindo `.agent-memory/decisions/proposals/*.md`)
-- `AGENT.md` — apenas se o diff atingiu o conteúdo entre `<!-- >>> agent-memory >>> -->` e `<!-- <<< agent-memory <<< -->`
+- `AGENTS.md` — apenas se o diff atingiu o conteúdo entre `<!-- >>> agent-memory >>> -->` e `<!-- <<< agent-memory <<< -->`
 
 **Ignore `STATE.md`.** O `.gitattributes` da metodologia o marca com `merge=ours`, então mudanças do colega são silenciosamente descartadas pelo merge driver. Reportar seria enganoso — o usuário não vai ver as mudanças do colega no seu STATE local.
 
@@ -63,7 +63,7 @@ Para arquivos modificados: compare o frontmatter antes (via `git show <base>:<pa
 
 - **Features**: ID, transição de `status` (ex.: `in_progress → shipped`), mudança de `version`, mudanças em `acceptance` (resumido — número de critérios adicionados/removidos, não o conteúdo verbatim)
 - **ADRs**: ID, transição de `status`, `supersedes` / `superseded_by`, `affects_features`
-- **AGENT.md (bloco sentinela)**: indique apenas que a metodologia foi atualizada upstream. Não tente diferenciar conteúdo do bloco — é responsabilidade do `agent-memory deploy` quando o usuário decidir atualizar a tool.
+- **AGENTS.md (bloco sentinela)**: indique apenas que a metodologia foi atualizada upstream. Não tente diferenciar conteúdo do bloco — é responsabilidade do `agent-memory deploy` quando o usuário decidir atualizar a tool.
 
 Para arquivos removidos: registre o ID e o slug do arquivo.
 

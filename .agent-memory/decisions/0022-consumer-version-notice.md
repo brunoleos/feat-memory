@@ -15,7 +15,7 @@ tags: [governance, observability, consumer-notice, soft-warning]
 
 ADR-0013 firmou que o `agent-memory deploy` grava `.agent-memory/.meta.yaml::version` no consumidor com a versão do CLI no momento do deploy. ADR-0020 introduziu um guard hard que bloqueia commits com código sem bumpar `VERSION`, garantindo que `__version__` evolua honestamente.
 
-Falta o elo de feedback: **o consumidor não sabe quando a sua estrutura foi produzida por uma versão antiga do CLI**. As skills evoluem aqui (memory-bootstrap, memory-debrief, etc.); novos templates ou novos blocos de sentinela em `AGENT.md` chegam via `agent-memory deploy` re-rodado. Sem notificação, o usuário descobre desatualização tarde — quando uma skill faz algo inesperado ou um manifest field novo aparece sem suporte do agente local.
+Falta o elo de feedback: **o consumidor não sabe quando a sua estrutura foi produzida por uma versão antiga do CLI**. As skills evoluem aqui (memory-bootstrap, memory-debrief, etc.); novos templates ou novos blocos de sentinela em `AGENTS.md` chegam via `agent-memory deploy` re-rodado. Sem notificação, o usuário descobre desatualização tarde — quando uma skill faz algo inesperado ou um manifest field novo aparece sem suporte do agente local.
 
 Quando o usuário foi questionado sobre o que o projeto resolve, ele disse explicitamente: "as skills aqui evoluem, então tenho que saber quando os projetos consumidores precisam se atualizar". Esta feature endereça exatamente esse pedido.
 
@@ -85,7 +85,7 @@ Cor amarela quando `stderr.isatty()`; plain em CI.
 
 **Distinguir patch/minor/major no momento de emitir o notice**. Mais inteligente. Rejeitada na primeira versão por complexidade prematura: requer parsear semver, definir política (ex: só warna em minor+), manter regra. Simples primeiro; evolui se houver fricção real.
 
-**Embutir minimum_required_version no próprio template de AGENT.md** (sentinel block). Skill files declaram que versão mínima do CLI esperam. Mais rigoroso. Rejeitada por overhead de manutenção (cada release precisaria atualizar sentinels) sem ganho claro vs notice simples baseado em diff.
+**Embutir minimum_required_version no próprio template de AGENTS.md** (sentinel block). Skill files declaram que versão mínima do CLI esperam. Mais rigoroso. Rejeitada por overhead de manutenção (cada release precisaria atualizar sentinels) sem ganho claro vs notice simples baseado em diff.
 
 **Notice apenas quando consumer < CLI** (não no caso oposto). Mais limpo na maioria dos casos. Rejeitada — a regra simétrica "qualquer diff = notice" é mais fácil de raciocinar e captura o caso raro (CLI rodando contra consumer mais novo, sintoma de pipx desatualizado em algum colega).
 

@@ -15,7 +15,7 @@ tags: [architecture, separation-of-concerns, refactor, packaging]
 
 Após a sessão de v0.6.0 (F-0010..F-0016), o pacote `src/agent_memory/` cresceu com 14 módulos misturando dois propósitos diferentes:
 
-- **Memória de agente:** AGENT.md/STATE.md/manifest/decisions/skills, schemas, parsing, deploy, ciclo de vida (archive, checkpoints, migrate, propose-adr). O agente lê isto.
+- **Memória de agente:** AGENTS.md/STATE.md/manifest/decisions/skills, schemas, parsing, deploy, ciclo de vida (archive, checkpoints, migrate, propose-adr). O agente lê isto.
 - **Governança:** audit (drift/freshness/metrics/INDEX gen), hooks, telemetria, check-staleness, check-version-bump, install-hooks. Enforcement disciplinar.
 
 Quando o usuário foi questionado sobre o que o projeto resolve, ele disse: "A parte de memoria do agente é meu foco. Ainda nao sei se preciso da governança." E em seguida: "deixe a separação totalmente independente entre memória de agente x governança."
@@ -45,7 +45,7 @@ src/agent_memory/
     checkpoints.py         # F-0015 (STATE como view)
     propose_adr.py         # gênese de ADR
     migrate.py             # migração legacy
-    data/templates/        # AGENT.md, CLAUDE.md, STATE.md
+    data/templates/        # AGENTS.md, CLAUDE.md, STATE.md
     data/skills/           # memory-{bootstrap,debrief,deploy,pull-brief}/SKILL.md
 
   governance/              # enforcement, telemetria, hooks, métricas

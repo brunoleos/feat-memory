@@ -49,15 +49,15 @@ class Issue:
 def validate_agent(path: Path) -> tuple[dict, list[Issue]]:
     issues: list[Issue] = []
     if not path.exists():
-        return {}, [Issue("AGENT.md", "error", "arquivo ausente")]
+        return {}, [Issue("AGENTS.md", "error", "arquivo ausente")]
     try:
         fm, _ = parse_frontmatter(path)
     except ValueError as e:
-        return {}, [Issue("AGENT.md", "error", str(e))]
+        return {}, [Issue("AGENTS.md", "error", str(e))]
     required = ["schema_version", "project", "constraints", "references", "budgets"]
     for key in required:
         if key not in fm:
-            issues.append(Issue("AGENT.md", "error", f"campo ausente: {key}"))
+            issues.append(Issue("AGENTS.md", "error", f"campo ausente: {key}"))
     return fm, issues
 
 

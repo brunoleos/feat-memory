@@ -38,7 +38,7 @@ acceptance:
     pattern: event
     trigger: "`agent-memory deploy <target> --no-hooks` é executado"
     response: >
-      target recebe artefatos de memória completos (AGENT.md, STATE.md,
+      target recebe artefatos de memória completos (AGENTS.md, STATE.md,
       manifest/, decisions/, skills/) sem hook de governança instalado;
       consumidor pode operar puramente em memória
   - id: A4

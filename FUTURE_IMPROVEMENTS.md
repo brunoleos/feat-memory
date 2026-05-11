@@ -50,7 +50,7 @@ Um subcomando `agent-memory query` que responde perguntas comuns sem o agente pr
 
 ### Linting de constraints hard
 
-Hoje as restrições `severity: hard` em `AGENT.md` são apenas declarativas. A extensão é executar linters específicos para cada constraint registrada e reportar violações reais no código. Por exemplo, uma constraint "Pydantic obrigatório para schemas de borda" pode ser checada por um plugin de AST. Aumenta significativamente o valor das constraints, mas cada nova regra exige código de validação.
+Hoje as restrições `severity: hard` em `AGENTS.md` são apenas declarativas. A extensão é executar linters específicos para cada constraint registrada e reportar violações reais no código. Por exemplo, uma constraint "Pydantic obrigatório para schemas de borda" pode ser checada por um plugin de AST. Aumenta significativamente o valor das constraints, mas cada nova regra exige código de validação.
 
 ### Formalizar campo `version` em ADRs no schema da metodologia
 

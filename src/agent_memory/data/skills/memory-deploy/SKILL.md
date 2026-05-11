@@ -1,17 +1,17 @@
 ---
 name: memory-deploy
-description: Use quando o usuário pede para instalar a metodologia em um projeto (frases como "instale a metodologia", "configure o agent-memory", "rode o setup", "este projeto não tem AGENT.md", "ajude a adotar esta estrutura"). Conduz a adoção: detecta greenfield versus legacy, executa `agent-memory deploy` (que cuida sozinho do bloco com sentinelas no AGENT.md), e em projetos legacy faz gênese retroativa de ADRs e Manifest a partir do git log e dos entrypoints públicos. Não escreve em AGENT.md fora do bloco delimitado pelas sentinelas.
+description: Use quando o usuário pede para instalar a metodologia em um projeto (frases como "instale a metodologia", "configure o agent-memory", "rode o setup", "este projeto não tem AGENTS.md", "ajude a adotar esta estrutura"). Conduz a adoção: detecta greenfield versus legacy, executa `agent-memory deploy` (que cuida sozinho do bloco com sentinelas no AGENTS.md), e em projetos legacy faz gênese retroativa de ADRs e Manifest a partir do git log e dos entrypoints públicos. Não escreve em AGENTS.md fora do bloco delimitado pelas sentinelas.
 ---
 
 # Memory deploy
 
 Esta skill é o ponto de entrada único para instalar a metodologia em qualquer projeto. Conduz três etapas: detecção do estado do projeto, deploy mecânico via CLI, e (apenas em projetos legacy) gênese retroativa de ADRs e do Manifest.
 
-A skill **não escreve no corpo da `AGENT.md`** fora do bloco delimitado pelas sentinelas markdown. O bloco em si é gerenciado pelo `agent-memory deploy` (refrescado a cada execução). Identidade, restrições não-negociáveis, convenções de código e qualquer outra seção específica do projeto são autoria do mantenedor humano, registradas em sessão posterior se ele decidir que vale.
+A skill **não escreve no corpo da `AGENTS.md`** fora do bloco delimitado pelas sentinelas markdown. O bloco em si é gerenciado pelo `agent-memory deploy` (refrescado a cada execução). Identidade, restrições não-negociáveis, convenções de código e qualquer outra seção específica do projeto são autoria do mantenedor humano, registradas em sessão posterior se ele decidir que vale.
 
 ## Quando usar
 
-A skill aplica-se em duas situações. A primeira é quando o usuário pede para instalar a metodologia pela primeira vez, com frases como "instale a metodologia neste projeto", "configure o agent-memory aqui", "rode o setup". A segunda é quando o usuário pede para adotar a metodologia em um projeto legado, com frases como "este projeto não tem AGENT.md" ou "preciso popular o Manifest a partir do código existente".
+A skill aplica-se em duas situações. A primeira é quando o usuário pede para instalar a metodologia pela primeira vez, com frases como "instale a metodologia neste projeto", "configure o agent-memory aqui", "rode o setup". A segunda é quando o usuário pede para adotar a metodologia em um projeto legado, com frases como "este projeto não tem AGENTS.md" ou "preciso popular o Manifest a partir do código existente".
 
 A skill não se aplica quando os artefatos da metodologia já estão totalmente populados. Nesse caso use `memory-bootstrap` para retomar trabalho. Também não se aplica quando o usuário quer apenas rodar o deploy mecânico em CI ou automação; nesse caso, `agent-memory deploy <projeto> --no-merge` deve ser invocado diretamente sem mediação de skill.
 
@@ -25,7 +25,7 @@ Examine o projeto para classificá-lo. Os sinais que distinguem greenfield de le
 
 Considere o projeto greenfield quando o repositório tem poucos commits (menos de cinco, ou apenas commit inicial), há pouco ou nenhum código (apenas README e arquivos de configuração), e não há entrypoints públicos identificáveis (rotas HTTP, comandos CLI, módulos exportados).
 
-Considere o projeto legacy quando há histórico Git substancial (dez ou mais commits), código de produção em pastas como `src/`, `app/`, `lib/`, stack identificável via arquivos de manifesto, e ausência de `AGENT.md` ou apenas template não-personalizado.
+Considere o projeto legacy quando há histórico Git substancial (dez ou mais commits), código de produção em pastas como `src/`, `app/`, `lib/`, stack identificável via arquivos de manifesto, e ausência de `AGENTS.md` ou apenas template não-personalizado.
 
 Casos de borda incluem projetos com algum código mas em desenvolvimento ativo recente, que devem ser tratados como legacy se há entrypoints públicos identificáveis. Repositório completamente vazio é greenfield sem ressalvas. Quando ambíguo, pergunte ao usuário em vez de assumir.
 
@@ -35,23 +35,23 @@ Apresente sua classificação e peça confirmação antes de prosseguir. Algo co
 
 Em ambos os cenários (greenfield e legacy), rode `agent-memory deploy <projeto>` para estabelecer a estrutura física, onde `<projeto>` é o caminho absoluto da raiz do projeto consumidor. O comando:
 
-- Cria `AGENT.md` com frontmatter scaffold + bloco com sentinelas, ou — se já existe — anexa o bloco preservando todo o resto do conteúdo do usuário. Em re-deploys, o bloco é refrescado de forma idempotente.
-- Cria `CLAUDE.md` (redirect mínimo `@AGENT.md`) se ausente; deixa quieto se existe.
+- Cria `AGENTS.md` com frontmatter scaffold + bloco com sentinelas, ou — se já existe — anexa o bloco preservando todo o resto do conteúdo do usuário. Em re-deploys, o bloco é refrescado de forma idempotente.
+- Cria `CLAUDE.md` (redirect mínimo `@AGENTS.md`) se ausente; deixa quieto se existe.
 - Cria `.agent-memory/STATE.md` se ausente.
 - Copia as skills para `skills/` (sempre sobrescritas; conteúdo de metodologia).
 - Cria pastas `.agent-memory/manifest/features/` e `.agent-memory/decisions/proposals/`.
 - Instala o pre-commit hook se for repositório Git.
 - Refresca os blocos de `.gitattributes` e `.gitignore`.
 
-Não use `--force` aqui. O `--force` reescreve `AGENT.md` inteira a partir do template, perdendo conteúdo do usuário fora do bloco. O comportamento padrão (sentinel-block refresh) é o que você quer para adoção.
+Não use `--force` aqui. O `--force` reescreve `AGENTS.md` inteira a partir do template, perdendo conteúdo do usuário fora do bloco. O comportamento padrão (sentinel-block refresh) é o que você quer para adoção.
 
 Se o deploy reportar erros, pare e investigue. Geralmente são problemas de permissão ou Python ausente.
 
-A partir deste ponto a skill não escreve mais em `AGENT.md`. Em greenfield, o trabalho da skill termina aqui — sugira commitar o estado inicial. Em legacy, prossiga para a Etapa 3.
+A partir deste ponto a skill não escreve mais em `AGENTS.md`. Em greenfield, o trabalho da skill termina aqui — sugira commitar o estado inicial. Em legacy, prossiga para a Etapa 3.
 
 ### Etapa 3 (apenas legacy): gênese retroativa de ADRs e Manifest
 
-Esta etapa só executa em projetos legacy. Ela popula `.agent-memory/decisions/` e `.agent-memory/manifest/features/` a partir do que já existe no repositório, mas **não toca em `AGENT.md`**. Identidade, restrições e convenções específicas do projeto continuam sendo responsabilidade do mantenedor humano, em sessão posterior.
+Esta etapa só executa em projetos legacy. Ela popula `.agent-memory/decisions/` e `.agent-memory/manifest/features/` a partir do que já existe no repositório, mas **não toca em `AGENTS.md`**. Identidade, restrições e convenções específicas do projeto continuam sendo responsabilidade do mantenedor humano, em sessão posterior.
 
 #### Fase 3.1: ADRs candidatos a partir do git log
 
@@ -79,11 +79,11 @@ Lote pequeno, revisão crítica. Lotes grandes saturam a atenção do revisor e 
 
 Quando em dúvida, não escreva. Em gênese, isso significa deixar uma feature ou ADR fora da gênese inicial em vez de escrevê-la imprecisa.
 
-A skill nunca escreve no corpo da `AGENT.md` fora do bloco com sentinelas. Mesmo que o usuário peça explicitamente "preencha a identidade" durante a adoção, recuse: identidade do projeto é autoria humana e o usuário pode escrever no próximo turno fora desta skill.
+A skill nunca escreve no corpo da `AGENTS.md` fora do bloco com sentinelas. Mesmo que o usuário peça explicitamente "preencha a identidade" durante a adoção, recuse: identidade do projeto é autoria humana e o usuário pode escrever no próximo turno fora desta skill.
 
 ## O que evitar
 
-Não rode `agent-memory deploy --force` automaticamente. O `--force` reescreve `AGENT.md` do template, perdendo conteúdo do usuário fora do bloco com sentinelas. É escolha consciente do operador, e a skill deve respeitar essa escolha apenas quando o usuário pede explicitamente.
+Não rode `agent-memory deploy --force` automaticamente. O `--force` reescreve `AGENTS.md` do template, perdendo conteúdo do usuário fora do bloco com sentinelas. É escolha consciente do operador, e a skill deve respeitar essa escolha apenas quando o usuário pede explicitamente.
 
 Não tente cobrir cem por cento das decisões históricas ou dos entrypoints na primeira gênese. Capture o que é claro e importante; o resto entra incrementalmente conforme o trabalho normal toca essas áreas. Cobertura parcial honesta é melhor que cobertura total inventada.
 

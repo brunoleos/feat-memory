@@ -20,7 +20,7 @@ def audit_with_tmp_root(tmp_project, monkeypatch):
     unitários precisamos resetar entre execuções.
     """
     monkeypatch.setattr(_paths, "ROOT", tmp_project, raising=False)
-    monkeypatch.setattr(_paths, "AGENT", tmp_project / "AGENT.md", raising=False)
+    monkeypatch.setattr(_paths, "AGENT", tmp_project / "AGENTS.md", raising=False)
     monkeypatch.setattr(_paths, "CLAUDE", tmp_project / "CLAUDE.md", raising=False)
     monkeypatch.setattr(
         _paths, "STATE", tmp_project / ".agent-memory" / "STATE.md", raising=False,

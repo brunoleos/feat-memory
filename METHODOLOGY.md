@@ -8,24 +8,24 @@ A escolha de quatro artefatos não é arbitrária. Cada um responde uma pergunta
 
 | Artefato | Pergunta | Verdade | Mutação |
 |---|---|---|---|
-| `AGENT.md` | Sob quais regras? | Normativa | Rara |
+| `AGENTS.md` | Sob quais regras? | Normativa | Rara |
 | `.agent-memory/manifest/` | O que existe hoje? | Descritiva | Append-only |
 | `.agent-memory/STATE.md` | Onde estamos agora? | Volátil | Reescrita bounded |
 | `.agent-memory/decisions/` | Por que escolhemos assim? | Histórica | Imutável + supersede |
 
-A metodologia adota convenções consolidadas em vez de inventar vocabulário. O arquivo `AGENT.md` segue a convenção multi-agente reconhecida por ferramentas como Claude Code, Cursor, Aider e Continue; ADRs em pasta `decisions/` seguem o padrão de Michael Nygard de 2011; os critérios de aceitação seguem a notação EARS (Easy Approach to Requirements Syntax) com seus cinco padrões canônicos. Toda a inteligência mora na disciplina das mutações, não em ferramentas exclusivas.
+A metodologia adota convenções consolidadas em vez de inventar vocabulário. O arquivo `AGENTS.md` segue a convenção multi-agente reconhecida por ferramentas como Claude Code, Cursor, Aider e Continue; ADRs em pasta `decisions/` seguem o padrão de Michael Nygard de 2011; os critérios de aceitação seguem a notação EARS (Easy Approach to Requirements Syntax) com seus cinco padrões canônicos. Toda a inteligência mora na disciplina das mutações, não em ferramentas exclusivas.
 
-## 1. Constitution: `AGENT.md`
+## 1. Constitution: `AGENTS.md`
 
-O `AGENT.md` é o ponto de entrada do projeto. Ele segue a convenção multi-agente que funciona com Claude Code, Cursor, Aider, Continue e outras ferramentas, eliminando a necessidade de uma "skill de bootstrap" customizada e de duplicar instruções por ferramenta. Um arquivo `CLAUDE.md` mínimo coexiste na raiz contendo apenas `@AGENT.md`, que faz o Claude Code carregar a constituição via sintaxe de importação. Times que usam apenas uma ferramenta podem manter só o arquivo correspondente; times multi-agente compartilham a mesma constituição sem duplicação.
+O `AGENTS.md` é o ponto de entrada do projeto. Ele segue a convenção multi-agente que funciona com Claude Code, Cursor, Aider, Continue e outras ferramentas, eliminando a necessidade de uma "skill de bootstrap" customizada e de duplicar instruções por ferramenta. Um arquivo `CLAUDE.md` mínimo coexiste na raiz contendo apenas `@AGENTS.md`, que faz o Claude Code carregar a constituição via sintaxe de importação. Times que usam apenas uma ferramenta podem manter só o arquivo correspondente; times multi-agente compartilham a mesma constituição sem duplicação.
 
-O `AGENT.md` contém apenas o que não muda entre sessões: identidade do projeto, restrições técnicas, e ponteiros para os outros artefatos.
+O `AGENTS.md` contém apenas o que não muda entre sessões: identidade do projeto, restrições técnicas, e ponteiros para os outros artefatos.
 
 O frontmatter YAML torna o conteúdo parseável por scripts sem sacrificar legibilidade humana. As restrições têm `severity` explícita: `hard` bloqueia o build quando violada, `soft` apenas gera warning. Esta distinção é o que separa convenções de estilo (que podem ser ignoradas em casos extremos) de regras de segurança (que nunca podem).
 
 O campo `budgets` define os orçamentos de tamanho que o sistema impõe sobre si mesmo. O orçamento de retomada (CLAUDE + STATE + dois índices) deve ficar abaixo de doze kilobytes para que um agente possa carregar todo o contexto inicial em poucos tokens. O orçamento do State é mais agressivo, quatro kilobytes, porque o State é reescrito a cada sessão e crescimento descontrolado significa que o agente não está consolidando direito.
 
-Mudanças em `AGENT.md` exigem ADR sempre que alteram restrições `hard` ou referenciam novas convenções arquiteturais. A regra prática é: se a mudança requer explicação para um futuro contribuidor, ela merece ADR.
+Mudanças em `AGENTS.md` exigem ADR sempre que alteram restrições `hard` ou referenciam novas convenções arquiteturais. A regra prática é: se a mudança requer explicação para um futuro contribuidor, ela merece ADR.
 
 ## 2. Manifest: `.agent-memory/manifest/`
 
@@ -107,7 +107,7 @@ A skill `memory-pull-brief` cobre o momento pós-`git pull` em projeto cliente q
 
 A separação em quatro skills em vez de uma reflete a estrutura real do trabalho com a metodologia: quatro momentos qualitativamente diferentes (adoção, início de sessão, fim de unidade, sincronização pós-pull), cada um com sua própria checklist e cada um com seus próprios riscos de ser executado errado. Skills monolíticas tendem a ser ignoradas; skills específicas e curtas tendem a ser invocadas no momento certo.
 
-A escolha de fazer da `memory-deploy` o ponto de entrada — em vez de exigir que o usuário invoque o `agent-memory deploy` diretamente — reflete uma decisão de design importante. O comando sozinho instala a estrutura mecânica mas não personaliza nada, o que deixa um projeto greenfield com `AGENT.md` genérico inútil ou um projeto legacy com Manifest vazio que ignora todo o código existente. A skill envolve o comando com a inteligência necessária para que a instalação produza valor real desde o primeiro commit. O comando direto permanece disponível para automação e CI, onde personalização não se aplica.
+A escolha de fazer da `memory-deploy` o ponto de entrada — em vez de exigir que o usuário invoque o `agent-memory deploy` diretamente — reflete uma decisão de design importante. O comando sozinho instala a estrutura mecânica mas não personaliza nada, o que deixa um projeto greenfield com `AGENTS.md` genérico inútil ou um projeto legacy com Manifest vazio que ignora todo o código existente. A skill envolve o comando com a inteligência necessária para que a instalação produza valor real desde o primeiro commit. O comando direto permanece disponível para automação e CI, onde personalização não se aplica.
 
 ## Workflow de merge e rebase
 
@@ -127,9 +127,9 @@ A configuração do driver `merge.ours.driver` no Git é feita automaticamente p
 
 ## Protocolo do agente
 
-O protocolo cabe em três frases e opera sobre os quatro artefatos sem precisar de skill customizada — agentes que reconhecem `AGENT.md` (Claude Code via redirect, Cursor, Aider, Continue) já carregam a constituição automaticamente.
+O protocolo cabe em três frases e opera sobre os quatro artefatos sem precisar de skill customizada — agentes que reconhecem `AGENTS.md` (Claude Code via redirect, Cursor, Aider, Continue) já carregam a constituição automaticamente.
 
-Na inicialização, o agente carrega `AGENT.md`, `.agent-memory/STATE.md`, `.agent-memory/manifest/INDEX.md` e `.agent-memory/decisions/INDEX.md`. O total fica dentro do orçamento de doze kilobytes definido em `AGENT.md::budgets::resumption_max_bytes`. O agente então expande apenas as features listadas em `STATE.md::active_features` e os ADRs em `STATE.md::active_decisions`.
+Na inicialização, o agente carrega `AGENTS.md`, `.agent-memory/STATE.md`, `.agent-memory/manifest/INDEX.md` e `.agent-memory/decisions/INDEX.md`. O total fica dentro do orçamento de doze kilobytes definido em `AGENTS.md::budgets::resumption_max_bytes`. O agente então expande apenas as features listadas em `STATE.md::active_features` e os ADRs em `STATE.md::active_decisions`.
 
 Durante o trabalho, qualquer mudança de comportamento exige atualizar a feature correspondente no Manifest no mesmo commit do código. O Manifest é a única fonte de verdade sobre o que o sistema faz; se uma capacidade não está no Manifest, ela não existe, mesmo que o código já tenha sido escrito. Esta rigidez parece custosa mas paga dividendos imediatos: o problema clássico de agentes inventando features que não combinam com o sistema existente desaparece.
 
@@ -141,7 +141,7 @@ O `agent-memory audit` produz um relatório de uma página com sete indicadores.
 
 A **conformidade de schema** mede se todos os artefatos passam validação estrutural, incluindo a validação dos critérios de aceitação contra os padrões EARS. Qualquer erro aqui bloqueia o build — schemas inválidos significam que o agente vai consumir dados quebrados na próxima sessão.
 
-O **custo de retomada** soma os bytes de `AGENT.md`, `CLAUDE.md` (quando presente como redirect), `.agent-memory/STATE.md` e os dois índices. Acima de doze kilobytes, o sistema está consumindo tokens demais antes mesmo do trabalho começar; é hora de compactar índices ou consolidar State.
+O **custo de retomada** soma os bytes de `AGENTS.md`, `CLAUDE.md` (quando presente como redirect), `.agent-memory/STATE.md` e os dois índices. Acima de doze kilobytes, o sistema está consumindo tokens demais antes mesmo do trabalho começar; é hora de compactar índices ou consolidar State.
 
 O **frescor de estado** mede o tempo desde o último update do `.agent-memory/STATE.md`. Acima de uma semana, a última sessão não fez debriefing — bug de processo, não de software.
 
@@ -177,7 +177,7 @@ A separação entre detecção e redação é deliberada. A detecção é determ
 
 ## Migração
 
-Para um projeto novo, criar `AGENT.md`, `.agent-memory/STATE.md`, `.agent-memory/manifest/` e `.agent-memory/decisions/` leva minutos, e a primeira feature a ser entregue já segue o protocolo. Para projetos legados, a migração tem dois passos sequenciais.
+Para um projeto novo, criar `AGENTS.md`, `.agent-memory/STATE.md`, `.agent-memory/manifest/` e `.agent-memory/decisions/` leva minutos, e a primeira feature a ser entregue já segue o protocolo. Para projetos legados, a migração tem dois passos sequenciais.
 
 Primeiro, `agent-memory migrate` examina os últimos cem ou duzentos commits e propõe ADRs candidatos a partir de mensagens contendo padrões como "switched", "instead of", "revert", "decided to". Os candidatos são impressos para revisão humana, não escritos automaticamente. Esta restrição é deliberada — gênese retroativa não pode ser silenciosa, sob pena de cristalizar interpretações erradas como decisões oficiais.
 

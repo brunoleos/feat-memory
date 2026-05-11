@@ -7,7 +7,7 @@ version: 0.6.0
 user_value: >
   Permite que projetos consumidores e ferramentas externas descubram qual
   versão do agent-memory produziu sua estrutura, sem parsing frágil de URLs
-  em AGENT.md. Habilita audit cross-version (F-0011) e telemetria (F-0014)
+  em AGENTS.md. Habilita audit cross-version (F-0011) e telemetria (F-0014)
   a anotarem eventos contra a versão real, e dá ao usuário um
   `agent-memory --version` que funciona como qualquer CLI moderna.
 contracts:

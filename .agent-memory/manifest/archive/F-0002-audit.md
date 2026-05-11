@@ -18,7 +18,7 @@ acceptance:
     pattern: event
     trigger: "agent-memory audit é invocado"
     response: >
-      valida schemas de AGENT.md, STATE.md, features em manifest/ e ADRs
+      valida schemas de AGENTS.md, STATE.md, features em manifest/ e ADRs
       em decisions/, incluindo notação EARS de cada acceptance criterion
   - id: A2
     pattern: ubiquitous

@@ -258,7 +258,7 @@ def run(args: argparse.Namespace) -> int:
         print("\nStack detectada:")
         for s in stack:
             print(f"  • {s}")
-        print("→ Adicione em AGENT.md::stack")
+        print("→ Adicione em AGENTS.md::stack")
     else:
         print("\nNenhuma stack reconhecida automaticamente.")
 

@@ -49,7 +49,7 @@ def archive_repo(tmp_project, monkeypatch):
     """Aponta os globals do audit para um tmp repo Git limpo."""
     am = tmp_project / ".agent-memory"
     monkeypatch.setattr(_paths, "ROOT", tmp_project, raising=False)
-    monkeypatch.setattr(_paths, "AGENT", tmp_project / "AGENT.md", raising=False)
+    monkeypatch.setattr(_paths, "AGENT", tmp_project / "AGENTS.md", raising=False)
     monkeypatch.setattr(_paths, "CLAUDE", tmp_project / "CLAUDE.md", raising=False)
     monkeypatch.setattr(_paths, "STATE", am / "STATE.md", raising=False)
     monkeypatch.setattr(_paths, "MANIFEST_DIR", am / "manifest", raising=False)
@@ -156,7 +156,7 @@ def test_run_apply_falls_back_to_fs_when_no_git(tmp_path, monkeypatch):
     """A6: git mv falha (não-tracked / sem git) → shutil.move."""
     am = tmp_path / ".agent-memory"
     monkeypatch.setattr(_paths, "ROOT", tmp_path, raising=False)
-    monkeypatch.setattr(_paths, "AGENT", tmp_path / "AGENT.md", raising=False)
+    monkeypatch.setattr(_paths, "AGENT", tmp_path / "AGENTS.md", raising=False)
     monkeypatch.setattr(_paths, "CLAUDE", tmp_path / "CLAUDE.md", raising=False)
     monkeypatch.setattr(_paths, "STATE", am / "STATE.md", raising=False)
     monkeypatch.setattr(_paths, "MANIFEST_DIR", am / "manifest", raising=False)

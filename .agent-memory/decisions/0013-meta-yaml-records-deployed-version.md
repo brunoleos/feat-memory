@@ -13,7 +13,7 @@ tags: [deploy, meta, version, observability]
 
 ## Contexto
 
-A versão do `agent-memory` que produziu a estrutura de um projeto consumidor hoje só vive implícita nas URLs `blob/v{VERSION}/METHODOLOGY.md` que o template de `AGENT.md` interpola via [`_copy_template`](src/agent_memory/deploy.py) (substituição literal de `{VERSION}` pelo valor de `__version__` em [src/agent_memory/__init__.py](src/agent_memory/__init__.py)). Isso significa que descobrir a versão exige parsing frágil de markdown — quebra se o usuário editar a URL, e nenhum subcomando da CLI consegue reportar "auditado contra v0.6.0" sem re-executar o parsing.
+A versão do `agent-memory` que produziu a estrutura de um projeto consumidor hoje só vive implícita nas URLs `blob/v{VERSION}/METHODOLOGY.md` que o template de `AGENTS.md` interpola via [`_copy_template`](src/agent_memory/deploy.py) (substituição literal de `{VERSION}` pelo valor de `__version__` em [src/agent_memory/__init__.py](src/agent_memory/__init__.py)). Isso significa que descobrir a versão exige parsing frágil de markdown — quebra se o usuário editar a URL, e nenhum subcomando da CLI consegue reportar "auditado contra v0.6.0" sem re-executar o parsing.
 
 Três usos imediatos pediam a versão como dado de primeira classe:
 
@@ -67,7 +67,7 @@ O arquivo `.meta.yaml` **é versionado no Git** do consumidor. Não é volátil 
 
 ## Alternativas rejeitadas
 
-**Embutir a versão num campo do frontmatter de AGENT.md** (ex: `installed_version: 0.6.0`). Funciona mas mistura metadata de instalação com configuração editável pelo usuário. AGENT.md já tem campos do projeto (`project`, `constraints`); adicionar metadata de tooling polui a separação de responsabilidades. Rejeitada por acoplamento ruim.
+**Embutir a versão num campo do frontmatter de AGENTS.md** (ex: `installed_version: 0.6.0`). Funciona mas mistura metadata de instalação com configuração editável pelo usuário. AGENTS.md já tem campos do projeto (`project`, `constraints`); adicionar metadata de tooling polui a separação de responsabilidades. Rejeitada por acoplamento ruim.
 
 **Usar `pyproject.toml` da CLI via `importlib.metadata` no consumidor**. Não funciona — o consumidor não tem dependência declarada no `agent-memory`; a CLI vive no ambiente Python dele, não no projeto. Rejeitada por inviabilidade.
 

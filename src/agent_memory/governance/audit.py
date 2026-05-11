@@ -5,7 +5,7 @@ Orquestrador. Importa schemas de `memory.schemas` para validar, gera
 governança: cross-check de IDs ativos (F-0011), staleness check
 opt-in (F-0011), collision detection pré-merge, métricas de saúde.
 
-Subcomando da CLI: `agent-memory audit`. AGENT.md fica na raiz do
+Subcomando da CLI: `agent-memory audit`. AGENTS.md fica na raiz do
 project root; STATE.md, manifest/ e decisions/ ficam em .agent-memory/.
 
 Uso:
@@ -237,12 +237,51 @@ def _parse_dt(value) -> datetime | None:
         return None
 
 
-def _compute_resumption_cost() -> int:
+def _resolve_active_feature_paths(state_fm: dict) -> list[Path]:
+    """Resolve IDs de active_features para caminhos de arquivo.
+
+    Busca em FEATURES_DIR e ARCHIVE_DIR (F-NNNN-*.md).
+    """
+    ids = state_fm.get("active_features") or []
+    if not ids:
+        return []
+    candidates: list[Path] = []
+    for d in (_paths.FEATURES_DIR, _paths.ARCHIVE_DIR):
+        if d.exists():
+            candidates.extend(d.glob("F-*.md"))
+    id_set = set(ids)
+    return [p for p in candidates
+            if re.match(r"^(F-\d{4})-", p.name)
+            and p.name.split("-")[1] and f"F-{p.name.split('-')[1]}" in id_set]
+
+
+def _resolve_active_decision_paths(state_fm: dict) -> list[Path]:
+    """Resolve IDs de active_decisions para caminhos de arquivo.
+
+    Busca em DECISIONS_DIR (NNNN-*.md → ADR-NNNN).
+    """
+    ids = state_fm.get("active_decisions") or []
+    if not ids:
+        return []
+    if not _paths.DECISIONS_DIR.exists():
+        return []
+    candidates = list(_paths.DECISIONS_DIR.glob("[0-9]*.md"))
+    id_set = set(ids)
+    result: list[Path] = []
+    for p in candidates:
+        m = re.match(r"^(\d{4})-", p.name)
+        if m and f"ADR-{m.group(1)}" in id_set:
+            result.append(p)
+    return result
+
+
+def _compute_resumption_cost(state_fm: dict | None = None) -> int:
     """Soma em bytes os artefatos que o bootstrap do agente carrega.
 
-    AGENT.md + CLAUDE.md + STATE.md + manifest INDEX + decisions INDEX.
+    Base: AGENTS.md + CLAUDE.md + STATE.md + manifest INDEX + decisions INDEX.
+    Ativo: features e decisions listadas em active_* no STATE.md.
     Reusado por `compute_metrics` (relatório) e `validate_resumption_budget`
-    (warning quando excede o budget de AGENT.md::budgets::resumption_max_bytes).
+    (warning quando excede o budget de AGENTS.md::budgets::resumption_max_bytes).
     """
     cost = 0
     for p in (_paths.AGENT, _paths.CLAUDE, _paths.STATE,
@@ -250,13 +289,20 @@ def _compute_resumption_cost() -> int:
               _paths.DECISIONS_DIR / "INDEX.md"):
         if p.exists():
             cost += p.stat().st_size
+    if state_fm is not None:
+        for p in _resolve_active_feature_paths(state_fm):
+            if p.exists():
+                cost += p.stat().st_size
+        for p in _resolve_active_decision_paths(state_fm):
+            if p.exists():
+                cost += p.stat().st_size
     return cost
 
 
 def validate_resumption_budget(cost: int, max_bytes: int) -> list[Issue]:
     """Emite warning quando o custo de retomada excede o budget (F-0019).
 
-    AGENT.md::budgets::resumption_max_bytes existe desde v0.1, mas até
+    AGENTS.md::budgets::resumption_max_bytes existe desde v0.1, mas até
     F-0019 era apenas informativo: `compute_metrics` calculava o custo
     e o relatório imprimia, sem comparação. Soft (severity=warning)
     consistente com ADR-0008 e ADR-0014; remediação aponta para
@@ -264,7 +310,7 @@ def validate_resumption_budget(cost: int, max_bytes: int) -> list[Issue]:
     """
     if cost > max_bytes:
         return [Issue(
-            "AGENT.md", "warning",
+            "AGENTS.md", "warning",
             f"custo de retomada ({cost:,} bytes) excede budget "
             f"({max_bytes:,}) — considere arquivar features shipped "
             f"antigas com 'agent-memory archive' ou reduzir corpo de "
@@ -278,7 +324,7 @@ def compute_metrics(state_fm: dict, features: list[dict],
     errors = sum(1 for i in issues if i.severity == "error")
 
     # Custo de retomada conta o que o agente carrega no bootstrap.
-    cost = _compute_resumption_cost()
+    cost = _compute_resumption_cost(state_fm)
 
     freshness = None
     updated = _parse_dt(state_fm.get("updated_at"))
@@ -367,12 +413,14 @@ def run_audit(write_indices: bool = True,
 
     # F-0019: warning quando custo de retomada excede budget. Soft
     # (não muda exit code) — operador decide se arquiva, reduz corpo
-    # de features ou aumenta o budget em AGENT.md.
+    # de features ou aumenta o budget em AGENTS.md.
     max_resumption = (agent_fm.get("budgets") or {}).get(
         "resumption_max_bytes", DEFAULT_RESUMPTION_BUDGET
     )
     all_issues.extend(
-        validate_resumption_budget(_compute_resumption_cost(), max_resumption)
+        validate_resumption_budget(
+            _compute_resumption_cost(state_fm), max_resumption,
+        )
     )
 
     features: list[dict] = []

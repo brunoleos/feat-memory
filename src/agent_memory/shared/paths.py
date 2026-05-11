@@ -30,7 +30,7 @@ def find_project_root() -> Path:
 
     current = Path.cwd().resolve()
     for _ in range(5):
-        if (current / "AGENT.md").exists():
+        if (current / "AGENTS.md").exists():
             return current
         if current.parent == current:
             break
@@ -57,7 +57,7 @@ def _init_paths() -> None:
     if ROOT is not None:
         return
     ROOT = find_project_root()
-    AGENT = ROOT / "AGENT.md"
+    AGENT = ROOT / "AGENTS.md"
     CLAUDE = ROOT / "CLAUDE.md"
     STATE = ROOT / ".agent-memory" / "STATE.md"
     MANIFEST_DIR = ROOT / ".agent-memory" / "manifest"

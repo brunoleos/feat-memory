@@ -4,7 +4,7 @@ Subcomando da CLI: `agent-memory deploy <target>`. Copia templates,
 instala hooks e configura .gitignore/.gitattributes no target.
 
 Comportamento por arquivo:
-    AGENT.md             → bloco com sentinelas markdown, refrescado a cada
+    AGENTS.md            → bloco com sentinelas markdown, refrescado a cada
                             deploy; conteúdo do usuário fora do bloco nunca
                             é tocado
     CLAUDE.md            → copia se ausente; deixa quieto se existe
@@ -31,7 +31,7 @@ from agent_memory.governance import install_hooks
 SENTINEL_BEGIN = "# >>> agent-memory >>>"
 SENTINEL_END = "# <<< agent-memory <<<"
 
-# Sentinelas markdown (HTML comments) para o bloco da metodologia em AGENT.md.
+# Sentinelas markdown (HTML comments) para o bloco da metodologia em AGENTS.md.
 # Diferentes das sentinelas shell-style usadas em .gitignore/.gitattributes
 # porque `#` em markdown é heading, não comentário.
 MD_SENTINEL_BEGIN = "<!-- >>> agent-memory >>> -->"
@@ -39,18 +39,18 @@ MD_SENTINEL_END = "<!-- <<< agent-memory <<< -->"
 
 
 def _data_path(*parts: str) -> Traversable:
-    """Retorna um Traversable em memory/data/<parts> ou governance/data/<parts>.
+    """Retorna um Traversable em data/<parts>.
 
-    F-0017 / ADR-0021 moveu data/ para os subpacotes correspondentes:
-    - templates/, skills/  → memory/data/
-    - hooks/               → governance/data/
+    F-0017 / ADR-0021 moveu data/ para o topo do package agent_memory:
+    - templates/, skills/  → agent_memory/data/
+    - hooks/               → agent_memory.governance/data/
 
     Esta função roteia automaticamente baseado no primeiro componente.
     """
     if parts and parts[0] == "hooks":
         base = files("agent_memory.governance") / "data"
     else:
-        base = files("agent_memory.memory") / "data"
+        base = files("agent_memory") / "data"
     p = base
     for part in parts:
         p = p / part
@@ -66,7 +66,7 @@ def _copy_resource(src: Traversable, dst: Path) -> None:
 def _copy_template(src: Traversable, dst: Path) -> None:
     """Copia um template fazendo substituições (`{VERSION}` → versão atual).
 
-    Usado para AGENT.md/CLAUDE.md/STATE.md, onde o frontmatter referencia
+    Usado para AGENTS.md/CLAUDE.md/STATE.md, onde o frontmatter referencia
     a doutrina por URL ancorada na tag da versão. Templates sem
     placeholders passam intactos.
     """
@@ -103,16 +103,16 @@ def _replace_sentinel_block(existing: str, payload: str,
 
 
 def _extract_methodology_block(template_text: str) -> str:
-    """Extrai o conteúdo entre sentinelas markdown no template AGENT.md.
+    """Extrai o conteúdo entre sentinelas markdown no template AGENTS.md.
 
     O conteúdo retornado é o que vai entre `<!-- >>> agent-memory >>> -->`
     e `<!-- <<< agent-memory <<< -->` no template (sem as sentinelas em si).
-    Usado para refrescar o bloco em arquivos AGENT.md já existentes sem
+    Usado para refrescar o bloco em arquivos AGENTS.md já existentes sem
     sobrescrever o resto do conteúdo do usuário.
     """
     if MD_SENTINEL_BEGIN not in template_text or MD_SENTINEL_END not in template_text:
         raise ValueError(
-            "template AGENT.md não contém sentinelas markdown agent-memory"
+            "template AGENTS.md não contém sentinelas markdown agent-memory"
         )
     # Defesa contra menções literais às sentinelas no conteúdo: usa primeira
     # abertura e última fechamento (cf. _replace_sentinel_block).
@@ -122,23 +122,23 @@ def _extract_methodology_block(template_text: str) -> str:
 
 
 def deploy_constitution(target: Path, force: bool, merge: bool) -> None:
-    """Deploy de AGENT.md (via bloco com sentinelas) e CLAUDE.md.
+    """Deploy de AGENTS.md (via bloco com sentinelas) e CLAUDE.md.
 
-    Para AGENT.md, a única mudança que o deploy faz num arquivo existente
+    Para AGENTS.md, a única mudança que o deploy faz num arquivo existente
     é substituir o bloco delimitado por sentinelas markdown. O resto do
     conteúdo (frontmatter, seções específicas do projeto autoradas pelo
     mantenedor) nunca é tocado. Em arquivo ausente, copia o template
     completo.
 
-    Para CLAUDE.md (redirect mínimo `@AGENT.md`), copia se ausente e
+    Para CLAUDE.md (redirect mínimo `@AGENTS.md`), copia se ausente e
     deixa quieto se existe — não há merge nem refresh.
     """
-    print("Constituição (AGENT.md, CLAUDE.md):")
+    print("Constituição (AGENTS.md, CLAUDE.md):")
 
-    src = _data_path("templates", "AGENT.md")
-    dst = target / "AGENT.md"
+    src = _data_path("templates", "AGENTS.md")
+    dst = target / "AGENTS.md"
     if not src.is_file():
-        print("  ERRO: template ausente no pacote: AGENT.md", file=sys.stderr)
+        print("  ERRO: template ausente no pacote: AGENTS.md", file=sys.stderr)
         sys.exit(1)
 
     from agent_memory import __version__
@@ -148,12 +148,12 @@ def deploy_constitution(target: Path, force: bool, merge: bool) -> None:
 
     if not dst.exists():
         dst.write_text(template_text, encoding="utf-8")
-        print("  criado: AGENT.md")
+        print("  criado: AGENTS.md")
     elif force:
         dst.write_text(template_text, encoding="utf-8")
-        print("  sobrescrito: AGENT.md (--force)")
+        print("  sobrescrito: AGENTS.md (--force)")
     elif not merge:
-        print("  pulado: AGENT.md (já existe; --no-merge)")
+        print("  pulado: AGENTS.md (já existe; --no-merge)")
     else:
         block_payload = _extract_methodology_block(template_text)
         existing = dst.read_text(encoding="utf-8")
@@ -165,9 +165,9 @@ def deploy_constitution(target: Path, force: bool, merge: bool) -> None:
         if changed:
             dst.write_text(new_content, encoding="utf-8")
             verb = "atualizado" if had_block else "atualizado (bloco anexado)"
-            print(f"  {verb}: AGENT.md (bloco agent-memory)")
+            print(f"  {verb}: AGENTS.md (bloco agent-memory)")
         else:
-            print("  já contém: AGENT.md (bloco agent-memory atualizado)")
+            print("  já contém: AGENTS.md (bloco agent-memory atualizado)")
 
     src = _data_path("templates", "CLAUDE.md")
     dst = target / "CLAUDE.md"
@@ -436,10 +436,10 @@ def run_audit(target: Path) -> None:
 def print_next_steps(target: Path) -> None:
     """Imprime próximos passos para o usuário."""
     print("Próximos passos:")
-    print(f"  1. Edite o frontmatter de {target}/AGENT.md "
+    print(f"  1. Edite o frontmatter de {target}/AGENTS.md "
           "(project, stack, constraints)")
     print(f"  2. Edite {target}/.agent-memory/STATE.md (Current, Next)")
-    print("  3. (Opcional) Adicione seções específicas do projeto à AGENT.md "
+    print("  3. (Opcional) Adicione seções específicas do projeto à AGENTS.md "
           "fora do bloco agent-memory")
     print("  4. Crie sua primeira feature em .agent-memory/manifest/features/")
     print("  5. Faça commit: git add . && git commit -m 'adopt agent memory'")
@@ -484,7 +484,7 @@ def run(args: argparse.Namespace) -> int:
 
     deploy_dir = target / ".agent-memory-deploy"
     # Remove o diretório transiente legado (de versões anteriores que tinham
-    # merge queue para AGENT.md). v0.4+ resolve a constituição direto via
+    # merge queue para AGENTS.md). v0.4+ resolve a constituição direto via
     # bloco com sentinelas, sem handoff intermediário.
     if deploy_dir.exists():
         shutil.rmtree(deploy_dir, ignore_errors=True)

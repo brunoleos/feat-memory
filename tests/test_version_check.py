@@ -127,7 +127,7 @@ def test_audit_emits_notice_when_versions_differ(tmp_project, capsys, monkeypatc
     am = tmp_project / ".agent-memory"
     am.mkdir(parents=True, exist_ok=True)
     _seed_meta(tmp_project, version="0.5.0")
-    (tmp_project / "AGENT.md").write_text(
+    (tmp_project / "AGENTS.md").write_text(
         "---\nschema_version: 1\nproject: x\nconstraints: []\n"
         "references: {}\nbudgets: {}\n---\n", encoding="utf-8",
     )
@@ -137,7 +137,7 @@ def test_audit_emits_notice_when_versions_differ(tmp_project, capsys, monkeypatc
     )
 
     monkeypatch.setattr(_paths, "ROOT", tmp_project, raising=False)
-    monkeypatch.setattr(_paths, "AGENT", tmp_project / "AGENT.md", raising=False)
+    monkeypatch.setattr(_paths, "AGENT", tmp_project / "AGENTS.md", raising=False)
     monkeypatch.setattr(_paths, "CLAUDE", tmp_project / "CLAUDE.md", raising=False)
     monkeypatch.setattr(_paths, "STATE", am / "STATE.md", raising=False)
     monkeypatch.setattr(_paths, "MANIFEST_DIR", am / "manifest", raising=False)

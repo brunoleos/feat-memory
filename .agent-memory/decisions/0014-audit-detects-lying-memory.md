@@ -49,7 +49,7 @@ A janela é parametrizada por flag (`--check-staleness=N`, default 7). Se o repo
 
 - Quebra retrocompat para projetos consumidores cujo STATE.md já lista IDs órfãos. Mitigação: a mensagem de erro diz exatamente qual ID não tem arquivo — o usuário corrige em segundos. E é o tipo de "quebra" que sinaliza problema real (era memória mentirosa).
 - O cross-check duplica leitura de diretórios já varridos por `run_audit()`. Custo desprezível em projetos típicos (dezenas de features, não milhares).
-- A heurística de "arquivo de código" via blacklist é frágil para projetos com layouts atípicos (ex: monorepo com `apps/`, `packages/`). Fica como TODO claro: no horizonte próximo, se virar fricção, expomos a lista via configuração no frontmatter de `AGENT.md` (ex: `audit.code_paths`). Por ora, paths fixos minimizam superfície e atendem o repo deste projeto.
+- A heurística de "arquivo de código" via blacklist é frágil para projetos com layouts atípicos (ex: monorepo com `apps/`, `packages/`). Fica como TODO claro: no horizonte próximo, se virar fricção, expomos a lista via configuração no frontmatter de `AGENTS.md` (ex: `audit.code_paths`). Por ora, paths fixos minimizam superfície e atendem o repo deste projeto.
 - `--check-staleness` exige `git log`, então não funciona fora de repositório Git. Fail-soft: se git não responde, retorna sem warning (não promove a erro).
 
 ## Alternativas rejeitadas
@@ -62,4 +62,4 @@ A janela é parametrizada por flag (`--check-staleness=N`, default 7). Se o repo
 
 **Detectar staleness via mtime do STATE.md em vez de git log**. Mais simples, mas mtime não persiste em clones frescos e não tem semântica de commit. `git log` é a fonte de verdade da atividade do projeto. Rejeitada por fragilidade.
 
-**Embutir lista de "code paths" no frontmatter de AGENT.md já agora**. Configuração antes de necessidade real é overhead. Espera-se um caso concreto de fricção (ex: monorepo) para justificar. Rejeitada por YAGNI.
+**Embutir lista de "code paths" no frontmatter de AGENTS.md já agora**. Configuração antes de necessidade real é overhead. Espera-se um caso concreto de fricção (ex: monorepo) para justificar. Rejeitada por YAGNI.

@@ -7,7 +7,7 @@ version: 0.5.0
 user_value: >
   Orienta o agente LLM, após git pull em projeto cliente, a brifar o
   desenvolvedor sobre mudanças trazidas em features, decisions e bloco
-  metodológico de AGENT.md, e a propor ajustes em STATE.md para refletir
+  metodológico de AGENTS.md, e a propor ajustes em STATE.md para refletir
   a nova realidade — sem reverter trabalho de colegas em manifest/ e
   decisions/.
 contracts:
@@ -22,7 +22,7 @@ acceptance:
     response: >
       determina o range do pull (default @{1}..HEAD; se reflog não
       indica pull/merge, pede base explícita) e lista arquivos tocados
-      em manifest/features/, decisions/, e bloco sentinela de AGENT.md
+      em manifest/features/, decisions/, e bloco sentinela de AGENTS.md
   - id: A2
     pattern: event
     trigger: "lista de arquivos tocados extraída"
@@ -76,4 +76,4 @@ SKILL.md em [src/agent_memory/memory/data/skills/memory-pull-brief/SKILL.md](src
 
 - O range default `@{1}..HEAD` pode ser ambíguo se o usuário fez commits locais depois do pull. A skill detecta isso via `git reflog -1 --format='%gs'` e pede base explícita.
 - `STATE.md` é ignorado no diff por design: o `.gitattributes` da metodologia o marca `merge=ours`, então mudanças upstream são silenciosamente descartadas pelo merge driver. Reportar daria informação enganosa.
-- Mudanças no `AGENT.md` fora do bloco entre sentinelas são reportadas como nota curta sem detalhamento — são autoria do mantenedor humano e merecem atenção dele, não da skill.
+- Mudanças no `AGENTS.md` fora do bloco entre sentinelas são reportadas como nota curta sem detalhamento — são autoria do mantenedor humano e merecem atenção dele, não da skill.
