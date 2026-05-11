@@ -15,4 +15,4 @@
 | F-0018 | consumer-version-notice | in_progress | 0.7.0 | ADR-0022 | F-0010,F-0017 |
 | F-0019 | audit-resumption-budget-warning | in_progress | 0.8.1 | ADR-0014 | F-0010,F-0012 |
 
-_Gerado por `agent-memory audit` em 2026-05-11T03:19:05+00:00. Não edite manualmente._
+_Gerado por `agent-memory audit` em 2026-05-11T03:27:54+00:00. Não edite manualmente._

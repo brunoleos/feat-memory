@@ -58,7 +58,7 @@ decisions: [ADR-0004, ADR-0010, ADR-0011]
 
 ## Comportamento
 
-SKILL.md em [src/agent_memory/memory/data/skills/memory-deploy/SKILL.md](src/agent_memory/memory/data/skills/memory-deploy/SKILL.md). Ponto de entrada único para adoção — invoca `agent-memory deploy` (F-0001) na Etapa 2 do fluxo, e `agent-memory migrate` (F-0004) na Fase 3.1 do sub-fluxo legacy.
+SKILL.md em [src/agent_memory/data/skills/memory-deploy/SKILL.md](src/agent_memory/data/skills/memory-deploy/SKILL.md). Ponto de entrada único para adoção — invoca `agent-memory deploy` (F-0001) na Etapa 2 do fluxo, e `agent-memory migrate` (F-0004) na Fase 3.1 do sub-fluxo legacy.
 
 Princípio operacional central: a skill toca em `decisions/`, `manifest/` e `STATE.md` durante a gênese retroativa, mas nunca no corpo da `AGENTS.md` fora do bloco com sentinelas. O bloco em si é gerenciado pelo `agent-memory deploy` de forma idempotente. Todo conteúdo de projeto na `AGENTS.md` (identidade, restrições, convenções) é autoria humana.
 

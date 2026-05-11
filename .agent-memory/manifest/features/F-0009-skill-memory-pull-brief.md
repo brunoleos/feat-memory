@@ -11,7 +11,7 @@ user_value: >
   a nova realidade — sem reverter trabalho de colegas em manifest/ e
   decisions/.
 contracts:
-  api: src/agent_memory/memory/data/skills/memory-pull-brief/SKILL.md
+  api: src/agent_memory/data/skills/memory-pull-brief/SKILL.md
 acceptance:
   - id: A1
     pattern: event
@@ -70,7 +70,7 @@ decisions: [ADR-0004, ADR-0012]
 
 ## Comportamento
 
-SKILL.md em [src/agent_memory/memory/data/skills/memory-pull-brief/SKILL.md](src/agent_memory/memory/data/skills/memory-pull-brief/SKILL.md). Espelho de `memory-debrief` (F-0008) em direção contrária: enquanto o debrief reflete o que **eu fiz** na sessão antes do commit, o pull-brief reflete o que **veio do remote** depois do pull. Triggera manualmente por frases do usuário ou por delegação a partir de `memory-bootstrap` (F-0007) quando o último commit é merge que tocou artefatos.
+SKILL.md em [src/agent_memory/data/skills/memory-pull-brief/SKILL.md](src/agent_memory/data/skills/memory-pull-brief/SKILL.md). Espelho de `memory-debrief` (F-0008) em direção contrária: enquanto o debrief reflete o que **eu fiz** na sessão antes do commit, o pull-brief reflete o que **veio do remote** depois do pull. Triggera manualmente por frases do usuário ou por delegação a partir de `memory-bootstrap` (F-0007) quando o último commit é merge que tocou artefatos.
 
 ## Limites conhecidos
 

@@ -9,7 +9,7 @@ user_value: >
   mudanças na memória persistente — atualizar Manifest, reescrever STATE,
   e propor ADR se houver decisão arquitetural não-trivial — antes do commit.
 contracts:
-  api: src/agent_memory/memory/data/skills/memory-debrief/SKILL.md
+  api: src/agent_memory/data/skills/memory-debrief/SKILL.md
 acceptance:
   - id: A1
     pattern: event
@@ -43,6 +43,6 @@ decisions: [ADR-0004]
 
 ## Comportamento
 
-SKILL.md em [src/agent_memory/memory/data/skills/memory-debrief/SKILL.md](src/agent_memory/memory/data/skills/memory-debrief/SKILL.md). A skill mais usada no dia-a-dia. Cobre o momento em que o trabalho realizado precisa ser refletido na memória persistente antes de virar commit.
+SKILL.md em [src/agent_memory/data/skills/memory-debrief/SKILL.md](src/agent_memory/data/skills/memory-debrief/SKILL.md). A skill mais usada no dia-a-dia. Cobre o momento em que o trabalho realizado precisa ser refletido na memória persistente antes de virar commit.
 
 O debrief é parte do trabalho, não opcional — uma sessão sem debrief é trabalho perdido. As três tarefas (Manifest, STATE, ADR opcional) são sequenciais para o agente, mas o usuário aprova cada artefato antes do commit.
