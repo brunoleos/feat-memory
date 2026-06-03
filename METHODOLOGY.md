@@ -23,6 +23,8 @@ O `AGENTS.md` contém apenas o que não muda entre sessões: identidade do proje
 
 O frontmatter YAML torna o conteúdo parseável por scripts sem sacrificar legibilidade humana. As restrições têm `severity` explícita: `hard` bloqueia o build quando violada, `soft` apenas gera warning. Esta distinção é o que separa convenções de estilo (que podem ser ignoradas em casos extremos) de regras de segurança (que nunca podem).
 
+Cada restrição pode declarar um bloco `check` opcional que a torna **enforced** em vez de só declarativa: o `agent-memory audit` o executa contra o repositório e emite uma violação herdando a `severity` da restrição. O conjunto de checkers é fechado e genérico — `forbid_paths`, `require_paths`, `forbid_pattern`, `require_pattern` e `dependencies` — composto via YAML, sem código por regra ([ADR-0028](.agent-memory/decisions/0028-constraints-declarative-checkers.md)). Restrição sem `check` permanece puramente declarativa. Nem toda regra é mecanizável de forma barata e confiável (o idioma da documentação, por exemplo); o schema não finge que é — enforça onde dá, declara onde não dá. Tudo opera com a dependência única do projeto, sem ferramentas externas.
+
 O campo `budgets` define os orçamentos de tamanho que o sistema impõe sobre si mesmo. O orçamento de retomada (CLAUDE + STATE + dois índices) deve ficar abaixo de doze kilobytes para que um agente possa carregar todo o contexto inicial em poucos tokens. O orçamento do State é mais agressivo, quatro kilobytes, porque o State é reescrito a cada sessão e crescimento descontrolado significa que o agente não está consolidando direito.
 
 Mudanças em `AGENTS.md` exigem ADR sempre que alteram restrições `hard` ou referenciam novas convenções arquiteturais. A regra prática é: se a mudança requer explicação para um futuro contribuidor, ela merece ADR.
@@ -139,9 +141,11 @@ No debrief, o agente reescreve as seções `Current` e `Next` do `.agent-memory/
 
 ## Auditoria
 
-O `agent-memory audit` produz um relatório de uma página com sete indicadores. Cada um responde uma pergunta operacional concreta sobre se o sistema está entregando valor ou virando burocracia.
+O `agent-memory audit` produz um relatório de uma página com oito indicadores. Cada um responde uma pergunta operacional concreta sobre se o sistema está entregando valor ou virando burocracia.
 
 A **conformidade de schema** mede se todos os artefatos passam validação estrutural, incluindo a validação dos critérios de aceitação contra os padrões EARS. Qualquer erro aqui bloqueia o build — schemas inválidos significam que o agente vai consumir dados quebrados na próxima sessão.
+
+A **conformidade de constraints** mede as restrições `hard`/`soft` que declaram um bloco `check`: o audit executa cada checker contra o repositório e reporta quantas foram checadas e quantas violaram. Violação de restrição `hard` é error e bloqueia o build; `soft` é warning. Restrições sem `check` não entram na conta. É o indicador que torna a constituição enforced em vez de só lida (ADR-0028).
 
 O **custo de retomada** soma os bytes de `AGENTS.md`, `CLAUDE.md` (quando presente como redirect), `.agent-memory/STATE.md` e os dois índices. Acima de doze kilobytes, o sistema está consumindo tokens demais antes mesmo do trabalho começar; é hora de compactar índices ou consolidar State.
 

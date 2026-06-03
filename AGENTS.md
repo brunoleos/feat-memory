@@ -10,9 +10,16 @@ constraints:
   - id: C1
     severity: hard
     rule: "Pure Python; sem shell scripts. Tools rodam em Linux, macOS e Windows nativamente."
+    check:
+      type: forbid_paths
+      globs: ["**/*.sh", "**/*.bash"]
   - id: C2
     severity: hard
     rule: "Dependência externa única: pyyaml. Novas dependências exigem ADR."
+    check:
+      type: dependencies
+      manifest: pyproject.toml
+      allow: ["pyyaml"]
   - id: C3
     severity: hard
     rule: "O projeto segue a metodologia agent-memory para gestão de agentes LLM."
@@ -42,6 +49,8 @@ Este repositório é simultaneamente a tool e a metodologia — vale o C3: o pro
 ## Restrições não-negociáveis
 
 As restrições marcadas como `severity: hard` no frontmatter são auditadas pelo `agent-memory audit` e bloqueiam o build quando violadas. As `soft` geram apenas warning. Mudanças nesta lista exigem ADR.
+
+Constraints podem declarar um bloco `check` opcional que o `agent-memory audit` **executa** contra o repositório, tornando a restrição enforced em vez de só declarativa ([ADR-0028](.agent-memory/decisions/0028-constraints-declarative-checkers.md)). C1 (`forbid_paths` sobre `*.sh`/`*.bash`) e C2 (`dependencies` sobre `pyproject.toml`, allow `pyyaml`) são checadas a cada audit; a violação herda a severity da constraint. C3 e C4 ficam declarativas — não há checker barato e confiável para elas.
 
 A combinação `pure Python` + `pyyaml apenas` é o que torna o `pipx install` trivial em qualquer plataforma. Adicionar shell scripts ou outras dependências fragmenta a superfície de instalação e exige ADR.
 

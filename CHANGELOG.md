@@ -6,6 +6,14 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto ader
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-06-03
+
+Primeiro passo do posicionamento estratégico do projeto como **a melhor camada de "constitution"** do spec-driven development (SDD): tornar as restrições da constituição *enforced* em vez de só declarativas. Uma constituição verificada a cada commit supera uma que é apenas lida.
+
+### Adicionado
+
+**F-0024 (constraint-enforcement) + ADR-0028.** Cada constraint em `AGENTS.md` pode declarar um bloco `check` opcional que o `agent-memory audit` **executa** contra o repositório. Novo módulo `governance/constraints.py` com um **conjunto fechado** de cinco checkers genéricos — `forbid_paths`, `require_paths`, `forbid_pattern`, `require_pattern`, `dependencies` — compostos via YAML sem escrever Python (o antídoto à razão que adiava o item: "cada regra exige um validador"). A violação herda a severity da constraint (hard→error/bloqueia o build, soft→warning); `check` malformado (type desconhecido, param faltando, regex inválido, dependencies sem allow/forbid) é error de schema. Vive em `governance/` e não em `memory/schemas.py` porque executar checker varre a árvore — governança, não schema (ADR-0021). Tudo stdlib + pyyaml (C2 preservada), agnóstico de linguagem: `dependencies` cobre `pyproject.toml`/`requirements.txt`/`package.json`. Novo indicador "Conformidade de constraints" no relatório e no JSON do audit. **Dogfood (C3/ADR-0009):** C1 (`forbid_paths` sobre `*.sh`/`*.bash`) e C2 (`dependencies` sobre `pyproject.toml`, allow `pyyaml`) deste repo passam a ser checadas a cada audit. C3 ("segue a metodologia") e C4 ("docs em pt-br") ficam declarativas — sem checker barato e confiável, limitação honesta.
+
 ## [0.11.0] - 2026-06-03
 
 Implementa os itens do roadmap (FUTURE_IMPROVEMENTS) com valor real e aderência à identidade do projeto, descartando explicitamente o que acopla linguagem/domínio ou é especulativo na escala atual.

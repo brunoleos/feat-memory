@@ -47,6 +47,7 @@ from agent_memory.memory.schemas import (
     validate_feature,
     validate_state,
 )
+from agent_memory.governance import constraints as _constraints
 
 
 # Re-export para compat: outros módulos (e testes) podem ter referências
@@ -59,6 +60,7 @@ __all__ = [
     "validate_state_crosscheck",
     "validate_state_freshness",
     "validate_release_status",
+    "check_constraints",
     "released_versions",
     "STALENESS_WARN_HOURS",
     "_is_code_path",
@@ -78,6 +80,10 @@ __all__ = [
 # e promover a Issue faria o pre-commit hook (`audit --strict`) bloquear
 # o commit, transformando um nudge em coerção. ADR-0024.
 STALENESS_WARN_HOURS = 14 * 24
+
+# Re-export: executor dos checkers de constraint (ADR-0028). Vive em
+# governance/constraints.py; exposto aqui para os testes e a compat de API.
+check_constraints = _constraints.check_constraints
 
 
 def validate_state_crosscheck(state_fm: dict,
@@ -433,6 +439,12 @@ def run_audit(write_indices: bool = True,
     agent_fm, issues = validate_agent(_paths.AGENT)
     all_issues.extend(issues)
 
+    # Constitution enforced: executa os checkers declarativos das constraints
+    # com bloco `check` (ADR-0028). Violação herda a severity da constraint
+    # (hard→error/bloqueia, soft→warning); `check` malformado é error de schema.
+    cc = _constraints.check_constraints(agent_fm, _paths.ROOT)
+    all_issues.extend(cc["issues"])
+
     max_state = (agent_fm.get("budgets") or {}).get(
         "state_max_bytes", DEFAULT_STATE_BUDGET
     )
@@ -502,6 +514,11 @@ def run_audit(write_indices: bool = True,
         )
 
     metrics = compute_metrics(state_fm, all_features, all_decisions, all_issues)
+    metrics["constraint_conformance"] = {
+        "checked": cc["checked"],
+        "violations": cc["violations"],
+        "pass": cc["violations"] == 0,
+    }
     return {
         "metrics": metrics,
         "issues": [asdict(i) for i in all_issues],
@@ -515,6 +532,13 @@ def print_report(result: dict) -> None:
     print("=" * 60)
     print(f"Project root:              {_paths.ROOT}")
     print(f"Conformidade de schema:    {m['schema_compliance']:.2f}")
+    cc = m.get("constraint_conformance") or {}
+    if cc.get("checked"):
+        if cc["pass"]:
+            print(f"Conformidade constraints:  {cc['checked']} checada(s) — ok")
+        else:
+            print(f"Conformidade constraints:  {cc['checked']} checada(s) — "
+                  f"⚠ {cc['violations']} violação(ões)")
     fresh = m["state_freshness_hours"]
     if fresh is not None and fresh > STALENESS_WARN_HOURS:
         dias = round(fresh / 24)

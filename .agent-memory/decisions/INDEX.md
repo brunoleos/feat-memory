@@ -26,5 +26,6 @@
 | ADR-0025 | 2026-06-03 | accepted | distribution,packaging,pypi,ci,release | F-0021 |
 | ADR-0026 | 2026-06-03 | accepted | ci,audit,portability,constraints,dogfooding | F-0022 |
 | ADR-0027 | 2026-06-03 | accepted | schema,decisions,methodology,drift | F-0023 |
+| ADR-0028 | 2026-06-03 | accepted | constitution,constraints,governance,enforcement,sdd,dogfooding | F-0024 |
 
-_Gerado por `agent-memory audit` em 2026-06-03T04:46:44+00:00. Não edite manualmente._
+_Gerado por `agent-memory audit` em 2026-06-03T05:36:18+00:00. Não edite manualmente._

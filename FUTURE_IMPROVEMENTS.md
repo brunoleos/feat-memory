@@ -50,6 +50,10 @@ O pacote passou a ser publicável na PyPI: `.github/workflows/release.yml` build
 
 O campo `version` no frontmatter de ADRs — presente em ADRs antigos, ausente nos recentes, sem regra — virou opcional formalizado: `validate_decision` valida o formato `X.Y.Z` quando presente mas nunca o exige; `propose-adr` pré-preenche o campo em novos drafts; a METHODOLOGY documenta a semântica (release de aceite). Sem backfill (ADRs antigos sem o campo seguem válidos). Fecha um drift conhecido. F-0023, ADR-0027.
 
+### Constraints `hard` enforced via checkers declarativos (v0.12.0)
+
+Antes adiado ("vago e caro de generalizar; cada regra exige um validador próprio"), o linting de constraints foi promovido a flagship sob o posicionamento de ser **a melhor camada de "constitution"** do spec-driven development: uma constituição *verificada* a cada commit supera uma só lida. A razão que adiava o item é resolvida sem um validador por regra — por um **conjunto fechado** de cinco checkers genéricos (`forbid_paths`, `require_paths`, `forbid_pattern`, `require_pattern`, `dependencies`) que o projeto compõe via YAML, sem escrever Python. Cada constraint pode declarar um bloco `check` opcional no frontmatter do `AGENTS.md`; o `agent-memory audit` o executa contra o repositório e emite Issue herdando a severity da constraint (hard→error/bloqueia, soft→warning); `check` malformado é erro de schema. Vive em `governance/constraints.py` (não em `memory/schemas.py`): executar checker varre a árvore — governança, não schema (ADR-0021). Tudo stdlib + pyyaml (C2 preservada), agnóstico de linguagem — `dependencies` cobre pyproject.toml/requirements.txt/package.json. Dogfood: C1 e C2 deste repo são checadas a cada audit. C3 ("segue a metodologia") e C4 ("docs em pt-br") ficam declarativas — sem checker barato e confiável, limitação honesta. F-0024, ADR-0028.
+
 ## Curto prazo
 
 ### Comando de busca no Manifest — **[Adiado]**
@@ -57,12 +61,6 @@ O campo `version` no frontmatter de ADRs — presente em ADRs antigos, ausente n
 > _Triagem 2026-06-03: ganho marginal com ~20 features e mantenedor solo. Revisitar quando o Manifest passar de ~50 features._
 
 Um subcomando `agent-memory query` que responde perguntas comuns sem o agente precisar carregar arquivos. Exemplos: `agent-memory query depends-on F-0007` lista features que dependem de `F-0007`, `agent-memory query affected-by ADR-0002` lista features afetadas por uma decisão, `agent-memory query stale --days 90` lista features sem update há mais de noventa dias. Reduz o custo de retomada para perguntas frequentes.
-
-### Linting de constraints hard — **[Adiado]**
-
-> _Triagem 2026-06-03: vago e caro de generalizar; cada regra exige um validador próprio. Um lint estreito de C1/C2 (sem shell scripts, só pyyaml) é viável mas de baixo ROI agora._
-
-Hoje as restrições `severity: hard` em `AGENTS.md` são apenas declarativas. A extensão é executar linters específicos para cada constraint registrada e reportar violações reais no código. Por exemplo, uma constraint "Pydantic obrigatório para schemas de borda" pode ser checada por um plugin de AST. Aumenta significativamente o valor das constraints, mas cada nova regra exige código de validação.
 
 ## Médio prazo
 
