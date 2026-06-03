@@ -26,5 +26,6 @@ principal.
 | F-0017 | memory-governance-split | shipped | 0.7.0 | ADR-0021 | F-0001,F-0002 |
 | F-0018 | consumer-version-notice | shipped | 0.8.0 | ADR-0022 | F-0010,F-0017 |
 | F-0019 | superseded-decisions-folder | shipped | 0.9.0 | ADR-0023 | F-0011 |
+| F-0020 | audit-release-status | shipped | 0.10.0 | ADR-0024 | F-0011 |
 
-_Gerado por `agent-memory audit` em 2026-06-03T04:02:27+00:00. Não edite manualmente._
+_Gerado por `agent-memory audit` em 2026-06-03T04:46:44+00:00. Não edite manualmente._

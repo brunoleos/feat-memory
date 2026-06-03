@@ -23,5 +23,8 @@
 | ADR-0022 | 2026-05-05 | accepted | governance,observability,consumer-notice,soft-warning | F-0018 |
 | ADR-0023 | 2026-05-11 | accepted | decisions,archive,retention,retomada | F-0019 |
 | ADR-0024 | 2026-06-03 | accepted | audit,governance,validation,dogfooding,anti-drift | F-0020 |
+| ADR-0025 | 2026-06-03 | accepted | distribution,packaging,pypi,ci,release | F-0021 |
+| ADR-0026 | 2026-06-03 | accepted | ci,audit,portability,constraints,dogfooding | F-0022 |
+| ADR-0027 | 2026-06-03 | accepted | schema,decisions,methodology,drift | F-0023 |
 
-_Gerado por `agent-memory audit` em 2026-06-03T04:02:27+00:00. Não edite manualmente._
+_Gerado por `agent-memory audit` em 2026-06-03T04:46:44+00:00. Não edite manualmente._

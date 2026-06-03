@@ -38,65 +38,89 @@ O `agent-memory propose-adr` ganhou validação prévia de base ref, com mensage
 
 O `agent-memory audit` passou a confrontar o `status` declarado das features contra as versões realmente released. Antes, a auditoria validava validade estrutural (schema, integridade referencial de IDs) mas não verdade semântica — uma feature `in_progress` cujo trabalho já saiu em release passava clean. Foi assim que o próprio repo acumulou 11 features fantasma `in_progress` após v0.6.0–v0.9.0. Agora `validate_release_status` (F-0020, ADR-0024) emite warning quando o `version` de uma feature `in_progress` consta no CHANGELOG ou em tag Git — promovido a error sob `--strict`, bloqueando o commit. Em paralelo, o frescor do STATE acima de 14 dias ganhou destaque visual no relatório (apresentação, não Issue: staleness no commit continua sendo o nudge soft de F-0013). A assimetria — bloquear mentira factual, nudgar higiene — está documentada em ADR-0024.
 
+### Distribuição via PyPI com trusted publishing (v0.11.0)
+
+O pacote passou a ser publicável na PyPI: `.github/workflows/release.yml` builda sdist+wheel e publica a cada tag `vX.Y.Z` via trusted publishing (OIDC, sem token persistente). No caminho, corrigiu-se um bug latente de `package-data` (o pre-commit hook, movido para `governance/data/hooks/` no split F-0017, era omitido do wheel) e adicionou-se `tests/test_packaging.py` para impedir a regressão. Metadados ajustados a PEP 639 (license SPDX, sem classifier de licença). Quando o mantenedor reservar o nome e configurar o publisher, `pipx install agent-memory` passa a ser o caminho de instalação do usuário final. F-0021, ADR-0025.
+
+### CI cross-OS como segunda linha de defesa (v0.11.0)
+
+`.github/workflows/ci.yml` roda `pytest` + `agent-memory audit --strict` em cada push/PR, numa matriz {ubuntu, macos, windows} × {3.11, 3.12}. A matriz cross-OS torna a constraint C1 ("roda nativamente nos três sistemas") verificável por execução em vez de só declarada; o `audit --strict` no CI fecha o furo deixado pelo `--no-verify` do pre-commit. F-0022, ADR-0026.
+
+### Campo `version` em ADRs formalizado (v0.11.0)
+
+O campo `version` no frontmatter de ADRs — presente em ADRs antigos, ausente nos recentes, sem regra — virou opcional formalizado: `validate_decision` valida o formato `X.Y.Z` quando presente mas nunca o exige; `propose-adr` pré-preenche o campo em novos drafts; a METHODOLOGY documenta a semântica (release de aceite). Sem backfill (ADRs antigos sem o campo seguem válidos). Fecha um drift conhecido. F-0023, ADR-0027.
+
 ## Curto prazo
 
-### Publicação na PyPI
+### Comando de busca no Manifest — **[Adiado]**
 
-Quando a CLI estabilizar (interface congelada por algumas releases sem mudança breaking), publicar o pacote na PyPI permitirá que usuários finais instalem com `pipx install agent-memory` em vez do clone-and-install editable atual. O caminho técnico é simples: `python -m build` para gerar wheel + sdist, `twine upload` para publicar; o trabalho real é (a) reservar o nome `agent-memory` na PyPI antes de qualquer concorrência, (b) decidir cadência de releases, e (c) configurar GitHub Actions para publicar automaticamente em cada tag `vX.Y.Z`.
-
-### Integração com CI
-
-Rodar `agent-memory audit --json --strict` em cada pull request, parsear o JSON e postar comentário no PR listando issues encontrados. Bloquear merge quando `violations_count > 0` ou `manifest_drift` não-vazio. A integração com GitHub Actions ou GitLab CI cabe em poucas linhas de YAML; o trabalho real é decidir os limiares de bloqueio. Com o pre-commit hook já implementado, a CI atua como segunda linha de defesa para casos onde o hook foi pulado ou não estava instalado.
-
-### Comando de busca no Manifest
+> _Triagem 2026-06-03: ganho marginal com ~20 features e mantenedor solo. Revisitar quando o Manifest passar de ~50 features._
 
 Um subcomando `agent-memory query` que responde perguntas comuns sem o agente precisar carregar arquivos. Exemplos: `agent-memory query depends-on F-0007` lista features que dependem de `F-0007`, `agent-memory query affected-by ADR-0002` lista features afetadas por uma decisão, `agent-memory query stale --days 90` lista features sem update há mais de noventa dias. Reduz o custo de retomada para perguntas frequentes.
 
-### Linting de constraints hard
+### Linting de constraints hard — **[Adiado]**
+
+> _Triagem 2026-06-03: vago e caro de generalizar; cada regra exige um validador próprio. Um lint estreito de C1/C2 (sem shell scripts, só pyyaml) é viável mas de baixo ROI agora._
 
 Hoje as restrições `severity: hard` em `AGENTS.md` são apenas declarativas. A extensão é executar linters específicos para cada constraint registrada e reportar violações reais no código. Por exemplo, uma constraint "Pydantic obrigatório para schemas de borda" pode ser checada por um plugin de AST. Aumenta significativamente o valor das constraints, mas cada nova regra exige código de validação.
 
-### Formalizar campo `version` em ADRs no schema da metodologia
-
-A METHODOLOGY descreve `version` (semver da release que tocou) apenas para features no Manifest. Durante a gênese retroativa do próprio agent-memory (v0.3.0), introduzimos o mesmo campo no frontmatter dos ADRs para registrar em qual versão do projeto cada decisão foi aceita — útil para tabelas de overview e para correlacionar mudanças arquiteturais com releases. A extensão é propagar isso formalmente: documentar o campo na seção "Decisions" da METHODOLOGY, atualizar o schema validado pelo `agent-memory audit` para reconhecer (mas não exigir) o campo, e atualizar o template de ADR gerado pelo `agent-memory propose-adr`. Trabalho pequeno, mas precisa de coordenação entre doc, audit e propose-adr para evitar drift.
-
 ## Médio prazo
 
-### Coordenação multi-agente
+> _Triagem 2026-06-03: nenhum destes entrou no ciclo v0.11.0. Os marcadores abaixo registram a decisão e a razão para não reabrir a discussão sem fato novo._
+
+### Coordenação multi-agente — **[Adiado]**
+
+> _YAGNI: o uso real é sessão única, projeto solo. Revisitar quando houver trabalho concorrente de fato no mesmo repo._
 
 A versão atual assume sessão única em série. Quando duas sessões de Claude Code rodam em paralelo no mesmo repositório, há risco de conflito no `.agent-memory/STATE.md` e de duplicação de IDs em features novas. A proposta é um protocolo simples de lock: o agente cria um arquivo `.state.lock` com sua identidade ao iniciar uma sessão; outros agentes detectam o lock e operam em modo read-only no Manifest até o lock ser liberado. Para IDs novos, uma reserva atômica via Git push força resolução de conflito explícita.
 
-### Coverage real ligado a pytest-cov
+### Coverage real ligado a pytest-cov — **[Rejeitado]**
+
+> _Acopla a tool a Python/pytest. A metodologia é genérica (serve qualquer projeto/linguagem); `manifest_coverage` mede presença de teste por design. Coverage real é trabalho do CI do projeto consumidor, não da tool._
 
 O campo `manifest_coverage` hoje mede apenas presença de arquivos de teste, não cobertura real de execução. A extensão é cruzar com a saída de `pytest --cov` (ou equivalente) e reportar cobertura real por feature. Uma feature pode ter arquivo de teste linkado mas com cobertura efetiva de quinze por cento, e o sistema atual não detecta isso. O trabalho é em parsear o relatório de coverage e mapear de volta para feature IDs via convenção de nomes ou marcadores no teste.
 
-### Geração de OpenAPI a partir do Manifest
+### Geração de OpenAPI a partir do Manifest — **[Rejeitado]**
+
+> _Acopla a tool a um domínio (APIs HTTP) e a Pydantic/OpenAPI. Fere a identidade genérica. Cabe a um plugin externo, não ao core._
 
 Para features de API, o campo `contracts.api` aponta para a função handler e `contracts.schemas` aponta para os schemas Pydantic. Com essa informação, é possível gerar a especificação OpenAPI automaticamente, garantindo que a documentação externa fique sempre alinhada com o Manifest interno. Útil principalmente em sistemas com SDK de cliente gerado a partir de OpenAPI, onde drift entre spec e implementação tem impacto direto em consumidores.
 
-### Snapshot histórico do State
+### Snapshot histórico do State — **[Adiado]**
+
+> _`git log .agent-memory/STATE.md` já entrega isso ad-hoc; baixo valor incremental para uma ferramenta dedicada._
 
 O `.agent-memory/STATE.md` é reescrito a cada sessão e a história fica no Git. Para análises retrospectivas — "qual era o foco do time em janeiro?", "quanto tempo passamos em F-0007?" — fazer `git log .agent-memory/STATE.md` é viável mas inconveniente. A proposta é um script que extrai snapshots semanais do `.agent-memory/STATE.md` e produz uma timeline navegável. Nada que não dê para fazer ad-hoc, mas a presença da ferramenta induz a hábito.
 
 ## Longo prazo
 
-### Busca semântica sobre o Manifest
+### Busca semântica sobre o Manifest — **[Rejeitado]**
+
+> _Exigiria dependência de embeddings/índice vetorial, ferindo C2 (dependência externa única: pyyaml). Em escala, o subcomando `query` (determinístico) cobre a maior parte da necessidade sem deps._
 
 Em projetos com mais de cinquenta features, encontrar a feature relevante por nome ou tags vira difícil. Indexar os campos `name`, `user_value` e o corpo das features em embeddings permite busca por similaridade: "qual feature trata de autenticação?" retorna as três mais relevantes mesmo que nenhuma tenha "autenticação" no nome. O custo é manter o índice atualizado; em projetos pequenos não vale, em projetos grandes economiza muito tempo.
 
-### Federação entre projetos
+### Federação entre projetos — **[Adiado]**
+
+> _Especulativo; sem caso real de monorepo/multi-projeto consumindo a tool hoje._
 
 Em monorepos ou em organizações com múltiplos projetos relacionados, faz sentido linkar Manifests. Uma feature em `projeto-a` pode declarar `depends_on_external: projeto-b/F-0042`, e o `agent-memory audit` consulta o Manifest do projeto vizinho via Git submodule ou registry. Habilita raciocínio cross-cutting sobre dependências sem precisar duplicar informação.
 
-### Versionamento de schema
+### Versionamento de schema — **[Adiado]**
+
+> _Torna-se necessário só no primeiro bump de `schema_version`. Até lá é YAGNI; quando vier, é pré-requisito de qualquer evolução de schema._
 
 A versão atual usa `schema_version: 2` em todos os artefatos. Quando o schema mudar (campos novos, formatos diferentes), precisamos de migration scripts que atualizem artefatos antigos preservando informação. A proposta é um diretório `src/agent_memory/migrations/` com scripts numerados, um para cada incremento de schema, expostos como `agent-memory migrate-schema --to N` (dry-run por padrão).
 
-### Integração com feature flags
+### Integração com feature flags — **[Rejeitado]**
+
+> _Acopla a tool a SaaS externos (LaunchDarkly/Unleash/Flagsmith), ferindo a portabilidade e a dependência única. Cabe a adapter externo, não ao core._
 
 Quando `status: shipped` em produção é mediado por feature flags (LaunchDarkly, Unleash, Flagsmith), seria útil que o Manifest refletisse o estado real de exposição. Uma feature pode estar marcada como shipped mas com flag desligada para 95% dos usuários, e essa nuance importa para decisões operacionais. A integração é via adapter por provedor, lendo o estado da flag e anexando ao registro da feature.
 
-### Análise de drift histórico
+### Análise de drift histórico — **[Adiado]**
+
+> _Agora viável (a CI existe — F-0022), mas é nice-to-have de time grande. Sem demanda real, fica no horizonte._
 
 Manter `manifest_drift` é uma série temporal valiosa: pode-se medir quanto drift acumulou entre releases, quais features são mais propensas a drift, e correlacionar com regressões. A proposta é um job de CI que registra a métrica diariamente em uma tabela ou arquivo append-only, e um dashboard mínimo (HTML estático gerado por script) para visualização. Útil principalmente em times grandes onde refactors frequentes desafiam a manutenção do Manifest.
 

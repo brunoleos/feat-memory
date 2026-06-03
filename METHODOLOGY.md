@@ -83,6 +83,8 @@ Cada decisão arquitetural não-trivial vira um arquivo numerado em `.agent-memo
 
 O frontmatter referencia features explicitamente via `affects_features`. Uma decisão pode afetar várias features, e uma feature pode encarnar várias decisões. Esta relação muitos-para-muitos é o que torna ADRs e Manifest ortogonais em vez de redundantes.
 
+Os campos obrigatórios do frontmatter de um ADR são `id`, `date` e `status`. O campo `version` é **opcional**: quando presente, registra a release (semver `X.Y.Z`, prefixo `v` aceito) em que a decisão foi aceita — simétrico ao `version` das features. O `agent-memory audit` valida o formato quando o campo existe, mas nunca o exige (ADRs sem `version` permanecem válidos). O `agent-memory propose-adr` pré-preenche o campo com a versão atual do pacote no draft gerado. Não há backfill obrigatório: ADRs antigos sem o campo continuam corretos.
+
 O corpo segue quatro seções padronizadas: Contexto (o problema), Decisão (a escolha feita), Consequências (positivas e negativas), Alternativas rejeitadas (com a razão da rejeição). A seção de alternativas é a mais importante e a mais frequentemente esquecida. Sem ela, um futuro leitor não tem como saber se a alternativa óbvia já foi considerada e descartada por uma boa razão, ou se ninguém pensou nela.
 
 Quando uma decisão é substituída, o ADR original tem apenas seu campo `superseded_by` atualizado — nada mais é alterado. O ADR substituto explica o motivo da mudança em sua seção de Contexto. Esta convenção preserva o raciocínio original mesmo quando as conclusões mudam.

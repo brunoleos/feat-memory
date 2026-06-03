@@ -6,6 +6,22 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto ader
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-06-03
+
+Implementa os itens do roadmap (FUTURE_IMPROVEMENTS) com valor real e aderência à identidade do projeto, descartando explicitamente o que acopla linguagem/domínio ou é especulativo na escala atual.
+
+### Adicionado
+
+**F-0021 (pypi-distribution) + ADR-0025.** Distribuição via PyPI: `.github/workflows/release.yml` builda sdist+wheel e publica a cada tag `vX.Y.Z` via trusted publishing (OIDC, sem token persistente). Corrigido bug latente de `package-data` — o pre-commit hook, movido para `governance/data/hooks/` no split F-0017, era omitido do wheel (editable install mascarava). `tests/test_packaging.py` valida que todo arquivo de runtime está coberto por algum glob, sem precisar buildar. Metadados ajustados a PEP 639 (license SPDX, sem classifier de licença); `keywords`/`classifiers` adicionados.
+
+**F-0022 (ci-pipeline) + ADR-0026.** `.github/workflows/ci.yml` roda `pytest` + `agent-memory audit --strict` em push/PR, na matriz {ubuntu, macos, windows} × {3.11, 3.12}. A matriz cross-OS torna a constraint C1 verificável por execução (antes só declarada); o `audit --strict` no CI é a segunda linha de defesa para commits que pularam o pre-commit via `--no-verify`.
+
+**F-0023 (adr-version-field) + ADR-0027.** O campo `version` em ADRs vira opcional formalizado: `validate_decision` valida o formato `X.Y.Z` quando presente mas nunca exige; `propose-adr` pré-preenche o campo em novos drafts (`SEMVER_RE` é a fonte única de formato); METHODOLOGY documenta a semântica (release de aceite). Sem backfill — ADRs antigos sem o campo seguem válidos. Fecha um drift conhecido.
+
+### Notas
+
+FUTURE_IMPROVEMENTS marca explicitamente os itens **adiados** (query, linting de constraints, multi-agente, snapshot de State, federação, migrations de schema, drift dashboard) e **rejeitados** (coverage via pytest-cov, OpenAPI, busca semântica, feature flags) com a razão de cada um.
+
 ## [0.10.0] - 2026-06-03
 
 Sessão de saneamento: a auditoria do próprio repo revelou drift acumulado (11 features `in_progress` já released, STATE 23 dias velho, `CLAUDE.md` com import quebrado para `AGENT.md` após o rename para `AGENTS.md`). Corrigido o estado **e** adicionado enforcement para que esse tipo de drift não passe mais clean.

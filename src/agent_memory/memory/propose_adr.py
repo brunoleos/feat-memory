@@ -32,6 +32,8 @@ import sys
 from datetime import date
 from pathlib import Path
 
+from agent_memory.memory.schemas import SEMVER_RE
+
 
 def find_project_root() -> Path:
     """Descobre o project root via git, com fallback para o cwd."""
@@ -229,6 +231,12 @@ def generate_draft(stats: dict, files: list[str], messages: list[str],
     today = date.today().isoformat()
     filename = f"{num:04d}-draft.md"
 
+    # version = release em que a decisão é aceita (opcional, ADR-0027).
+    # Pré-preenchido com a versão atual do pacote; ajuste se a decisão
+    # entrar em vigor em outra release.
+    from agent_memory import __version__ as pkg_version
+    adr_version = pkg_version if SEMVER_RE.match(pkg_version) else "0.0.0"
+
     file_list = "\n".join(f"- `{f}`" for f in files[:25])
     if len(files) > 25:
         file_list += f"\n- _... ({len(files) - 25} arquivos a mais)_"
@@ -241,6 +249,7 @@ def generate_draft(stats: dict, files: list[str], messages: list[str],
 id: ADR-{num:04d}
 date: {today}
 status: proposed
+version: {adr_version}
 supersedes: null
 superseded_by: null
 affects_features: []

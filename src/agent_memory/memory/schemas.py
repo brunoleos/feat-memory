@@ -22,6 +22,9 @@ from agent_memory.shared import paths as _paths
 
 FEATURE_FILE_RE = re.compile(r"^F-\d{4}-[a-z0-9-]+\.md$")
 DECISION_FILE_RE = re.compile(r"^\d{4}-[a-z0-9-]+\.md$")
+# Canônico X.Y.Z (alinhado ao `version` de features); prefixo `v` aceito
+# por compatibilidade com os ADRs da gênese (v0.3.0), que usaram `vX.Y.Z`.
+SEMVER_RE = re.compile(r"^v?\d+\.\d+\.\d+$")
 
 VALID_FEATURE_STATUS = {"planned", "in_progress", "shipped", "deprecated"}
 VALID_DECISION_STATUS = {"proposed", "accepted", "superseded", "deprecated"}
@@ -189,5 +192,16 @@ def validate_decision(path: Path) -> tuple[dict, list[Issue]]:
     status = fm.get("status")
     if status and status not in VALID_DECISION_STATUS:
         issues.append(Issue(name, "error", f"status inválido: {status}"))
+
+    # `version` é opcional em ADRs (release em que a decisão foi aceita —
+    # simétrico ao version de features). Reconhecido e validado quando
+    # presente; nunca exigido. ADR-0027.
+    version = fm.get("version")
+    if version is not None and not SEMVER_RE.match(str(version)):
+        issues.append(Issue(
+            name, "error",
+            f"version inválido: {version!r} "
+            f"(esperado X.Y.Z, prefixo 'v' opcional, ou ausente)",
+        ))
 
     return fm, issues
