@@ -113,18 +113,31 @@ agent-memory/                         # clone do projeto na sua máquina
 ├── CHANGELOG.md                      # histórico de versões
 ├── VERSION                           # versão semântica atual (lida por pyproject)
 ├── src/
-│   └── agent_memory/                 # pacote Python
+│   └── agent_memory/                 # pacote Python (3 subpacotes, ADR-0021)
 │       ├── __init__.py
 │       ├── cli.py                    # entrypoint: agent-memory ...
-│       ├── deploy.py                 # subcomando deploy
-│       ├── audit.py                  # subcomando audit
-│       ├── propose_adr.py            # subcomando propose-adr
-│       ├── migrate.py                # subcomando migrate
-│       ├── install_hooks.py          # helper de instalação de hooks
-│       └── data/                     # package data (vai no wheel)
-│           ├── templates/            # AGENTS.md, CLAUDE.md, STATE.md, .gitattributes
-│           ├── skills/               # memory-deploy, memory-bootstrap, memory-debrief, memory-pull-brief
-│           └── hooks/                # pre-commit
+│       ├── deploy.py                 # subcomando deploy (top-level)
+│       ├── data/                     # package data compartilhado (vai no wheel)
+│       │   ├── templates/            # AGENTS.md, CLAUDE.md, STATE.md, .gitattributes
+│       │   └── skills/               # memory-deploy, memory-bootstrap, memory-debrief, memory-pull-brief
+│       ├── shared/                   # utilitários sem deps do projeto
+│       │   ├── paths.py              # lazy-init de ROOT e paths derivados
+│       │   └── parsing.py            # parse_frontmatter, read_meta
+│       ├── memory/                   # artefatos canônicos + ciclo de vida
+│       │   ├── schemas.py            # validação de schema (EARS, etc.)
+│       │   ├── indexing.py           # geração de INDEX.md
+│       │   ├── archive.py            # subcomando archive
+│       │   ├── checkpoints.py        # subcomando checkpoint
+│       │   ├── propose_adr.py        # subcomando propose-adr
+│       │   └── migrate.py            # subcomando migrate
+│       └── governance/              # enforcement, métricas, telemetria, hooks
+│           ├── audit.py              # subcomando audit
+│           ├── telemetry.py          # subcomandos record / log
+│           ├── check_staleness.py    # check-staleness-staged
+│           ├── check_version_bump.py # check-version-bump-staged
+│           ├── version_check.py      # subcomando version-check
+│           ├── install_hooks.py      # helper de instalação de hooks
+│           └── data/hooks/           # pre-commit
 ├── tests/                            # suite pytest
 └── examples/                         # exemplos pedagógicos (não vão no wheel)
     ├── manifest/features/F-0001-vector-similarity-search.md

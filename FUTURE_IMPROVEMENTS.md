@@ -12,7 +12,7 @@ Os critérios de aceitação no Manifest agora seguem os cinco padrões canônic
 
 ### Pre-commit hook
 
-O hook em `src/agent_memory/data/hooks/pre-commit` é instalado pelo `agent-memory deploy` e roda `agent-memory audit --strict` antes de cada commit. A flag `--strict` promove warnings (drift) a errors. O hook respeita `--no-verify` como válvula de escape para casos excepcionais. A combinação recomendada continua sendo hook local mais checagem em CI.
+O hook em `src/agent_memory/governance/data/hooks/pre-commit` é instalado pelo `agent-memory deploy` e roda `agent-memory audit --strict` antes de cada commit. A flag `--strict` promove warnings (drift) a errors. O hook respeita `--no-verify` como válvula de escape para casos excepcionais. A combinação recomendada continua sendo hook local mais checagem em CI.
 
 ### Geração automática de propostas de ADR
 
@@ -33,6 +33,10 @@ O agent-memory é distribuído como pacote Python com entry point `agent-memory 
 ### Robustez de tratamento de erros
 
 O `agent-memory propose-adr` ganhou validação prévia de base ref, com mensagens de erro acionáveis quando o repositório tem poucos commits para `HEAD~1` funcionar. O `agent-memory audit` ganhou mensagem acionável quando PyYAML está ausente, incluindo opções de instalação para diferentes ambientes (pip, pip3, virtualenv, --break-system-packages). Estas mudanças tornam o feedback de erro útil em vez de obscuro.
+
+### Cross-check de status vs. release no audit (v0.10.0)
+
+O `agent-memory audit` passou a confrontar o `status` declarado das features contra as versões realmente released. Antes, a auditoria validava validade estrutural (schema, integridade referencial de IDs) mas não verdade semântica — uma feature `in_progress` cujo trabalho já saiu em release passava clean. Foi assim que o próprio repo acumulou 11 features fantasma `in_progress` após v0.6.0–v0.9.0. Agora `validate_release_status` (F-0020, ADR-0024) emite warning quando o `version` de uma feature `in_progress` consta no CHANGELOG ou em tag Git — promovido a error sob `--strict`, bloqueando o commit. Em paralelo, o frescor do STATE acima de 14 dias ganhou destaque visual no relatório (apresentação, não Issue: staleness no commit continua sendo o nudge soft de F-0013). A assimetria — bloquear mentira factual, nudgar higiene — está documentada em ADR-0024.
 
 ## Curto prazo
 

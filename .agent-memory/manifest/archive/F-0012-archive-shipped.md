@@ -1,7 +1,7 @@
 ---
 id: F-0012
 name: archive-shipped
-status: in_progress
+status: shipped
 introduced: 2026-05-04
 version: 0.6.0
 user_value: Subcomando `agent-memory archive` move features shipped (e fora de active_features) para `manifest/archive/`, reduzindo o INDEX que memory-bootstrap carrega na retomada. ADRs nunca são arquivados (registro histórico imutável).

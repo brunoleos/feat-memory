@@ -1,7 +1,7 @@
 ---
 id: F-0017
 name: memory-governance-split
-status: in_progress
+status: shipped
 introduced: 2026-05-05
 version: 0.7.0
 user_value: Separa o pacote em três subpacotes (shared, memory, governance) com regra de dependência hierárquica `shared ⇐ memory ⇐ governance`. Permite ao consumidor operar puramente em memória sem invocar governança. UX do CLI inalterada.

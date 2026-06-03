@@ -1,7 +1,7 @@
 ---
 id: F-0015
 name: state-from-checkpoints
-status: in_progress
+status: shipped
 introduced: 2026-05-04
 version: 0.6.0
 user_value: Inverte STATE.md de fonte da verdade para view derivada de checkpoints append-only, eliminando reescrita destrutiva por debriefs apressados. memory-bootstrap continua lendo o mesmo arquivo (Liskov-safe).

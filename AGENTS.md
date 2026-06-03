@@ -35,7 +35,7 @@ budgets:
 
 ## Identidade
 
-`agent-memory` é uma CLI Python que distribui uma metodologia de memória persistente para agentes LLM (Claude Code, Cursor, Aider e qualquer ferramenta que reconheça `AGENTS.md`). Quatro artefatos versionados (`AGENTS.md` na raiz; `STATE.md`, `manifest/` e `decisions/` em `.agent-memory/`) dão ao agente contexto durável entre sessões; quatro subcomandos (`deploy`, `audit`, `propose-adr`, `migrate`) automatizam instalação, validação e gênese retroativa. Quatro skills (`memory-deploy`, `memory-bootstrap`, `memory-debrief`, `memory-pull-brief`) orientam os fluxos críticos. Usuários: desenvolvedores que querem que seu agente preserve foco e decisões arquiteturais sem reler o código a cada sessão.
+`agent-memory` é uma CLI Python que distribui uma metodologia de memória persistente para agentes LLM (Claude Code, Cursor, Aider e qualquer ferramenta que reconheça `AGENTS.md`). Quatro artefatos versionados (`AGENTS.md` na raiz; `STATE.md`, `manifest/` e `decisions/` em `.agent-memory/`) dão ao agente contexto durável entre sessões; um conjunto de subcomandos (`deploy`, `audit`, `propose-adr`, `migrate`, `archive`, `checkpoint`, `record`/`log`, `version-check`, `check-*-staged`) automatiza instalação, validação, gênese retroativa e governança. Quatro skills (`memory-deploy`, `memory-bootstrap`, `memory-debrief`, `memory-pull-brief`) orientam os fluxos críticos. Usuários: desenvolvedores que querem que seu agente preserve foco e decisões arquiteturais sem reler o código a cada sessão.
 
 Este repositório é simultaneamente a tool e a metodologia — vale o C3: o projeto segue o próprio protocolo.
 
@@ -47,11 +47,11 @@ A combinação `pure Python` + `pyyaml apenas` é o que torna o `pipx install` t
 
 ## Convenções de código
 
-Observado em refactors recentes (não confirmado como regra dura): módulos da CLI tendem a usar **lazy initialization** — `yaml` importado dentro das funções que precisam, `ROOT` e paths derivados computados sob demanda. Veja [src/agent_memory/audit.py](src/agent_memory/audit.py), [src/agent_memory/propose_adr.py](src/agent_memory/propose_adr.py). Mantém startup barato e desacopla import do CWD.
+Observado em refactors recentes (não confirmado como regra dura): módulos da CLI tendem a usar **lazy initialization** — `yaml` importado dentro das funções que precisam, `ROOT` e paths derivados computados sob demanda. Veja [src/agent_memory/governance/audit.py](src/agent_memory/governance/audit.py), [src/agent_memory/memory/propose_adr.py](src/agent_memory/memory/propose_adr.py). Mantém startup barato e desacopla import do CWD.
 
 Templates em `src/agent_memory/data/templates/` usam o token literal `{VERSION}`, substituído em runtime pelo `deploy.py` com a versão do pacote. Não escreva versões hardcoded em templates.
 
-Pre-commit hook é fail-open: se o binário `agent-memory` não está no PATH, emite warning e libera o commit. Documentado em [src/agent_memory/data/hooks/pre-commit](src/agent_memory/data/hooks/pre-commit).
+Pre-commit hook é fail-open: se o binário `agent-memory` não está no PATH, emite warning e libera o commit. Documentado em [src/agent_memory/governance/data/hooks/pre-commit](src/agent_memory/governance/data/hooks/pre-commit).
 
 Código, identificadores e nomes de arquivos em inglês; documentação em pt-br (C4).
 
@@ -70,7 +70,7 @@ Não use `pip install -e .` — colide com o shim do pipx em `~/.local/bin/agent
 <!-- >>> agent-memory >>> -->
 ## agent-memory
 
-Sessões começam por `.agent-memory/STATE.md` (foco atual) e `.agent-memory/manifest/INDEX.md` (mapa de capacidades). Detalhes de uma feature ficam em `.agent-memory/manifest/features/F-NNNN-*.md`. Decisões arquiteturais em `.agent-memory/decisions/`. A metodologia completa está documentada no repositório do agent-memory: <https://github.com/brunoleos/agent-memory/blob/v0.9.0/METHODOLOGY.md>.
+Sessões começam por `.agent-memory/STATE.md` (foco atual) e `.agent-memory/manifest/INDEX.md` (mapa de capacidades). Detalhes de uma feature ficam em `.agent-memory/manifest/features/F-NNNN-*.md`. Decisões arquiteturais em `.agent-memory/decisions/`. A metodologia completa está documentada no repositório do agent-memory: <https://github.com/brunoleos/agent-memory/blob/v0.10.0/METHODOLOGY.md>.
 
 Este bloco é refrescado a cada `agent-memory deploy`. Não edite diretamente — mudanças aqui são sobrescritas no próximo redeploy. Conteúdo específico do projeto vai fora das marcações HTML que delimitam este bloco.
 

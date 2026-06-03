@@ -1,7 +1,7 @@
 ---
 id: F-0011
 name: audit-state-crosscheck
-status: in_progress
+status: shipped
 introduced: 2026-05-04
 version: 0.6.0
 user_value: Captura "memória mentirosa" — STATE.md aponta para F-NNNN ou ADR-NNNN que não existem no disco — antes que o agente confie nessa referência na próxima retomada.

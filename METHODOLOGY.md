@@ -159,7 +159,7 @@ A flag `--strict` promove warnings (drift) a errors. Em modo padrão o `agent-me
 
 ## Pre-commit hook
 
-O hook em `src/agent_memory/data/hooks/pre-commit` é instalado em `.git/hooks/pre-commit` automaticamente pelo `agent-memory deploy`. Como o diretório `.git/` não é versionado, cada clone do projeto consumidor precisa rodar `agent-memory deploy` uma vez para instalar o hook.
+O hook em `src/agent_memory/governance/data/hooks/pre-commit` é instalado em `.git/hooks/pre-commit` automaticamente pelo `agent-memory deploy`. Como o diretório `.git/` não é versionado, cada clone do projeto consumidor precisa rodar `agent-memory deploy` uma vez para instalar o hook.
 
 O hook roda `agent-memory audit --strict --no-index` antes de cada commit. Se a auditoria falha — schema inválido, EARS mal-formado, drift detectado — o commit é bloqueado e o desenvolvedor vê a lista exata de problemas. Para contornar deliberadamente em situações excepcionais, `git commit --no-verify` ignora todos os hooks. Esta válvula de escape é importante: hooks que não podem ser ignorados acabam sendo desinstalados, e o objetivo é nudge, não coerção.
 

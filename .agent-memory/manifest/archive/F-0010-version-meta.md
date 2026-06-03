@@ -1,7 +1,7 @@
 ---
 id: F-0010
 name: version-meta
-status: in_progress
+status: shipped
 introduced: 2026-05-03
 version: 0.6.0
 user_value: Expõe a versão do agent-memory ao consumidor via `--version` no CLI e via `.agent-memory/.meta.yaml`, habilitando audit cross-version (F-0011), telemetria (F-0014) e notice (F-0018).

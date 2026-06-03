@@ -1,9 +1,9 @@
 ---
 id: F-0019
 name: superseded-decisions-folder
-status: in_progress
+status: shipped
 introduced: 2026-05-11
-version: 0.8.0
+version: 0.9.0
 user_value: >
   ADRs com `status: superseded` vivem em `decisions/superseded/` com INDEX
   próprio (espelho de `manifest/archive/` para features). Desonera o INDEX

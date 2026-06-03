@@ -1,7 +1,7 @@
 ---
 id: F-0009
 name: skill-memory-pull-brief
-status: in_progress
+status: shipped
 introduced: 2026-04-30
 version: 0.5.0
 user_value: Após git pull, brifa o desenvolvedor sobre mudanças trazidas em features/decisions/bloco metodológico do AGENTS.md e propõe ajustes no STATE.md — sem reverter trabalho de colegas em manifest/ e decisions/.

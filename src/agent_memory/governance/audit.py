@@ -58,6 +58,9 @@ __all__ = [
     "read_meta",
     "validate_state_crosscheck",
     "validate_state_freshness",
+    "validate_release_status",
+    "released_versions",
+    "STALENESS_WARN_HOURS",
     "_is_code_path",
     "STALENESS_NONCODE_PREFIXES",
     "STALENESS_NONCODE_EXACT",
@@ -68,6 +71,13 @@ __all__ = [
     "add_subparser",
     "run",
 ]
+
+# Acima deste limiar (14 dias), `print_report` destaca o frescor do STATE
+# como aviso visual. NÃO vira Issue — staleness no momento do commit é
+# responsabilidade (soft, fail-open) de F-0013 `check-staleness-staged`,
+# e promover a Issue faria o pre-commit hook (`audit --strict`) bloquear
+# o commit, transformando um nudge em coerção. ADR-0024.
+STALENESS_WARN_HOURS = 14 * 24
 
 
 def validate_state_crosscheck(state_fm: dict,
@@ -103,6 +113,73 @@ def validate_state_crosscheck(state_fm: dict,
                 f"NNNN-*.md existe em decisions/",
             ))
 
+    return issues
+
+
+def released_versions(root: Path) -> set[str]:
+    """Conjunto de versões já released, derivado de CHANGELOG e git tags.
+
+    Fonte de verdade dupla, fail-soft (retorna o que conseguir):
+    - Seções datadas `## [X.Y.Z]` em CHANGELOG.md (ignora `[Unreleased]`,
+      que não casa o padrão numérico).
+    - Tags Git no formato `vX.Y.Z`.
+
+    A união é o que `validate_release_status` confronta contra o campo
+    `version` das features. ADR-0024.
+    """
+    versions: set[str] = set()
+
+    changelog = root / "CHANGELOG.md"
+    if changelog.exists():
+        try:
+            text = changelog.read_text(encoding="utf-8")
+        except OSError:
+            text = ""
+        for m in re.finditer(r"^##\s*\[(\d+\.\d+\.\d+)\]", text, re.MULTILINE):
+            versions.add(m.group(1))
+
+    try:
+        out = subprocess.check_output(
+            ["git", "tag"], text=True, stderr=subprocess.DEVNULL, cwd=root,
+        )
+        for line in out.splitlines():
+            m = re.match(r"^v(\d+\.\d+\.\d+)$", line.strip())
+            if m:
+                versions.add(m.group(1))
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pass
+
+    return versions
+
+
+def validate_release_status(features: list[dict],
+                            released: set[str]) -> list[Issue]:
+    """Detecta features que mentem sobre o próprio status.
+
+    Uma feature com `status: in_progress` cujo `version` já consta como
+    released (CHANGELOG/tag) é drift: o trabalho saiu, mas a memória ainda
+    o reporta aberto — foi exatamente assim que F-0010..F-0019 acumularam
+    11 features fantasma in_progress após 4 releases. Warning (soft), mas
+    promovível por `--strict`: commitar uma feature já-released ainda
+    marcada in_progress deve falhar. ADR-0024.
+
+    Fail-soft: sem versões released conhecidas (`released` vazio), não
+    emite nada — ausência de CHANGELOG/tags não é sinal.
+    """
+    issues: list[Issue] = []
+    if not released:
+        return issues
+    for f in features:
+        if f.get("status") != "in_progress":
+            continue
+        ver = f.get("version")
+        if ver and str(ver) in released:
+            issues.append(Issue(
+                "manifest", "warning",
+                f"{f.get('id', 'F-????')} declara version {ver} (já "
+                f"released) mas status=in_progress; marque shipped e rode "
+                f"`agent-memory archive`",
+            ))
     return issues
 
 
@@ -404,6 +481,10 @@ def run_audit(write_indices: bool = True,
     # Cross-check de IDs ativos contra arquivos existentes (ADR-0014).
     all_issues.extend(validate_state_crosscheck(state_fm, all_features, all_decisions))
 
+    # Cross-check status vs. release: feature in_progress já released é
+    # memória mentirosa (ADR-0024). Default-on, soft, fail-soft sem CHANGELOG/tags.
+    all_issues.extend(validate_release_status(all_features, released_versions(_paths.ROOT)))
+
     # Detecção de colisões pré-merge (opcional)
     if check_collisions_against:
         all_issues.extend(check_collisions(check_collisions_against))
@@ -435,8 +516,13 @@ def print_report(result: dict) -> None:
     print(f"Project root:              {_paths.ROOT}")
     print(f"Conformidade de schema:    {m['schema_compliance']:.2f}")
     fresh = m["state_freshness_hours"]
-    fresh_str = f"{fresh} h" if fresh is not None else "—"
-    print(f"Frescor de estado:         {fresh_str}")
+    if fresh is not None and fresh > STALENESS_WARN_HOURS:
+        dias = round(fresh / 24)
+        print(f"Frescor de estado:         {fresh} h  "
+              f"⚠ {dias} dias sem update — rode /memory-debrief")
+    else:
+        fresh_str = f"{fresh} h" if fresh is not None else "—"
+        print(f"Frescor de estado:         {fresh_str}")
     print(f"Cobertura do manifest:     {m['manifest_coverage']:.0%}")
     print(f"Drift detectado:           {len(m['manifest_drift'])} casos")
     print()

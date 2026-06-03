@@ -1,7 +1,7 @@
 ---
 id: F-0013
 name: hook-staleness-staged
-status: in_progress
+status: shipped
 introduced: 2026-05-04
 version: 0.6.0
 user_value: Pre-commit avisa (soft, exit 0) quando o commit toca código sem incluir STATE.md no staging — captura `/memory-debrief` esquecido no momento mais barato de intervir.

@@ -1,7 +1,7 @@
 ---
 id: F-0016
 name: check-version-bump
-status: in_progress
+status: shipped
 introduced: 2026-05-04
 version: 0.6.0
 user_value: Pre-commit bloqueia (exit 1) commits que tocam código sem atualizar VERSION, garantindo que `__version__`, `.meta.yaml::version` e telemetria sejam honestos. Auto opt-in — no-op em projetos sem arquivo VERSION.

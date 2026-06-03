@@ -1,7 +1,7 @@
 ---
 id: F-0014
 name: local-telemetry
-status: in_progress
+status: shipped
 introduced: 2026-05-04
 version: 0.6.0
 user_value: Telemetria local em `.agent-memory/.telemetry.jsonl` (gitignored) dá ao mantenedor visibilidade sobre adesão ao ritual (bootstrap, debrief). Sem rede, sem serviço, sem custo de privacidade. Default ligado, kill switch via `.meta.yaml::telemetry_enabled=false`.

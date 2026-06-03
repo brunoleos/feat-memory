@@ -12,6 +12,10 @@ dist/
 .coverage
 htmlcov/
 
+# Logs de ferramentas externas (MCP excalidraw etc.)
+excalidraw.log
+.kilo/
+
 # Virtualenvs criados pelo desenvolvedor
 .venv/
 venv/

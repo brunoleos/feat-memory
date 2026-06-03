@@ -1,9 +1,9 @@
 ---
 id: F-0018
 name: consumer-version-notice
-status: in_progress
+status: shipped
 introduced: 2026-05-05
-version: 0.7.0
+version: 0.8.0
 user_value: Notifica (soft) quando a versão do CLI instalada via pipx difere de `.meta.yaml::version`. Fecha o loop que F-0010 e F-0016 abriram — "consumidor desatualizado" vira sinal observável em vez de surpresa quando uma skill faz algo inesperado.
 contracts:
   api:

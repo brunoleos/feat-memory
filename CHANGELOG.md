@@ -6,6 +6,36 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto ader
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-06-03
+
+Sessão de saneamento: a auditoria do próprio repo revelou drift acumulado (11 features `in_progress` já released, STATE 23 dias velho, `CLAUDE.md` com import quebrado para `AGENT.md` após o rename para `AGENTS.md`). Corrigido o estado **e** adicionado enforcement para que esse tipo de drift não passe mais clean.
+
+### Adicionado
+
+**F-0020 (audit-release-status) + ADR-0024.** `agent-memory audit` passa a confrontar status de feature contra releases reais. Novo `validate_release_status`: feature com `status: in_progress` cujo `version` consta como released (seção `## [X.Y.Z]` do CHANGELOG **ou** tag `vX.Y.Z`, derivadas por `released_versions`, fail-soft) gera warning — promovido a error sob `audit --strict`, bloqueando commit de feature que mente sobre o próprio status. Em `print_report`, o frescor do STATE acima de `STALENESS_WARN_HOURS` (14 dias) ganha aviso visual; deliberadamente **não** vira Issue (staleness no commit é F-0013, soft/fail-open — ADR-0024 explica a assimetria).
+
+### Corrigido
+
+- `CLAUDE.md` importava `@AGENT.md` (inexistente após o rename `AGENT.md → AGENTS.md`) — a constituição não carregava no Claude Code. Agora `@AGENTS.md`.
+- Constituição (`AGENTS.md`), `README.md`, `FUTURE_IMPROVEMENTS.md` e `METHODOLOGY.md` referenciavam caminhos pré-split F-0017 (`src/agent_memory/audit.py`, `propose_adr.py`, `data/hooks/`) e o layout flat antigo do pacote — atualizados para `governance/`, `memory/` e `governance/data/hooks/`.
+- CHANGELOG da v0.7.0 afirmava que templates/skills migraram para `memory/data/`; na verdade permaneceram em `agent_memory/data/` (só hooks foram para `governance/data/`) — corrigido.
+- Adicionadas as seções faltantes `[0.8.1]` e `[0.9.0]` (releases sem entrada no changelog).
+- Features F-0009..F-0019 marcadas `shipped` com `version` = release de entrega (F-0018→0.8.0, F-0019→0.9.0) e arquivadas para `manifest/archive/`.
+
+## [0.9.0] - 2026-05-11
+
+ADRs `superseded` ganham casa própria, espelhando o que F-0012 fez para features arquivadas. Desonera o INDEX principal de decisões carregado por `memory-bootstrap`.
+
+### Adicionado
+
+**F-0019 (superseded-decisions-folder) + ADR-0023.** ADRs com `status: superseded` passam a viver em `.agent-memory/decisions/superseded/` com INDEX próprio (mesmas colunas do INDEX principal). `agent-memory audit` varre `decisions/` e `decisions/superseded/` para validação de schema e crosscheck de `active_decisions`; regenera ambos os INDEXes. `propose_adr.next_adr_number` agrega IDs de `decisions/` + `superseded/` + `proposals/` — colisão de número impossível. Movimentação para superseded é manual via `git mv` (sem subcomando dedicado). Novo helper `paths.SUPERSEDED_DIR`, `indexing.gen_superseded_decisions_index`.
+
+## [0.8.1] - 2026-05-10
+
+### Adicionado
+
+**F-0019 (parcial).** `agent-memory audit` passa a emitir warning quando o tamanho dos artefatos de retomada (resumption budget) excede o orçamento declarado em `AGENTS.md::budgets`, antes que o estouro degrade silenciosamente o briefing de `memory-bootstrap`.
+
 ## [0.8.0] - 2026-05-05
 
 Notificação ao consumidor quando o CLI está em versão diferente da que produziu sua estrutura. Fecha o loop de feedback que F-0010 (`.meta.yaml::version`) e F-0016 (VERSION-bump-on-code) abriram.
@@ -34,7 +64,7 @@ Refactor arquitetural: separação completa entre **memória de agente** e **gov
 
 Regra de dependência hierárquica: `shared ⇐ memory ⇐ governance`. **Memória nunca importa governança** — é o invariante que torna `deploy --no-hooks` uma operação puramente memória. Verificável mecanicamente.
 
-Templates e skills migraram para `src/agent_memory/memory/data/`; hooks para `src/agent_memory/governance/data/`. `deploy.py` resolve automaticamente via `_data_path` baseado no primeiro componente do path solicitado.
+Templates e skills permanecem em `src/agent_memory/data/` (data compartilhado no topo do pacote); hooks migraram para `src/agent_memory/governance/data/`. `deploy.py` resolve automaticamente via `_data_path` baseado no primeiro componente do path solicitado (`hooks` → governance, resto → topo).
 
 CLI mesmo binário (`agent-memory`), mesmos subcomandos. O `--help` agora descreve subcomandos agrupados por categoria (Memória / Governança) na descrição do parser raiz.
 
