@@ -1,6 +1,6 @@
 ---
 name: memory-deploy
-description: Use quando o usuário pede para instalar a metodologia em um projeto (frases como "instale a metodologia", "configure o agent-memory", "rode o setup", "este projeto não tem AGENTS.md", "ajude a adotar esta estrutura"). Conduz a adoção: detecta greenfield versus legacy, executa `agent-memory deploy` (que cuida sozinho do bloco com sentinelas no AGENTS.md), e em projetos legacy faz gênese retroativa de ADRs e Manifest a partir do git log e dos entrypoints públicos. Não escreve em AGENTS.md fora do bloco delimitado pelas sentinelas.
+description: Use quando o usuário pede para instalar a metodologia em um projeto (frases como "instale a metodologia", "configure o agent-memory", "rode o setup", "este projeto não tem AGENTS.md", "ajude a adotar esta estrutura"). Conduz a adoção: detecta greenfield versus legacy, executa `agent-memory deploy` (que cuida sozinho do bloco com sentinelas no AGENTS.md), e em projetos legacy faz gênese retroativa por engenharia reversa multi-fonte (code-first): triangula testes, telas, documentação, código e dependências para extrair capacidades e decisões, com o git log como fonte secundária para datar/justificar. Não escreve em AGENTS.md fora do bloco delimitado pelas sentinelas.
 ---
 
 # Memory deploy
@@ -53,19 +53,46 @@ A partir deste ponto a skill não escreve mais em `AGENTS.md`. Em greenfield, o 
 
 Esta etapa só executa em projetos legacy. Ela popula `.agent-memory/decisions/` e `.agent-memory/manifest/features/` a partir do que já existe no repositório, mas **não toca em `AGENTS.md`**. Identidade, restrições e convenções específicas do projeto continuam sendo responsabilidade do mantenedor humano, em sessão posterior.
 
-#### Fase 3.1: ADRs candidatos a partir do git log
+A gênese é **engenharia reversa multi-fonte, code-first** (ADR-0030, ADR-0031). Seu objetivo é reconstruir o *propósito* do sistema — o que ele faz para o usuário e por que foi construído assim — com **alta precisão e baixa alucinação**. Nenhuma fonte sozinha basta: o código é a verdade do *comportamento* mas exige inferência de *intenção*; os testes descrevem a intenção de forma executável; as telas mostram as capacidades como o usuário as vê; o git conta o *porquê/quando* mas é pobre em repos squashados. A precisão vem de **triangular** essas fontes, não de confiar em uma.
 
-Rode `agent-memory migrate` para detectar candidatos automáticos. Para cada candidato, examine o commit completo via `git show <sha>` e os arquivos tocados. Avalie se a mudança realmente representa decisão arquitetural ou apenas correção de bug ou refactor mecânico. Para os candidatos que sobrevivem ao filtro, redija um ADR no formato padrão com as quatro seções (Contexto, Decisão, Consequências, Alternativas rejeitadas), usando a data do commit original como `date` e marcando `status: accepted` porque a decisão já está em produção.
+Rode `agent-memory migrate` uma vez para colher pistas — ele aponta testes, telas, entrypoints, stack e commits com cara de decisão, agnóstico de linguagem. Trate a saída como "por onde começar a ler", nunca como a resposta.
 
-Apresente cada ADR proposto individualmente para revisão humana. Não gere uma fila sem aprovação intermediária — o cansaço do revisor é o inimigo. Ao aprovar, escreva diretamente em `.agent-memory/decisions/NNNN-slug.md` (não em `proposals/`, porque são reconstruções de decisões já tomadas, não propostas novas).
+#### As fontes de evidência, da mais precisa à menos (para inferir propósito)
 
-#### Fase 3.2: Manifest a partir dos entrypoints públicos
+1. **Testes — a fonte mais precisa de comportamento *pretendido*.** São spec executável, mantida e verificada por asserção. Os de aceitação/E2E (Playwright, Cypress, `*.spec`, `*_test`) descrevem **jornadas de usuário** — cada `describe`/`it`/nome de cenário é quase uma feature + critério `acceptance` prontos. Os unitários revelam os **contratos** de cada módulo. Fixtures e factories expõem o modelo de domínio. Leia os testes *antes* de inferir intenção do código cru.
+2. **UI / telas — o mapa de capacidades como o usuário as vê.** Em apps com frontend, o conjunto de telas/rotas/páginas/forms ≈ o conjunto de capacidades. Labels, textos de botão e strings de i18n **nomeiam** as features na língua do usuário (excelente matéria-prima para `user_value`). A tabela de rotas é um índice de features.
+3. **Documentação viva.** README (a seção "Features"/"Usage" lista capacidades literalmente), `docs/`, CHANGELOG (narra a evolução e decisões), specs de contrato (OpenAPI/Swagger, schema GraphQL, `.proto`). Declara intenção — mas pode estar **desatualizada**; trate como hipótese a verificar contra o código.
+4. **Entrypoints + código (fonte da verdade do comportamento).** A superfície pública — rotas, comandos, exports, handlers, consumers — e o caminho dela até os dados. Leia os entrypoints reais da linguagem (`package.json::bin`/`exports`, `main`, `index.*`, rotas declaradas), não só os diretórios de convenção. O código **prova** o que acontece; o *propósito* ainda exige inferência sua.
+5. **Manifestos de dependência + estrutura = decisões.** Cada lib escolhida (e cada uma conspicuamente *evitada*) é uma decisão. O shape de `src/`, as camadas (hexagonal, adapters/ports), os limites de módulo codificam arquitetura. Config de build/lint/CI/Docker e hooks revelam convenções impostas (candidatas a `constraints`, embora quem as autora seja o humano).
+6. **Git — o porquê/quando, fonte secundária e variável.** Mensagens de commit, PRs, padrões de revert, tags/releases datam e justificam decisões já identificadas nas fontes acima. Rico se granular, ~nulo se squashado — e isso é esperado, não bloqueio.
 
-Identifique os entrypoints examinando padrões comuns como routers, handlers e controllers para APIs HTTP, comandos top-level e subcomandos para CLIs, exports principais para bibliotecas, casos de uso ou comandos top-level para serviços. Para cada entrypoint, proponha uma feature com ID monotônico, `status: shipped`, `user_value` baseado no que faz para o usuário (não na implementação técnica), `contracts` apontando para arquivos reais, e `acceptance` em notação EARS inferida do comportamento observável via docstrings, testes existentes ou inferência cuidadosa do código.
+#### Técnicas de precisão (como ler sem alucinar)
+
+- **Triangulação.** Uma afirmação sobre comportamento é forte só quando ≥2 fontes independentes concordam (ex.: uma rota + um teste E2E + um bullet do README). Afirmação de fonte única é **hipótese**, não fato.
+- **Confiança em camadas.** Separe o **observado** (um teste asserta; o código faz) do **inferido** (você adivinha a intenção). Só cristalize o observado; marque o inferido como tal e leve para confirmação humana. Na dúvida, não escreva.
+- **Top-down e bottom-up.** Forme hipóteses de cima (README, telas, entrypoints) e verifique-as de baixo (testes, código). Onde divergem, o código vence para *comportamento* — e a própria divergência é sinal (doc apodrecida, feature meio-removida).
+- **Cobertura é mapa de importância.** Código muito testado é capacidade load-bearing; área sem teste é trivial ou arriscada. Use a densidade de testes para priorizar o que vira feature primeiro.
+- **Nomes são evidência, não prova.** Nome de função/arquivo/teste codifica intenção mas pode estar stale e mentir. Confirme contra asserções e comportamento.
+- **Ausência é sinal.** Uma camada que não existe, uma dependência evitada, uma área sem testes — também são decisões. Investigue o vazio.
+- **Datar decisões por múltiplos sinais.** `git blame`, data de entrada da dep no lockfile, CHANGELOG; mtime do arquivo só como último recurso.
+
+#### Fase 3.1: levantar evidências por fonte e formar hipóteses
+
+Varra as seis fontes na ordem acima, registrando para cada achado a **fonte** e o **nível de confiança**. Comece pelos testes e telas (mais precisos para *uso*), cruze com README/docs, e só então mergulhe no código dos entrypoints para confirmar comportamento e expor decisões estruturais. O produto desta fase é uma lista de candidatos a **capacidade** (→ features) e a **decisão** (→ ADRs), cada um com as fontes que o sustentam.
+
+#### Fase 3.2: Manifest a partir das capacidades
+
+Para cada capacidade, proponha uma feature com ID monotônico, `status: shipped`, `user_value` baseado no que faz para o usuário (não na implementação técnica — prefira a linguagem das telas/README à dos identificadores), `contracts` apontando para arquivos reais (inclua o **arquivo de teste** que cobre a capacidade — é o contrato executável), e `acceptance` em notação EARS **derivada diretamente das asserções dos testes** quando existirem, ou inferida do comportamento observável (docstrings, rotas, telas) quando não. Quando uma capacidade não tem teste nem doc que a sustente — só o seu palpite — marque-a como hipótese de baixa confiança ou deixe-a fora (cobertura honesta).
 
 Não inclua `metrics` na gênese inicial — métricas só aparecem quando há medições reais. Apresente as features em lotes pequenos (cinco por vez no máximo). Lotes grandes desencorajam revisão crítica.
 
-#### Fase 3.3: `.agent-memory/STATE.md` inicial e auditoria
+#### Fase 3.3: ADRs a partir das decisões
+
+Para cada decisão identificada (dependências, estrutura, camadas, cortes de escopo, convenções impostas por tooling), redija um ADR no formato padrão com as quatro seções (Contexto, Decisão, Consequências, Alternativas rejeitadas). Use o **git como fonte secundária** aqui: `git show <sha>` dos candidatos do `migrate`, PRs e o CHANGELOG ajudam a datar a decisão e recuperar a justificativa original; quando o histórico não cobre (squash), data com a melhor evidência (lockfile, CHANGELOG) e descreve o contexto a partir do código. Marque `status: accepted` porque a decisão já está em produção. Filtre decisão arquitetural de verdade versus refactor mecânico ou correção de bug.
+
+Apresente cada ADR proposto individualmente para revisão humana. Não gere uma fila sem aprovação intermediária — o cansaço do revisor é o inimigo. Ao aprovar, escreva diretamente em `.agent-memory/decisions/NNNN-slug.md` (não em `proposals/`, porque são reconstruções de decisões já tomadas, não propostas novas).
+
+#### Fase 3.4: `.agent-memory/STATE.md` inicial e auditoria
 
 Reescreva `.agent-memory/STATE.md` com `Current` registrando algo como "Memória inicial estabelecida via gênese retroativa. Última feature mapeada: F-NNNN." Em `Next`, escreva uma frase neutra do tipo "Aguardando definição do próximo foco pelo usuário." — não pergunte ao usuário e não invente um foco; ele rescreve quando começar a trabalhar. Em `Recent`, adicione uma linha sobre a gênese com timestamp atual. Deixe `active_features` vazio ou apenas com features em foco no momento.
 

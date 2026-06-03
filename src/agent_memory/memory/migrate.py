@@ -1,9 +1,20 @@
 """
 migrate.py — Assistente de migração para projetos legados.
 
-Examina o histórico do Git e propõe ADRs candidatos a partir de mensagens
-de commit que sugerem decisões arquiteturais. Detecta também a stack
-principal do projeto a partir de arquivos de manifesto comuns.
+Gera PISTAS para a gênese retroativa, na ordem de precisão para inferir
+propósito (ADR-0030, ADR-0031), todas agnósticas de linguagem:
+1. **Testes** (`detect_test_signals`) — a fonte mais precisa de comportamento
+   pretendido; spec executável.
+2. **UI/telas** (`detect_ui_signals`) — o mapa de capacidades como o usuário
+   as vê.
+3. **Entrypoints** (`detect_entry_points`) — a superfície pública; verdade do
+   comportamento, propósito por inferência.
+4. **Stack** (`detect_stack`) — a partir de arquivos de manifesto comuns.
+5. **Git log** (`suggest_decisions`) — fonte secundária; mensagens de commit
+   que datam/justificam decisões já identificadas no código, não as originam.
+
+O agente/skill não deve parar nestas pistas: a análise de verdade é a leitura
+e triangulação das fontes. Esta ferramenta só aponta onde olhar.
 
 Importante: este script não escreve nada automaticamente. Todas as
 sugestões são impressas para revisão humana, porque gênese retroativa
@@ -186,23 +197,121 @@ def detect_stack(root: Path) -> list[str]:
     return detected
 
 
+# Extensões de fonte reconhecidas — a varredura é agnóstica de linguagem
+# (ADR-0030). O `detect_entry_points` antigo só olhava `*.py`, então retornava
+# vazio em projetos JS/TS/Go/etc. e o agente perdia o sinal de onde olhar.
+SOURCE_EXTS: set[str] = {
+    ".py", ".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx", ".go", ".rs",
+    ".rb", ".java", ".kt", ".ex", ".exs", ".php",
+}
+
+# Diretórios de convenção onde entrypoints públicos costumam morar.
+ENTRY_POINT_DIRS: set[str] = {
+    "routes", "api", "handlers", "controllers", "endpoints",
+    "cli", "commands", "bin",
+    "use_cases", "usecases", "services", "pages", "views",
+}
+
+# Testes: a fonte mais precisa de comportamento PRETENDIDO (ADR-0031). Detectados
+# por diretório de convenção e por padrão de nome de arquivo.
+TEST_DIR_NAMES: set[str] = {
+    "tests", "test", "__tests__", "spec", "specs", "e2e",
+    "cypress", "playwright", "integration", "unit",
+}
+TEST_FILE_RE = re.compile(
+    r"(^test_.+|.+_test\.[a-z]+$|.+\.test\.[a-z]+$|.+\.spec\.[a-z]+$)", re.I
+)
+
+# UI/telas: o mapa de capacidades como o usuário as vê (ADR-0031).
+UI_DIR_NAMES: set[str] = {
+    "pages", "views", "screens", "templates", "components", "ui",
+}
+UI_EXTS: set[str] = {".html", ".vue", ".svelte", ".jsx", ".tsx", ".astro"}
+
+# Podados na varredura — vendored, build e o próprio .agent-memory.
+IGNORE_DIRS: set[str] = {
+    "node_modules", ".git", ".venv", "venv", "env", "dist", "build",
+    "__pycache__", ".agent-memory", "vendor", "target", ".next",
+    "coverage", "test-results", "playwright-report", ".mypy_cache",
+    ".pytest_cache", "site-packages",
+}
+
+
 def detect_entry_points(root: Path) -> list[str]:
-    """Sugere candidatos a entrypoints públicos para virar features."""
-    candidates: list[str] = []
-    patterns = [
-        ("APIs HTTP", ["**/routes/*.py", "**/api/*.py", "**/handlers/*.py",
-                       "**/controllers/*.py"]),
-        ("Comandos CLI", ["**/cli/*.py", "**/commands/*.py", "**/__main__.py"]),
-        ("Casos de uso", ["**/use_cases/*.py", "**/usecases/*.py",
-                          "**/services/*.py"]),
-    ]
-    for label, globs in patterns:
-        files: list[Path] = []
-        for g in globs:
-            files.extend(root.glob(g))
-        if files:
-            candidates.append(f"{label}: {len(files)} arquivos encontrados")
-    return candidates
+    """Sugere áreas com entrypoints públicos — uma PISTA, não a fonte.
+
+    Language-agnostic: varre diretórios de convenção (`routes/`, `cli/`, …) em
+    qualquer extensão de fonte reconhecida, podando vendored/build. É só um
+    ponto de partida: a fonte primária da gênese do Manifest é a leitura do
+    próprio código (ADR-0030), não esta contagem. O git log é apenas a terceira
+    fonte (narrativa do "porquê"), depois do código e dos entrypoints.
+    """
+    import os
+
+    hits: dict[str, int] = {}
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in IGNORE_DIRS]
+        rel = Path(dirpath).relative_to(root)
+        parts = {p.lower() for p in rel.parts}
+        matched = ENTRY_POINT_DIRS & parts
+        if not matched:
+            continue
+        n = sum(1 for fn in filenames if Path(fn).suffix in SOURCE_EXTS)
+        if n:
+            for d in matched:
+                hits[d] = hits.get(d, 0) + n
+    return [f"{d}/: {n} arquivo(s) de fonte" for d, n in sorted(hits.items())]
+
+
+def detect_test_signals(root: Path) -> list[str]:
+    """Aponta onde estão os testes — a fonte mais precisa de uso (ADR-0031).
+
+    Conta arquivos de fonte em diretórios de teste por convenção e, fora deles,
+    arquivos cujo nome casa o padrão de teste (`test_*`, `*_test.*`, `*.spec.*`).
+    """
+    import os
+
+    hits: dict[str, int] = {}
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in IGNORE_DIRS]
+        parts = {p.lower() for p in Path(dirpath).relative_to(root).parts}
+        in_test_dir = TEST_DIR_NAMES & parts
+        if in_test_dir:
+            key = sorted(in_test_dir)[0]
+            n = sum(1 for fn in filenames if Path(fn).suffix in SOURCE_EXTS)
+            if n:
+                hits[key] = hits.get(key, 0) + n
+        else:
+            n = sum(1 for fn in filenames
+                    if Path(fn).suffix in SOURCE_EXTS and TEST_FILE_RE.search(fn))
+            if n:
+                hits["(test_*/*.spec)"] = hits.get("(test_*/*.spec)", 0) + n
+    return [f"{k}: {n} arquivo(s) de teste" for k, n in sorted(hits.items())]
+
+
+def detect_ui_signals(root: Path) -> list[str]:
+    """Aponta a camada de UI/telas — o mapa de capacidades visíveis (ADR-0031)."""
+    import os
+
+    dir_hits: dict[str, int] = {}
+    ext_hits: dict[str, int] = {}
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in IGNORE_DIRS]
+        parts = {p.lower() for p in Path(dirpath).relative_to(root).parts}
+        for d in UI_DIR_NAMES & parts:
+            n = sum(1 for fn in filenames
+                    if Path(fn).suffix in (SOURCE_EXTS | UI_EXTS))
+            if n:
+                dir_hits[d] = dir_hits.get(d, 0) + n
+        for fn in filenames:
+            ext = Path(fn).suffix
+            if ext in UI_EXTS:
+                ext_hits[ext] = ext_hits.get(ext, 0) + 1
+    out = [f"{d}/: {n} arquivo(s)" for d, n in sorted(dir_hits.items())]
+    if ext_hits:
+        exts = ", ".join(f"{e} ({n})" for e, n in sorted(ext_hits.items()))
+        out.append(f"arquivos de view: {exts}")
+    return out
 
 
 def add_subparser(subparsers: argparse._SubParsersAction) -> None:
@@ -236,22 +345,26 @@ def run(args: argparse.Namespace) -> int:
 
     stack = detect_stack(root)
     candidates = suggest_decisions(commits)
+    test_signals = detect_test_signals(root)
+    ui_signals = detect_ui_signals(root)
     entry_points = detect_entry_points(root)
 
     if args.json:
         print(json.dumps({
             "commits_analyzed": len(commits),
             "stack_detected": stack,
+            "test_signals": test_signals,
+            "ui_signals": ui_signals,
+            "entry_point_signals": entry_points,
             "decision_candidates": [
                 {"sha": s, "message": m, "label": l}
                 for s, m, l in candidates
             ],
-            "entry_point_signals": entry_points,
         }, indent=2, ensure_ascii=False))
         return 0
 
     print("=" * 60)
-    print("Sugestões de migração")
+    print("Sugestões de migração — fontes em ordem de precisão (ADR-0031)")
     print("=" * 60)
 
     if stack:
@@ -262,26 +375,51 @@ def run(args: argparse.Namespace) -> int:
     else:
         print("\nNenhuma stack reconhecida automaticamente.")
 
-    print(f"\nCommits analisados: {len(commits)}")
-    if candidates:
-        print(f"\n{len(candidates)} possíveis ADRs candidatos:")
-        for sha, msg, label in candidates:
-            print(f"  [{label:>22}] {sha} {msg}")
+    # Fonte mais precisa de comportamento pretendido: os testes.
+    if test_signals:
+        print("\n[1] TESTES (a spec executável — LEIA PRIMEIRO):")
+        for t in test_signals:
+            print(f"  • {t}")
+        print("  → nomes de cenário ≈ features; asserções ≈ critérios acceptance.")
     else:
-        print("\nNenhum padrão de decisão detectado nas mensagens de commit.")
+        print("\n[1] Nenhum teste detectado — sem a fonte mais precisa de uso; "
+              "triangule telas + docs + código com mais cuidado.")
 
+    # As telas mostram as capacidades como o usuário as vê.
+    if ui_signals:
+        print("\n[2] UI / TELAS (mapa de capacidades visíveis):")
+        for u in ui_signals:
+            print(f"  • {u}")
+        print("  → cada tela/rota ≈ capacidade; labels/i18n nomeiam o user_value.")
+
+    # Fonte da verdade do comportamento; propósito exige inferência.
     if entry_points:
-        print("\nEntrypoints candidatos a virar features:")
+        print("\n[3] ENTRYPOINTS (superfície pública — confirme comportamento):")
         for ep in entry_points:
             print(f"  • {ep}")
     else:
-        print("\nNenhum entrypoint padrão detectado.")
+        print("\n[3] Nenhum diretório de entrypoint por convenção — "
+              "leia os exports/main reais do projeto.")
+
+    # Fonte secundária: o git log só agrega o "porquê/quando" de decisões.
+    print(f"\n[4] GIT — {len(commits)} commits analisados (fonte secundária):")
+    if candidates:
+        print(f"  {len(candidates)} com pistas de DECISÃO "
+              "(corrobora/data ADRs, não os origina):")
+        for sha, msg, label in candidates:
+            print(f"    [{label:>22}] {sha} {msg}")
+    else:
+        print("  Nenhum padrão de decisão nas mensagens "
+              "(normal em histórico squashado — não é bloqueio).")
 
     print("\n" + "=" * 60)
-    print("Próximos passos:")
-    print("  1. Revisar candidatos acima.")
-    print("  2. Para cada ADR relevante, criar .agent-memory/decisions/NNNN-slug.md.")
-    print("  3. Para cada entrypoint público, criar arquivo em")
-    print("     .agent-memory/manifest/features/F-NNNN-slug.md com status: shipped.")
+    print("Próximos passos (engenharia reversa multi-fonte — ADR-0030/0031):")
+    print("  1. TRIANGULE as fontes acima (testes+telas+docs+código): só")
+    print("     cristalize o que ≥2 fontes confirmam; marque o resto como")
+    print("     hipótese de baixa confiança para revisão humana.")
+    print("  2. Para cada capacidade, criar F-NNNN-slug.md (status: shipped),")
+    print("     com acceptance EARS derivado das asserções dos testes.")
+    print("  3. Para cada decisão (deps/estrutura/camadas; git data/justifica),")
+    print("     criar .agent-memory/decisions/NNNN-slug.md.")
     print("  4. Rodar `agent-memory audit` para validar e gerar índices.")
     return 0

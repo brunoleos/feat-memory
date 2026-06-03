@@ -27,5 +27,8 @@
 | ADR-0026 | 2026-06-03 | accepted | ci,audit,portability,constraints,dogfooding | F-0022 |
 | ADR-0027 | 2026-06-03 | accepted | schema,decisions,methodology,drift | F-0023 |
 | ADR-0028 | 2026-06-03 | accepted | constitution,constraints,governance,enforcement,sdd,dogfooding | F-0024 |
+| ADR-0029 | 2026-06-03 | accepted | deploy,onboarding,legacy,constitution,schema | F-0025 |
+| ADR-0030 | 2026-06-03 | accepted | methodology,genesis,legacy,migrate,skill,manifest | F-0026 |
+| ADR-0031 | 2026-06-03 | accepted | methodology,genesis,legacy,reverse-engineering,tests,ui,precision | F-0026 |
 
-_Gerado por `agent-memory audit` em 2026-06-03T05:36:18+00:00. Não edite manualmente._
+_Gerado por `agent-memory audit` em 2026-06-03T20:03:07+00:00. Não edite manualmente._

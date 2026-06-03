@@ -63,17 +63,59 @@ def _copy_resource(src: Traversable, dst: Path) -> None:
         shutil.copy2(src_path, dst)
 
 
-def _copy_template(src: Traversable, dst: Path) -> None:
-    """Copia um template fazendo substituições (`{VERSION}` → versão atual).
+def _substitute_tokens(content: str) -> str:
+    """Substitui placeholders de template (`{VERSION}`, `{DEPLOY_DATE}`).
 
-    Usado para AGENTS.md/CLAUDE.md/STATE.md, onde o frontmatter referencia
-    a doutrina por URL ancorada na tag da versão. Templates sem
+    `{VERSION}` → versão atual do pacote (URLs ancoradas na tag da doutrina).
+    `{DEPLOY_DATE}` → instante UTC do deploy em ISO-8601, para que STATE.md
+    nasça com `updated_at` real em vez de uma data fixa que a auditoria
+    leria como semanas de drift no primeiro contato. Templates sem
     placeholders passam intactos.
     """
+    from datetime import datetime, timezone
     from agent_memory import __version__
-    content = src.read_text(encoding="utf-8")
     content = content.replace("{VERSION}", __version__)
-    dst.write_text(content, encoding="utf-8")
+    content = content.replace(
+        "{DEPLOY_DATE}", datetime.now(timezone.utc).isoformat()
+    )
+    return content
+
+
+def _copy_template(src: Traversable, dst: Path) -> None:
+    """Copia um template aplicando `_substitute_tokens`.
+
+    Usado para AGENTS.md/CLAUDE.md/STATE.md.
+    """
+    dst.write_text(_substitute_tokens(src.read_text(encoding="utf-8")),
+                   encoding="utf-8")
+
+
+def _ensure_frontmatter(existing: str) -> tuple[str, bool]:
+    """Prepende um esqueleto de frontmatter se o arquivo não tiver nenhum.
+
+    Em adoção legacy a AGENTS.md já existe — quase sempre uma constituição em
+    prosa, sem YAML frontmatter. O deploy só refresca o bloco com sentinelas e
+    nunca tocava o topo do arquivo, então a auditoria pós-deploy falhava com
+    "campo ausente: schema_version/project/constraints/..." e a conformidade de
+    schema ficava 0.00 — exatamente o usuário diligente (que escreveu uma boa
+    constituição em prosa) sendo recebido com erros. Aqui fechamos a assimetria
+    com greenfield: se não há frontmatter, injetamos o esqueleto mínimo
+    (campos mecânicos preenchidos; `project`/`stack`/`constraints` como TODO
+    para o mantenedor migrar a prosa). Não é autorar identidade — é dar a mesma
+    estrutura que o template greenfield já entrega. Ver ADR-0029.
+
+    A detecção espelha `shared.parsing.parse_frontmatter`: frontmatter é
+    reconhecido só quando o arquivo começa exatamente com `---\\n`. Retorna
+    (novo_conteúdo, injetou).
+    """
+    if existing.startswith("---\n"):
+        return existing, False
+    skeleton_src = _data_path("templates", "AGENTS.frontmatter-skeleton.md")
+    if not skeleton_src.is_file():
+        # Defensivo: sem o template não injeta, mas não quebra o deploy.
+        return existing, False
+    skeleton = _substitute_tokens(skeleton_src.read_text(encoding="utf-8"))
+    return skeleton.rstrip() + "\n\n" + existing, True
 
 
 def _replace_sentinel_block(existing: str, payload: str,
@@ -141,10 +183,7 @@ def deploy_constitution(target: Path, force: bool, merge: bool) -> None:
         print("  ERRO: template ausente no pacote: AGENTS.md", file=sys.stderr)
         sys.exit(1)
 
-    from agent_memory import __version__
-    template_text = src.read_text(encoding="utf-8").replace(
-        "{VERSION}", __version__
-    )
+    template_text = _substitute_tokens(src.read_text(encoding="utf-8"))
 
     if not dst.exists():
         dst.write_text(template_text, encoding="utf-8")
@@ -157,15 +196,19 @@ def deploy_constitution(target: Path, force: bool, merge: bool) -> None:
     else:
         block_payload = _extract_methodology_block(template_text)
         existing = dst.read_text(encoding="utf-8")
+        existing, fm_added = _ensure_frontmatter(existing)
         had_block = MD_SENTINEL_BEGIN in existing and MD_SENTINEL_END in existing
         new_content, changed = _replace_sentinel_block(
             existing, block_payload,
             begin=MD_SENTINEL_BEGIN, end=MD_SENTINEL_END,
         )
-        if changed:
+        if changed or fm_added:
             dst.write_text(new_content, encoding="utf-8")
             verb = "atualizado" if had_block else "atualizado (bloco anexado)"
             print(f"  {verb}: AGENTS.md (bloco agent-memory)")
+            if fm_added:
+                print("  injetado: AGENTS.md (esqueleto de frontmatter — "
+                      "preencha os campos TODO)")
         else:
             print("  já contém: AGENTS.md (bloco agent-memory atualizado)")
 

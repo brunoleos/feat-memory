@@ -43,6 +43,7 @@ RUNTIME_DATA = [
     ("agent_memory", "data/templates/AGENTS.md"),
     ("agent_memory", "data/templates/CLAUDE.md"),
     ("agent_memory", "data/templates/STATE.md"),
+    ("agent_memory", "data/templates/AGENTS.frontmatter-skeleton.md"),
     ("agent_memory", "data/templates/.gitattributes"),
 ]
 

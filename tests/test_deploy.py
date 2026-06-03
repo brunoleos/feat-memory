@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from agent_memory import deploy
+from agent_memory.shared.parsing import parse_frontmatter
 
 
 def _args(target: Path | str, *, force: bool = False, no_merge: bool = False,
@@ -161,6 +162,83 @@ def test_deploy_substitutes_version_in_agent_md(tmp_project):
     content = (tmp_project / "AGENTS.md").read_text(encoding="utf-8")
     assert "{VERSION}" not in content
     assert f"v{__version__}/METHODOLOGY.md" in content
+
+
+def test_deploy_state_gets_real_timestamp_not_hardcoded(tmp_project):
+    """STATE.md nasce com updated_at do deploy, não a data fixa do template.
+
+    Regressão: o template tinha `updated_at: 2026-04-28` hardcoded, então a
+    auditoria pós-deploy lia semanas de drift num arquivo recém-criado.
+    """
+    from datetime import datetime, timezone
+
+    deploy.run(_args(tmp_project))
+    fm, _ = parse_frontmatter(tmp_project / ".agent-memory" / "STATE.md")
+
+    assert fm["updated_by"] == "deploy"
+    assert "{DEPLOY_DATE}" != str(fm["updated_at"])
+    ts = datetime.fromisoformat(str(fm["updated_at"]).replace("Z", "+00:00"))
+    if ts.tzinfo is None:
+        ts = ts.replace(tzinfo=timezone.utc)
+    # Deploy acabou de rodar: o timestamp é recente, não 2026-04.
+    assert abs((datetime.now(timezone.utc) - ts).total_seconds()) < 300
+
+
+def test_deploy_injects_frontmatter_into_legacy_agent_md(tmp_project):
+    """AGENTS.md em prosa, sem frontmatter, recebe o esqueleto injetado.
+
+    Regressão (ADR-0029): antes, deploy só anexava o bloco com sentinelas e
+    deixava o arquivo sem schema_version/project/..., fazendo a auditoria
+    falhar com conformidade 0.00 logo após adoção legacy.
+    """
+    prose = "# Constituição do projeto\n\nSomos uma SPA vanilla JS.\n"
+    (tmp_project / "AGENTS.md").write_text(prose, encoding="utf-8")
+
+    rc = deploy.run(_args(tmp_project))
+    assert rc == 0
+
+    content = (tmp_project / "AGENTS.md").read_text(encoding="utf-8")
+    # Frontmatter foi prependido (arquivo começa com ---)
+    assert content.startswith("---\n")
+    fm, _ = parse_frontmatter(tmp_project / "AGENTS.md")
+    for field in ("schema_version", "project", "constraints", "references",
+                  "budgets"):
+        assert field in fm, f"campo obrigatório ausente após injeção: {field}"
+    # Prosa do mantenedor preservada, abaixo do frontmatter
+    assert "Somos uma SPA vanilla JS." in content
+    # Bloco da metodologia também presente
+    assert "<!-- >>> agent-memory >>> -->" in content
+
+
+def test_deploy_does_not_inject_frontmatter_when_present(tmp_project):
+    """AGENTS.md que já tem frontmatter não recebe um segundo bloco."""
+    existing = (
+        "---\nschema_version: 2\nproject: meu-proj\nconstraints: []\n"
+        "references: {}\nbudgets: {}\n---\n\n# Const\n\nProsa.\n"
+    )
+    (tmp_project / "AGENTS.md").write_text(existing, encoding="utf-8")
+
+    deploy.run(_args(tmp_project))
+
+    content = (tmp_project / "AGENTS.md").read_text(encoding="utf-8")
+    # Exatamente um frontmatter (uma abertura `---` no topo + um fechamento)
+    assert content.startswith("---\n")
+    assert content.count("\n---\n") == 1
+    assert "project: meu-proj" in content
+    assert "TODO-nome-do-projeto" not in content
+
+
+def test_deploy_frontmatter_injection_is_idempotent(tmp_project):
+    """Re-deploy não injeta um segundo esqueleto de frontmatter."""
+    prose = "# Const\n\nProsa do projeto.\n"
+    (tmp_project / "AGENTS.md").write_text(prose, encoding="utf-8")
+
+    deploy.run(_args(tmp_project))
+    deploy.run(_args(tmp_project))
+
+    content = (tmp_project / "AGENTS.md").read_text(encoding="utf-8")
+    assert content.count("schema_version:") == 1
+    assert content.count("<!-- >>> agent-memory >>> -->") == 1
 
 
 def test_deploy_cleans_stale_pending_dir(tmp_project):

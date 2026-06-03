@@ -1,7 +1,7 @@
 ---
 schema_version: 2
-updated_at: 2026-04-28T00:00:00Z
-updated_by: claude-opus-4.7
+updated_at: {DEPLOY_DATE}
+updated_by: deploy
 active_features: []
 active_decisions: []
 blocked_on: null
