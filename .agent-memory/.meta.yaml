@@ -7,6 +7,6 @@
 # Schema documentado em ADR-0013. Não edite manualmente — re-rode deploy.
 
 schema_version: 1
-version: 0.14.0
-deployed_at: '2026-06-04T03:52:18+00:00'
+version: 0.15.0
+deployed_at: '2026-06-04T05:34:44+00:00'
 telemetry_enabled: true

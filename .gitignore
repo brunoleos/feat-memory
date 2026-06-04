@@ -24,3 +24,4 @@ venv/
 .agent-memory-deploy/
 .agent-memory/.telemetry.jsonl
 # <<< agent-memory <<<
+.vscode/settings.json

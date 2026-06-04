@@ -98,6 +98,8 @@ Não inclua `metrics` na gênese inicial — métricas só aparecem quando há m
 
 Mantenha cada arquivo de feature **enxuto**: uma capacidade, `user_value` em uma frase, `contracts`/`acceptance` só o essencial. Não há limite mecânico de tamanho — um arquivo inchado sinaliza feature mal-escopada (provavelmente duas), não rico. Rode `agent-memory schema` para o vocabulário exato de campos (obrigatórios, opcionais, patterns EARS).
 
+Aplique a cada feature o **"Teste de uma capacidade"** (detalhado na skill `memory-debrief`): user_value numa frase sem emendar assuntos; `acceptance` coesos; nome = substantivo de capacidade (o audit bloqueia nomes-balde, ADR-0035); bugfix/cleanup não vira feature. Nunca agrupe várias capacidades num arquivo "guarda-chuva".
+
 #### Fase 3.3: ADRs a partir das decisões
 
 Para cada decisão identificada (dependências, estrutura, camadas, cortes de escopo, convenções impostas por tooling), redija um ADR no formato padrão com as quatro seções (Contexto, Decisão, Consequências, Alternativas rejeitadas). Use o **git como fonte secundária** aqui: `git show <sha>` dos candidatos do `migrate`, PRs e o CHANGELOG ajudam a datar a decisão e recuperar a justificativa original; quando o histórico não cobre (squash), data com a melhor evidência (lockfile, CHANGELOG) e descreve o contexto a partir do código. Marque `status: accepted` porque a decisão já está em produção. Filtre decisão arquitetural de verdade versus refactor mecânico ou correção de bug.

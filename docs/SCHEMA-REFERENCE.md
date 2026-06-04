@@ -24,6 +24,7 @@ Gerado de `agent_memory.memory.schemas` (fonte única). Não edite à mão — r
 - `contracts`: mapa com chaves `api`, `schemas`, `tests` (str, lista ou mapa de caminhos reais; `arquivo::símbolo` aceito). Caminho inexistente → `warning` de drift.
 - `acceptance`: lista de critérios EARS (ver seção *EARS*).
 - Sem limite mecânico de tamanho — mantenha enxuto (uma capacidade, `user_value` em uma frase).
+- `name` deve nomear **uma capacidade**, não um lote de release: tokens de changelog (ex.: `polish`, `misc`, `various`) são **bloqueados** (ADR-0035). Coesão de conteúdo é julgamento humano (litmus nas skills).
 
 ## Decisão / ADR (`.agent-memory/decisions/NNNN-slug.md`)
 

@@ -109,6 +109,17 @@ Sem corpo, a menos que registre algo que a frontmatter não comporta (trade-off 
 
 Mantenha ≤ 4 critérios. Se está escrevendo `response: >` com 3 linhas YAML, ou condense para 1 linha, ou quebre em dois critérios menores. Se precisa enumerar todo caso de erro, está auditando — não documentando recall.
 
+### Teste de uma capacidade (aplique ANTES de gravar qualquer feature)
+
+O Manifest é por **capacidade**, não por lote de release. Antes de escrever uma feature, passe-a por estes quatro filtros — se falhar em qualquer um, **divida em features reais ou deixe de fora**:
+
+1. **Uma frase, sem "e"/";" juntando assuntos.** Consegue dizer o `user_value` numa frase sem emendar coisas distintas? Se enumera ("faz X; também Y; e Z"), são várias features.
+2. **Critérios coesos.** Todos os `acceptance` testam **a mesma** capacidade de ângulos diferentes? Se A1 e A2 falam de assuntos sem relação, você empacotou um changelog.
+3. **Nome = substantivo de capacidade.** O `name` diz *o que o sistema faz* (`schema-reference`, `cli-path-uniformity`), não uma palavra de processo (`polish`, `misc`, `various`, `fixes`, `updates`). O audit **bloqueia** nomes-balde (ADR-0035) — mas ele só pega o tell óbvio; a coesão dos itens 1–2 é seu julgamento.
+4. **É capacidade ou faxina?** Bugfix, refactor mecânico, fix cosmético, remoção de dead-code **não viram feature** — vão pro git history (e ADR se for decisão). Agrupar várias faxinas numa "feature guarda-chuva" é o anti-padrão que gerou o changelog-disfarçado-de-feature.
+
+Cobertura honesta > cobertura inflada: é melhor uma faxina ficar só no git do que virar uma entrada de Manifest que mente sobre ser capacidade.
+
 **EARS — patterns e campos obrigatórios:**
 
 | pattern      | campos                  | uso                          |
@@ -154,6 +165,7 @@ O que decidiu e o porquê dominante. Embuta trade-offs aqui ("aceitamos custo X 
 ## O que evitar
 
 - **Inventar features** para preencher Manifest. Sem capacidade nomeável, sem entrada.
+- **Feature guarda-chuva / changelog.** Empacotar várias mudanças de um lote (fixes + cleanup + cosmético) numa só feature. Passe pelo "Teste de uma capacidade" — divida ou deixe no git.
 - **Inventar métricas.** Sem medição desta sessão, mantenha valor anterior ou remova o campo.
 - **Corpo de checkpoint.** Frontmatter > prosa duplicada.
 - **Duplicar frontmatter no body** de feature ou ADR.

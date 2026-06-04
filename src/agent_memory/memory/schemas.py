@@ -29,6 +29,17 @@ SEMVER_RE = re.compile(r"^v?\d+\.\d+\.\d+$")
 VALID_FEATURE_STATUS = {"planned", "in_progress", "shipped", "deprecated"}
 VALID_DECISION_STATUS = {"proposed", "accepted", "superseded", "deprecated"}
 
+# Palavras de "balde de changelog" — tokens que, no NOME de uma feature, são um
+# sinal de alta precisão de que ela empacota várias coisas em vez de nomear UMA
+# capacidade (ADR-0035). Lista deliberadamente curta e inequívoca: nenhuma
+# capacidade real se chama "polish"/"misc"/"various". A coesão de conteúdo (vários
+# critérios sem relação) NÃO é checada — é ruidosa e cabe ao julgamento humano
+# via litmus nas skills de autoria; aqui só o tell mecânico confiável é bloqueado.
+CHANGELOG_NAME_WORDS = {
+    "polish", "misc", "miscellaneous", "various", "assorted", "tweaks",
+    "sundry", "melhorias", "diversos", "variados",
+}
+
 # Campos obrigatórios por artefato — fonte única, consumida tanto pelos
 # `validate_*` quanto pelo gerador de referência de schema (schema_reference.py).
 AGENT_REQUIRED = ["schema_version", "project", "constraints", "references", "budgets"]
@@ -166,6 +177,22 @@ def validate_feature(path: Path) -> tuple[dict, list[Issue]]:
     status = fm.get("status")
     if status and status not in VALID_FEATURE_STATUS:
         issues.append(Issue(name, "error", f"status inválido: {status}"))
+
+    # Guard anti-changelog (ADR-0035): o Manifest é por capacidade. Um nome com
+    # token de balde ("polish", "misc", …) é sinal de alta precisão de feature
+    # guarda-chuva — bloqueia. A coesão de conteúdo fica para o litmus humano.
+    fname = fm.get("name")
+    if fname:
+        tokens = {t for t in str(fname).lower().replace("_", "-").split("-") if t}
+        bucket = tokens & CHANGELOG_NAME_WORDS
+        if bucket:
+            issues.append(Issue(
+                name, "error",
+                f"nome de feature tem token de changelog {sorted(bucket)}: o "
+                f"Manifest é por capacidade nomeável, não por lote de release — "
+                f"divida em features reais ou registre bugfix/cleanup no git "
+                f"(ADR-0035)",
+            ))
 
     contracts = fm.get("contracts") or {}
     for p in _collect_contract_paths(contracts):

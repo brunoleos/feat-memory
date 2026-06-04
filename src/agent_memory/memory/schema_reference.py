@@ -72,6 +72,9 @@ def render_schema_reference() -> str:
     w("- `acceptance`: lista de critérios EARS (ver seção *EARS*).")
     w("- Sem limite mecânico de tamanho — mantenha enxuto (uma capacidade, "
       "`user_value` em uma frase).")
+    w("- `name` deve nomear **uma capacidade**, não um lote de release: tokens "
+      "de changelog (ex.: `polish`, `misc`, `various`) são **bloqueados** "
+      "(ADR-0035). Coesão de conteúdo é julgamento humano (litmus nas skills).")
     w("")
 
     # Decision / ADR

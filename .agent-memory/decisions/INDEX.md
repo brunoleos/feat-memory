@@ -33,5 +33,6 @@
 | ADR-0032 | 2026-06-04 | accepted | methodology,skill,deploy,frontmatter,authorship,onboarding | F-0028 |
 | ADR-0033 | 2026-06-04 | accepted | cli,ux,paths,consistency | F-0029 |
 | ADR-0034 | 2026-06-04 | accepted | meta,privacy,deploy,cleanup | F-0030 |
+| ADR-0035 | 2026-06-04 | accepted | manifest,governance,quality,audit,methodology,dogfooding | F-0031 |
 
-_Gerado por `agent-memory audit` em 2026-06-04T03:52:18+00:00. Não edite manualmente._
+_Gerado por `agent-memory audit` em 2026-06-04T05:34:45+00:00. Não edite manualmente._

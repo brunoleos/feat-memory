@@ -11,6 +11,6 @@
 | F-0027 | schema-reference | shipped | 0.14.0 | — | — |
 | F-0028 | frontmatter-authorship | shipped | 0.14.0 | ADR-0032 | F-0025 |
 | F-0029 | cli-path-uniformity | shipped | 0.14.0 | ADR-0033 | — |
-| F-0030 | legacy-onboarding-polish | shipped | 0.14.0 | ADR-0034 | F-0025,F-0027 |
+| F-0031 | manifest-capability-guard | shipped | 0.15.0 | ADR-0035 | — |
 
-_Gerado por `agent-memory audit` em 2026-06-04T03:52:18+00:00. Não edite manualmente._
+_Gerado por `agent-memory audit` em 2026-06-04T05:34:45+00:00. Não edite manualmente._
