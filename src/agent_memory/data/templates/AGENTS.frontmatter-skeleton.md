@@ -13,15 +13,14 @@ references:
 budgets:
   resumption_max_bytes: 12288
   state_max_bytes: 4096
-  feature_file_max_bytes: 6144
 ---
 
 <!-- agent-memory injetou este frontmatter porque a AGENTS.md existente não tinha
-nenhum. Os campos `references` e `budgets` já vêm corretos (são mecânicos). Você
-só precisa preencher o que está como TODO/vazio:
-  - project: nome do projeto
-  - stack: linguagem, arquitetura, deps relevantes
-  - constraints: restrições não-negociáveis, cada uma com `id`, `severity`
-    (hard|soft) e `rule`; opcionalmente um bloco `check` executável (ADR-0028).
-A prosa de identidade/restrições/convenções continua sendo SUA autoria, abaixo
-deste bloco. Veja METHODOLOGY.md. Apague este comentário quando terminar. -->
+nenhum. `references` e `budgets` já vêm corretos (são mecânicos). Os campos
+`project`, `stack` e `constraints` estão como placeholder: o agente os PROPÕE a
+partir de evidência do projeto (nome do repo, manifestos, tooling/CI, deps,
+lições já escritas em prosa) e apresenta para a SUA aprovação — você revisa,
+edita e aprova; nada é cristalizado sem seu aval. Rode `agent-memory schema`
+para a forma exata de cada campo (constraints aceitam um bloco `check`
+executável, ADR-0028). A prosa de identidade/convenções fora do frontmatter é
+autoria sua. Apague este comentário quando terminar. -->

@@ -51,6 +51,44 @@ def test_migrate_help(capsys):
         assert flag in out
 
 
+def test_schema_subcommand_listed_and_help(capsys):
+    """`schema` aparece no help top-level e responde a --help (W1)."""
+    with pytest.raises(SystemExit):
+        cli.main(["--help"])
+    assert "schema" in capsys.readouterr().out
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["schema", "--help"])
+    assert exc.value.code == 0
+
+
+def test_schema_subcommand_prints_reference(capsys):
+    """`agent-memory schema` imprime a referência de schema (W1)."""
+    rc = cli.main(["schema"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "Referência de schema" in out
+    assert "patterns EARS" in out
+
+
+def test_path_positional_accepted_by_audit_migrate(capsys):
+    """audit e migrate aceitam `[path]` opcional no help (W3, ADR-0033)."""
+    for sub in ("audit", "migrate"):
+        with pytest.raises(SystemExit) as exc:
+            cli.main([sub, "--help"])
+        assert exc.value.code == 0
+        assert "path" in capsys.readouterr().out
+
+
+def test_deploy_target_is_optional(capsys):
+    """deploy aceita target opcional (default cwd) — não erra ao parsear (W3)."""
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["deploy", "--help"])
+    assert exc.value.code == 0
+    out = capsys.readouterr().out
+    # uso mostra target entre colchetes (opcional)
+    assert "[target]" in out
+
+
 def test_no_subcommand_errors():
     """Sem subcomando, argparse deve sair com código != 0 (required=True)."""
     with pytest.raises(SystemExit) as exc:

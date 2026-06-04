@@ -241,6 +241,26 @@ def test_deploy_frontmatter_injection_is_idempotent(tmp_project):
     assert content.count("<!-- >>> agent-memory >>> -->") == 1
 
 
+def test_deploy_defaults_to_cwd(tmp_project, monkeypatch):
+    """deploy sem target usa o diretório atual (W3, ADR-0033)."""
+    monkeypatch.chdir(tmp_project)
+    rc = deploy.run(_args("."))
+    assert rc == 0
+    assert (tmp_project / "AGENTS.md").is_file()
+    assert (tmp_project / ".agent-memory" / "STATE.md").is_file()
+
+
+def test_deploy_meta_omits_cli_path(tmp_project):
+    """meta.yaml não versiona mais cli_path (W6, ADR-0034)."""
+    import yaml
+    deploy.run(_args(tmp_project))
+    data = yaml.safe_load(
+        (tmp_project / ".agent-memory" / ".meta.yaml").read_text(encoding="utf-8")
+    )
+    assert "cli_path" not in data
+    assert data["version"]
+
+
 def test_deploy_cleans_stale_pending_dir(tmp_project):
     """Re-deploy obliterates leftover .agent-memory-deploy/ from prior run."""
     # Simula deploy anterior com merges pendentes

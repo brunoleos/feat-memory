@@ -220,6 +220,7 @@ def render_state(root: Path,
     recent_table = _render_recent(recent)
 
     body = (
+        "# Estado\n\n"
         "## Current\n\n"
         f"{current_text}\n\n"
         "## Next\n\n"
@@ -242,7 +243,7 @@ def _render_recent(checkpoints: list[Path]) -> str:
         return "_(sem checkpoints anteriores)_\n"
     rows = [
         "| ts | author | features tocadas | summary |",
-        "|---|---|---|---|",
+        "| --- | --- | --- | --- |",
     ]
     for p in reversed(checkpoints):  # mais recente primeiro
         fm, _ = load_checkpoint(p)
@@ -267,6 +268,7 @@ def _empty_state() -> str:
         "active_decisions: []\n"
         "blocked_on: null\n"
         "---\n\n"
+        "# Estado\n\n"
         "## Current\n\n"
         "_(nenhum checkpoint registrado ainda. Rode "
         "`agent-memory checkpoint --summary '...'` ou ative a skill "

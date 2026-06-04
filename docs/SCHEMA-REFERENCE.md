@@ -1,0 +1,53 @@
+# Referência de schema — artefatos do agent-memory
+
+Gerado de `agent_memory.memory.schemas` (fonte única). Não edite à mão — rode `agent-memory schema` ou regenere o doc. Campos não listados como obrigatórios são opcionais.
+
+## AGENTS.md (frontmatter)
+
+- **Obrigatórios:** `schema_version`, `project`, `constraints`, `references`, `budgets`
+- `constraints`: lista; cada item tem `id`, `severity` (`hard`|`soft`) e `rule`. Bloco `check` opcional torna a constraint executável no audit (ADR-0028).
+- `references`: mapa (`manifest_index`, `state`, `decisions_index`, `methodology`, `skills`).
+- `budgets`: ver seção *Budgets* abaixo.
+
+## STATE.md (frontmatter)
+
+- **Obrigatórios:** `schema_version`, `updated_at`, `active_features`
+- `active_features`/`active_decisions`: listas de IDs em foco. `blocked_on`, `updated_by`: opcionais.
+- Tamanho **enforced**: `state_max_bytes` (default 4096B); exceder é `error`.
+
+## Feature (`.agent-memory/manifest/features/F-NNNN-slug.md`)
+
+- **Nome do arquivo:** `^F-\d{4}-[a-z0-9-]+\.md$`
+- **Obrigatórios:** `id`, `name`, `status`, `user_value`, `contracts`, `acceptance`
+- **Opcionais reconhecidos:** `version`, `owner`, `introduced`, `depends_on`, `decisions`, `metrics`
+- `status` ∈ {`deprecated`, `in_progress`, `planned`, `shipped`}
+- `contracts`: mapa com chaves `api`, `schemas`, `tests` (str, lista ou mapa de caminhos reais; `arquivo::símbolo` aceito). Caminho inexistente → `warning` de drift.
+- `acceptance`: lista de critérios EARS (ver seção *EARS*).
+- Sem limite mecânico de tamanho — mantenha enxuto (uma capacidade, `user_value` em uma frase).
+
+## Decisão / ADR (`.agent-memory/decisions/NNNN-slug.md`)
+
+- **Nome do arquivo:** `^\d{4}-[a-z0-9-]+\.md$`
+- **Obrigatórios:** `id`, `date`, `status`
+- **Opcionais reconhecidos:** `version`, `supersedes`, `superseded_by`, `affects_features`, `related`, `tags`
+- `status` ∈ {`accepted`, `deprecated`, `proposed`, `superseded`}
+- `version` (opcional): SemVer `^v?\d+\.\d+\.\d+$` (prefixo `v` aceito).
+
+## Critérios de aceitação — patterns EARS
+
+Cada item de `acceptance` tem um `pattern` e os campos exigidos por ele (além de um `id` livre). Campos exigidos por pattern:
+
+| pattern | campos obrigatórios |
+|---|---|
+| `ubiquitous` | `requirement` |
+| `event` | `response`, `trigger` |
+| `state` | `response`, `state` |
+| `optional` | `feature`, `response` |
+| `unwanted` | `response`, `trigger` |
+| `complex` | `requirement` |
+
+## Budgets (em `AGENTS.md::budgets`)
+
+- `state_max_bytes` — **enforced** (default 4096B): STATE.md acima disso é `error` no audit.
+- `resumption_max_bytes` — **advisory**: orçamento de contexto de retomada que o agente respeita ao carregar STATE/features/ADRs; não há checagem mecânica.
+

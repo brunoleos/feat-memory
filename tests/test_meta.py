@@ -32,7 +32,8 @@ def test_deploy_writes_meta_yaml(tmp_project):
     assert data["version"] == __version__
     assert "deployed_at" in data
     assert data["deployed_at"].endswith("+00:00")
-    assert "cli_path" in data
+    # cli_path removido em ADR-0034 (caminho local versionado, sem leitor)
+    assert "cli_path" not in data
     assert data["telemetry_enabled"] is True
 
 

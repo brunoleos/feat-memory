@@ -51,14 +51,22 @@ SUPERSEDED_DIR: Path = None  # type: ignore[assignment]
 PROPOSALS_DIR: Path = None  # type: ignore[assignment]
 
 
-def _init_paths() -> None:
-    """Resolve ROOT e dependentes a partir do cwd. Idempotente."""
+def _init_paths(root: Path | None = None) -> None:
+    """Resolve ROOT e dependentes. Idempotente.
+
+    Sem argumento, descobre o root via `find_project_root()` (git/cwd). Com
+    `root` explícito (subcomandos que aceitam `[path]` opcional, ADR-0033),
+    usa-o — desde que seja a primeira chamada ou que aponte para o mesmo root
+    já resolvido. Um override divergente após o root já estar fixado é
+    reaplicado (recomputa os derivados), porque cada `run` resolve seu próprio
+    alvo uma vez.
+    """
     global ROOT, AGENT, CLAUDE, STATE
     global MANIFEST_DIR, FEATURES_DIR, ARCHIVE_DIR
     global DECISIONS_DIR, SUPERSEDED_DIR, PROPOSALS_DIR
-    if ROOT is not None:
+    if ROOT is not None and (root is None or root == ROOT):
         return
-    ROOT = find_project_root()
+    ROOT = root if root is not None else find_project_root()
     AGENT = ROOT / "AGENTS.md"
     CLAUDE = ROOT / "CLAUDE.md"
     STATE = ROOT / ".agent-memory" / "STATE.md"

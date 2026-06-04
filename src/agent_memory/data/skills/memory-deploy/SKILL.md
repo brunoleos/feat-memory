@@ -1,13 +1,13 @@
 ---
 name: memory-deploy
-description: Use quando o usuário pede para instalar a metodologia em um projeto (frases como "instale a metodologia", "configure o agent-memory", "rode o setup", "este projeto não tem AGENTS.md", "ajude a adotar esta estrutura"). Conduz a adoção: detecta greenfield versus legacy, executa `agent-memory deploy` (que cuida sozinho do bloco com sentinelas no AGENTS.md), e em projetos legacy faz gênese retroativa por engenharia reversa multi-fonte (code-first): triangula testes, telas, documentação, código e dependências para extrair capacidades e decisões, com o git log como fonte secundária para datar/justificar. Não escreve em AGENTS.md fora do bloco delimitado pelas sentinelas.
+description: Use quando o usuário pede para instalar a metodologia em um projeto (frases como "instale a metodologia", "configure o agent-memory", "rode o setup", "este projeto não tem AGENTS.md", "ajude a adotar esta estrutura"). Conduz a adoção: detecta greenfield versus legacy, executa `agent-memory deploy` (que cuida sozinho do bloco com sentinelas no AGENTS.md), e em projetos legacy faz gênese retroativa por engenharia reversa multi-fonte (code-first): triangula testes, telas, documentação, código e dependências para extrair capacidades e decisões, com o git log como fonte secundária para datar/justificar. Propõe o frontmatter da AGENTS.md (project, stack, constraints) a partir de evidência observável e apresenta ao mantenedor para aprovação — nunca grava esses valores sem aval humano.
 ---
 
 # Memory deploy
 
 Esta skill é o ponto de entrada único para instalar a metodologia em qualquer projeto. Conduz três etapas: detecção do estado do projeto, deploy mecânico via CLI, e (apenas em projetos legacy) gênese retroativa de ADRs e do Manifest.
 
-A skill **não escreve no corpo da `AGENTS.md`** fora do bloco delimitado pelas sentinelas markdown. O bloco em si é gerenciado pelo `agent-memory deploy` (refrescado a cada execução). Identidade, restrições não-negociáveis, convenções de código e qualquer outra seção específica do projeto são autoria do mantenedor humano, registradas em sessão posterior se ele decidir que vale.
+A skill **propõe** o frontmatter da `AGENTS.md` (project, stack, constraints) a partir de evidência observável do projeto e **apresenta ao mantenedor para aprovação** antes de gravar — nunca cristaliza esses valores sem aval humano. Esse é o gate: propor é encorajado, gravar sem aprovação é proibido. O bloco de metodologia entre sentinelas markdown é gerenciado pelo `agent-memory deploy` (refrescado a cada execução) e não se confunde com o frontmatter. Seções em prosa específicas do projeto (Identidade, Convenções) seguem sendo autoria do mantenedor, registradas quando ele achar útil.
 
 ## Quando usar
 
@@ -47,11 +47,21 @@ Não use `--force` aqui. O `--force` reescreve `AGENTS.md` inteira a partir do t
 
 Se o deploy reportar erros, pare e investigue. Geralmente são problemas de permissão ou Python ausente.
 
-A partir deste ponto a skill não escreve mais em `AGENTS.md`. Em greenfield, o trabalho da skill termina aqui — sugira commitar o estado inicial. Em legacy, prossiga para a Etapa 3.
+Após o deploy estabelecer a estrutura, prossiga para a Etapa 2.1 (propor o frontmatter). Em greenfield, esse é o trabalho final da skill — sugira commitar após a aprovação. Em legacy, faça também a Etapa 3 (gênese de Manifest e ADRs).
+
+### Etapa 2.1: propor o frontmatter para aprovação
+
+O deploy deixou o frontmatter como esqueleto (legacy sem frontmatter) ou template (greenfield), com `project`/`stack`/`constraints` por preencher. Proponha valores a partir de evidência e **apresente ao mantenedor para aprovação — não grave sem aval**. Use `agent-memory schema` para a forma exata de cada campo.
+
+- **project**: o nome do projeto. Fato observável (nome do diretório/repositório) — proponha direto.
+- **stack**: detectável dos manifestos (`package.json`, `pyproject.toml`, `go.mod`, …) e da estrutura. Proponha `language`, `architecture` e as deps de runtime relevantes que você observa.
+- **constraints**: rascunhe a partir de evidência mecânica — regras impostas por tooling (configs de lint/formatter), gates de CI (suíte obrigatória, build), dependências fixadas/evitadas, e lições/avisos já escritos em prosa na AGENTS.md. Para cada uma, proponha `id`, `severity` (`hard`|`soft`) e `rule`; marque-as explicitamente como **rascunho**.
+
+Apresente o frontmatter proposto inteiro para o mantenedor revisar, editar e aprovar. Gravar valores não-aprovados como se fossem decisão oficial é tão grave quanto cristalizar um ADR sem revisão. Após a aprovação, grave no frontmatter e rode `agent-memory audit` para confirmar conformidade.
 
 ### Etapa 3 (apenas legacy): gênese retroativa de ADRs e Manifest
 
-Esta etapa só executa em projetos legacy. Ela popula `.agent-memory/decisions/` e `.agent-memory/manifest/features/` a partir do que já existe no repositório, mas **não toca em `AGENTS.md`**. Identidade, restrições e convenções específicas do projeto continuam sendo responsabilidade do mantenedor humano, em sessão posterior.
+Esta etapa só executa em projetos legacy. Ela popula `.agent-memory/decisions/` e `.agent-memory/manifest/features/` a partir do que já existe no repositório. (O frontmatter da AGENTS.md já foi proposto na Etapa 2.1; aqui o foco é Manifest e ADRs.)
 
 A gênese é **engenharia reversa multi-fonte, code-first** (ADR-0030, ADR-0031). Seu objetivo é reconstruir o *propósito* do sistema — o que ele faz para o usuário e por que foi construído assim — com **alta precisão e baixa alucinação**. Nenhuma fonte sozinha basta: o código é a verdade do *comportamento* mas exige inferência de *intenção*; os testes descrevem a intenção de forma executável; as telas mostram as capacidades como o usuário as vê; o git conta o *porquê/quando* mas é pobre em repos squashados. A precisão vem de **triangular** essas fontes, não de confiar em uma.
 
@@ -86,6 +96,8 @@ Para cada capacidade, proponha uma feature com ID monotônico, `status: shipped`
 
 Não inclua `metrics` na gênese inicial — métricas só aparecem quando há medições reais. Apresente as features em lotes pequenos (cinco por vez no máximo). Lotes grandes desencorajam revisão crítica.
 
+Mantenha cada arquivo de feature **enxuto**: uma capacidade, `user_value` em uma frase, `contracts`/`acceptance` só o essencial. Não há limite mecânico de tamanho — um arquivo inchado sinaliza feature mal-escopada (provavelmente duas), não rico. Rode `agent-memory schema` para o vocabulário exato de campos (obrigatórios, opcionais, patterns EARS).
+
 #### Fase 3.3: ADRs a partir das decisões
 
 Para cada decisão identificada (dependências, estrutura, camadas, cortes de escopo, convenções impostas por tooling), redija um ADR no formato padrão com as quatro seções (Contexto, Decisão, Consequências, Alternativas rejeitadas). Use o **git como fonte secundária** aqui: `git show <sha>` dos candidatos do `migrate`, PRs e o CHANGELOG ajudam a datar a decisão e recuperar a justificativa original; quando o histórico não cobre (squash), data com a melhor evidência (lockfile, CHANGELOG) e descreve o contexto a partir do código. Marque `status: accepted` porque a decisão já está em produção. Filtre decisão arquitetural de verdade versus refactor mecânico ou correção de bug.
@@ -106,7 +118,7 @@ Lote pequeno, revisão crítica. Lotes grandes saturam a atenção do revisor e 
 
 Quando em dúvida, não escreva. Em gênese, isso significa deixar uma feature ou ADR fora da gênese inicial em vez de escrevê-la imprecisa.
 
-A skill nunca escreve no corpo da `AGENTS.md` fora do bloco com sentinelas. Mesmo que o usuário peça explicitamente "preencha a identidade" durante a adoção, recuse: identidade do projeto é autoria humana e o usuário pode escrever no próximo turno fora desta skill.
+Autoria do frontmatter: propor a partir de evidência, aprovar com o humano. A skill propõe `project`/`stack`/`constraints` a partir do que observa (nome do projeto, manifestos, tooling, deps, lições já escritas) e apresenta para aprovação; nunca grava esses valores sem o aval do mantenedor. Constraints inferidas são explicitamente rascunho. O gate é aprovação humana, não proibição de propor — cristalizar valores não-aprovados é tão ruim quanto cristalizar um ADR sem revisão (ADR-0032). A prosa de identidade/convenções fora do frontmatter segue sendo autoria do mantenedor.
 
 ## O que evitar
 

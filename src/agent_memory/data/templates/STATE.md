@@ -7,6 +7,8 @@ active_decisions: []
 blocked_on: null
 ---
 
+# Estado
+
 ## Current
 
 Inicialização do projeto. Nenhuma feature implementada ainda.
@@ -18,5 +20,5 @@ Definir a primeira feature em `.agent-memory/manifest/features/F-0001-*.md` e o 
 ## Recent
 
 | ts | agent | features touched | summary |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | — | — | — | — |

@@ -241,27 +241,25 @@ META_HEADER = (
 
 
 def deploy_meta(target: Path) -> None:
-    """Grava .agent-memory/.meta.yaml com versão, timestamp e cli_path.
+    """Grava .agent-memory/.meta.yaml com versão e timestamp.
 
     Idempotente por construção: cada deploy sobrescreve o arquivo com os
-    valores correntes. Schema definido em ADR-0013.
+    valores correntes. Schema definido em ADR-0013; `cli_path` removido em
+    ADR-0034 (era caminho absoluto, local, da máquina do autor, versionado no
+    Git sem nenhum consumidor que o lesse).
     """
     print("Metadata (.agent-memory/.meta.yaml):")
 
-    import shutil as _shutil
     from datetime import datetime, timezone
 
     import yaml
 
     from agent_memory import __version__
 
-    cli_path = _shutil.which("agent-memory") or sys.executable
-
     data = {
         "schema_version": 1,
         "version": __version__,
         "deployed_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "cli_path": str(Path(cli_path).resolve()),
         "telemetry_enabled": True,
     }
 
@@ -479,13 +477,15 @@ def run_audit(target: Path) -> None:
 def print_next_steps(target: Path) -> None:
     """Imprime próximos passos para o usuário."""
     print("Próximos passos:")
-    print(f"  1. Edite o frontmatter de {target}/AGENTS.md "
-          "(project, stack, constraints)")
-    print(f"  2. Edite {target}/.agent-memory/STATE.md (Current, Next)")
+    print(f"  1. Preencha/aprove o frontmatter de {target / 'AGENTS.md'} "
+          "(project, stack, constraints) — a skill memory-deploy propõe a partir "
+          "do código e você aprova; `agent-memory schema` mostra a forma dos campos")
+    print(f"  2. Edite {target / '.agent-memory' / 'STATE.md'} (Current, Next)")
     print("  3. (Opcional) Adicione seções específicas do projeto à AGENTS.md "
           "fora do bloco agent-memory")
-    print("  4. Crie sua primeira feature em .agent-memory/manifest/features/")
-    print("  5. Faça commit: git add . && git commit -m 'adopt agent memory'")
+    print("  4. Crie sua primeira feature em .agent-memory/manifest/features/ "
+          "(`agent-memory schema` lista os campos)")
+    print('  5. Faça commit: git add + git commit -m "adopt agent memory"')
 
 
 def add_subparser(subparsers: argparse._SubParsersAction) -> None:
@@ -493,8 +493,9 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
         "deploy",
         help="Instala templates, skills e hooks da metodologia num projeto",
     )
-    p.add_argument("target", type=str,
-                   help="caminho para a raiz do projeto consumidor")
+    p.add_argument("target", type=str, nargs="?", default=".",
+                   help="caminho para a raiz do projeto consumidor "
+                        "(default: diretório atual)")
     p.add_argument("--force", action="store_true",
                    help="sobrescreve TUDO sem merge")
     p.add_argument("--no-merge", action="store_true",

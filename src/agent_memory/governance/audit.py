@@ -578,6 +578,8 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
         "audit",
         help="Valida artefatos da metodologia e regenera índices",
     )
+    p.add_argument("path", nargs="?", default=None,
+                   help="raiz do projeto (default: descobre via git/cwd)")
     p.add_argument("--json", action="store_true",
                    help="output em JSON")
     p.add_argument("--no-index", action="store_true",
@@ -595,7 +597,9 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
-    _paths._init_paths()
+    from pathlib import Path
+    root = Path(args.path).resolve() if getattr(args, "path", None) else None
+    _paths._init_paths(root)
 
     result = run_audit(
         write_indices=not args.no_index,
@@ -615,6 +619,21 @@ def run(args: argparse.Namespace) -> int:
         notice = consumer_version_notice(_paths.ROOT)
         if notice:
             _print_notice(notice)
+            # Guard de upgrade (W5): se a AGENTS.md está sem frontmatter (erros
+            # "campo ausente") E o CLI é mais novo que o deploy, o remédio é
+            # re-deployar — o deploy >=0.13 injeta o esqueleto de frontmatter
+            # (ADR-0029). Liga o sintoma (schema 0.00) à causa/solução.
+            missing_fm = any(
+                i["artifact"] == "AGENTS.md"
+                and str(i["message"]).startswith("campo ausente")
+                for i in result["issues"]
+            )
+            if missing_fm:
+                _print_notice(
+                    "→ AGENTS.md sem frontmatter e CLI mais novo que o deploy: "
+                    "re-rode `agent-memory deploy` para injetar o esqueleto de "
+                    "frontmatter (v0.13+)."
+                )
 
     issues = result["issues"]
     errors = sum(1 for i in issues if i["severity"] == "error")

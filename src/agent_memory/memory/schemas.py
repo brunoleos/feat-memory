@@ -29,6 +29,23 @@ SEMVER_RE = re.compile(r"^v?\d+\.\d+\.\d+$")
 VALID_FEATURE_STATUS = {"planned", "in_progress", "shipped", "deprecated"}
 VALID_DECISION_STATUS = {"proposed", "accepted", "superseded", "deprecated"}
 
+# Campos obrigatórios por artefato — fonte única, consumida tanto pelos
+# `validate_*` quanto pelo gerador de referência de schema (schema_reference.py).
+AGENT_REQUIRED = ["schema_version", "project", "constraints", "references", "budgets"]
+STATE_REQUIRED = ["schema_version", "updated_at", "active_features"]
+FEATURE_REQUIRED = ["id", "name", "status", "user_value", "contracts", "acceptance"]
+DECISION_REQUIRED = ["id", "date", "status"]
+
+# Campos reconhecidos-porém-opcionais — puramente documentais (os `validate_*`
+# não os exigem). Existem para o gerador de referência listar o vocabulário
+# completo de cada artefato sem que o agente precise ler schemas.py.
+FEATURE_OPTIONAL = [
+    "version", "owner", "introduced", "depends_on", "decisions", "metrics",
+]
+DECISION_OPTIONAL = [
+    "version", "supersedes", "superseded_by", "affects_features", "related", "tags",
+]
+
 EARS_PATTERN_FIELDS: dict[str, set[str]] = {
     "ubiquitous": {"requirement"},
     "event":      {"trigger", "response"},
@@ -56,8 +73,7 @@ def validate_agent(path: Path) -> tuple[dict, list[Issue]]:
         fm, _ = parse_frontmatter(path)
     except ValueError as e:
         return {}, [Issue("AGENTS.md", "error", str(e))]
-    required = ["schema_version", "project", "constraints", "references", "budgets"]
-    for key in required:
+    for key in AGENT_REQUIRED:
         if key not in fm:
             issues.append(Issue("AGENTS.md", "error", f"campo ausente: {key}"))
     return fm, issues
@@ -77,8 +93,7 @@ def validate_state(path: Path, max_bytes: int) -> tuple[dict, list[Issue]]:
         fm, _ = parse_frontmatter(path)
     except ValueError as e:
         return {}, [Issue("STATE.md", "error", str(e))]
-    required = ["schema_version", "updated_at", "active_features"]
-    for key in required:
+    for key in STATE_REQUIRED:
         if key not in fm:
             issues.append(Issue("STATE.md", "error", f"campo ausente: {key}"))
     return fm, issues
@@ -144,8 +159,7 @@ def validate_feature(path: Path) -> tuple[dict, list[Issue]]:
     except ValueError as e:
         return {}, [Issue(name, "error", str(e))]
 
-    required = ["id", "name", "status", "user_value", "contracts", "acceptance"]
-    for key in required:
+    for key in FEATURE_REQUIRED:
         if key not in fm:
             issues.append(Issue(name, "error", f"campo ausente: {key}"))
 
@@ -185,7 +199,7 @@ def validate_decision(path: Path) -> tuple[dict, list[Issue]]:
     except ValueError as e:
         return {}, [Issue(name, "error", str(e))]
 
-    for key in ("id", "date", "status"):
+    for key in DECISION_REQUIRED:
         if key not in fm:
             issues.append(Issue(name, "error", f"campo ausente: {key}"))
 

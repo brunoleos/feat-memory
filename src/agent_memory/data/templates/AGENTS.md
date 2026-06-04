@@ -24,7 +24,6 @@ references:
 budgets:
   resumption_max_bytes: 12288
   state_max_bytes: 4096
-  feature_file_max_bytes: 6144
 ---
 
 # Constituição do projeto
@@ -43,15 +42,12 @@ Este bloco é refrescado a cada `agent-memory deploy`. Não edite diretamente �
 
 ### Skills disponíveis
 
-Este projeto inclui quatro skills em `skills/` (na raiz do workspace) que orientam você nos fluxos críticos da metodologia. Cada skill tem um arquivo `SKILL.md` com instruções detalhadas e condições de ativação no frontmatter. Use-as quando os triggers correspondentes aparecerem na conversa, lendo o `SKILL.md` correspondente antes de executar — as skills são autoritativas sobre como cada fluxo deve ser conduzido.
+Quatro skills em `skills/` orientam os fluxos críticos. Leia o `SKILL.md` de cada uma antes de executá-la — o frontmatter traz os triggers de ativação e as instruções autoritativas (fonte única; não duplicadas aqui). Roster:
 
-A skill `memory-deploy` é o ponto de entrada único para instalar a metodologia em qualquer projeto. Ela ativa quando o usuário pede para instalar, configurar ou adotar a metodologia, com frases como "instale a metodologia neste projeto", "configure o agent-memory aqui" ou "este projeto não tem AGENTS.md". Ela detecta se o projeto é greenfield ou legacy, executa `agent-memory deploy` para instalar a estrutura mecânica, e em projetos legacy conduz gênese retroativa code-first: a fonte primária é a leitura do próprio código (capacidades viram features; decisões visíveis na estrutura viram ADRs), com o git log como fonte secundária para datar e justificar decisões. A skill nunca escreve no corpo da `AGENTS.md` fora do bloco delimitado por sentinelas — identidade, restrições e convenções específicas do projeto são autoria do mantenedor humano.
-
-A skill `memory-bootstrap` ativa no início de uma sessão quando o usuário pergunta sobre o estado atual do projeto, com frases como "onde paramos", "qual o status" ou "carregue o contexto". Ela carrega os artefatos de memória eficientemente e apresenta um briefing tático antes de você prosseguir com a tarefa. Quando detecta que o último commit é um merge que tocou artefatos da metodologia, ela delega para `memory-pull-brief` antes do briefing tático.
-
-A skill `memory-debrief` ativa quando o usuário sinaliza intenção de commitar ou fechar a sessão, com frases como "vou commitar", "atualize o STATE" ou "antes de subir". Ela executa a rotina de debrief: examina o diff, atualiza entradas do Manifest para features tocadas, reescreve o `.agent-memory/STATE.md`, e gera proposta de ADR se a sessão produziu uma decisão arquitetural não-trivial. Esta é a skill mais importante do dia-a-dia — invoque-a antes de cada commit relevante.
-
-A skill `memory-pull-brief` ativa após `git pull` quando o usuário pergunta o que veio do remote, com frases como "o que veio do pull", "brifa as mudanças do main" ou "ressincroniza o STATE com o que veio". Ela examina o diff trazido pelo pull, identifica mudanças em features, decisions e no bloco metodológico de AGENTS.md, e propõe ajustes em `.agent-memory/STATE.md` para refletir a nova realidade — sem tocar `.agent-memory/manifest/` nem `.agent-memory/decisions/`, que já vieram corretos do pull.
+- **`memory-deploy`** — instalar/adotar a metodologia num projeto: deploy mecânico e, em legacy, gênese retroativa multi-fonte (testes, telas, código, deps; git secundário).
+- **`memory-bootstrap`** — retomar uma sessão: carregar o contexto e dar o briefing tático ("onde paramos", "qual o status").
+- **`memory-debrief`** — fechar/commitar uma sessão: atualizar Manifest e STATE e propor ADR a partir do diff. A mais usada no dia-a-dia.
+- **`memory-pull-brief`** — após `git pull`, brifar o que veio do remote e ressincronizar o STATE.
 
 ### Como retomar trabalho
 

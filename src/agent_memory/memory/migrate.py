@@ -39,7 +39,7 @@ import sys
 from pathlib import Path
 
 
-def _run_to_checkpoints() -> int:
+def _run_to_checkpoints(root: Path | None = None) -> int:
     """Cria o primeiro checkpoint a partir de STATE.md legado.
 
     Idempotente: se .agent-memory/checkpoints/ já tem arquivos, retorna 0
@@ -50,7 +50,7 @@ def _run_to_checkpoints() -> int:
     from agent_memory.shared.parsing import parse_frontmatter
     from agent_memory.memory import checkpoints as cp
 
-    _paths._init_paths()
+    _paths._init_paths(root)
     cp_dir = cp._checkpoints_dir(_paths.ROOT)
     if cp_dir.exists() and any(cp_dir.glob("*.md")):
         print("Checkpoints já existem em .agent-memory/checkpoints/. "
@@ -319,6 +319,8 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
         "migrate",
         help="Examina histórico Git e sugere ADRs candidatos para projetos legados",
     )
+    p.add_argument("path", nargs="?", default=None,
+                   help="raiz do projeto (default: descobre via git/cwd)")
     p.add_argument("--limit", type=int, default=100,
                    help="número de commits a examinar (padrão: 100)")
     p.add_argument("--json", action="store_true",
@@ -331,10 +333,12 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
-    if getattr(args, "to", None) == "checkpoints":
-        return _run_to_checkpoints()
+    explicit = Path(args.path).resolve() if getattr(args, "path", None) else None
 
-    root = find_project_root()
+    if getattr(args, "to", None) == "checkpoints":
+        return _run_to_checkpoints(explicit)
+
+    root = explicit if explicit is not None else find_project_root()
 
     try:
         commits = git_log(args.limit)

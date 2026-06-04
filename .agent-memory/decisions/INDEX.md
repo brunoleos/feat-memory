@@ -30,5 +30,8 @@
 | ADR-0029 | 2026-06-03 | accepted | deploy,onboarding,legacy,constitution,schema | F-0025 |
 | ADR-0030 | 2026-06-03 | accepted | methodology,genesis,legacy,migrate,skill,manifest | F-0026 |
 | ADR-0031 | 2026-06-03 | accepted | methodology,genesis,legacy,reverse-engineering,tests,ui,precision | F-0026 |
+| ADR-0032 | 2026-06-04 | accepted | methodology,skill,deploy,frontmatter,authorship,onboarding | F-0028 |
+| ADR-0033 | 2026-06-04 | accepted | cli,ux,paths,consistency | F-0029 |
+| ADR-0034 | 2026-06-04 | accepted | meta,privacy,deploy,cleanup | F-0030 |
 
-_Gerado por `agent-memory audit` em 2026-06-03T20:03:07+00:00. Não edite manualmente._
+_Gerado por `agent-memory audit` em 2026-06-04T03:52:18+00:00. Não edite manualmente._

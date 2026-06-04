@@ -15,6 +15,7 @@ from agent_memory.memory import (
     checkpoints,
     migrate,
     propose_adr,
+    schema_reference,
 )
 from agent_memory.governance import (
     audit,
@@ -50,6 +51,7 @@ def main(argv: list[str] | None = None) -> int:
     migrate.add_subparser(sub)
     archive.add_subparser(sub)
     checkpoints.add_subparser(sub)
+    schema_reference.add_subparser(sub)
 
     # Subcomandos de governança (telemetria, hooks, version-check)
     check_staleness.add_subparser(sub)
