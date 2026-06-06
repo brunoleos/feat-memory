@@ -19,6 +19,7 @@ from feat_memory.memory import (
 )
 from feat_memory.governance import (
     audit,
+    check_doc_sync,
     check_staleness,
     check_version_bump,
     telemetry,
@@ -55,6 +56,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # Subcomandos de governança (telemetria, hooks, version-check)
     check_staleness.add_subparser(sub)
+    check_doc_sync.add_subparser(sub)
     check_version_bump.add_subparser(sub)
     telemetry.add_subparser(sub)
     version_check.add_subparser(sub)

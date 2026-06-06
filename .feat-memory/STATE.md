@@ -1,10 +1,11 @@
 ---
 schema_version: 2
-updated_at: '2026-06-06T12:00:00+00:00'
+updated_at: '2026-06-06T13:00:00+00:00'
 updated_by: claude-opus-4.8
-active_features: []
+active_features:
+- F-0032
 active_decisions:
-- ADR-0036
+- ADR-0037
 blocked_on: null
 ---
 
@@ -12,16 +13,17 @@ blocked_on: null
 
 ## Current
 
-**v1.0.0 — reposicionamento: o projeto vira `feat-memory`** (memória de *features e decisões*). Hard rename `agent-memory`→`feat-memory` (pacote import, comando CLI, `.agent-memory/`→`.feat-memory/`), motivado por (1) o Claude Code embarcar memória nativa de agente (`.claude/agent-memory/MEMORY.md`), que comoditiza o scratchpad e colide nominalmente, e (2) o diferencial real ser a governança de doc viva, não a memória. Reescrita uniforme inclusive em ADRs históricos (decisão do mantenedor); diretório movido com `git mv`. Pelo litmus do ADR-0035, rename não é capacidade → ADR-0036 + git history, sem feature. 215 testes verdes; audit schema 1.00, drift 0, C1/C2 ok.
+**v1.1.0 — B1 do agente de governança: gate hard de sincronização doc↔código.** Novo `check-doc-sync-staged` (F-0032, ADR-0037) ligado ao pre-commit: bloqueia (exit 1) commit que toca código sem mover nenhum artefato de doc (`.feat-memory/STATE.md`, `manifest/**` ou `decisions/**`). Complementa o soft `check-staleness-staged` (ADR-0016, que segue nudgando p/ STATE); segue o padrão de guard hard em hook fail-open de ADR-0020 (binário-ausente e `--no-verify` seguem valendo). Converte a promessa de "doc sempre sincronizada" (ADR-0036) de disciplina em garantia. 225 testes verdes (10 novos), audit limpo. Antes (v1.0.0): rename `agent-memory`→`feat-memory` + reposicionamento (ADR-0036).
 
 ## Next
 
-Workstream B do plano `feat-memory` (Claude Code apenas): **(B1)** endurecer o gate de drift no pre-commit — `check-staleness-staged` soft→hard, estendido a manifest/ADR (`check-doc-sync-staged` bloqueante), revisita ADR-0016; **(B2)** subagent gerador `memory-debrief` — wrapper fino que pré-carrega a skill (fonte única) via `skills:`, projetado pelo `deploy` em `.claude/agents/`; **(B3)** auto-pilot opt-in (`claude -p` headless no hook). Capacidade separada (litmus ADR-0035): migrador de consumidores `.agent-memory/`→`.feat-memory/`. Coexistir com a memória nativa, sem integração. Ação do mantenedor: reservar `feat-memory` na PyPI + trusted publisher; renomear repo GitHub `brunoleos/agent-memory`→`feat-memory`.
+Continuar o agente de governança: **(B2)** subagent gerador `memory-debrief` — wrapper fino que pré-carrega a skill (fonte única) via `skills:`, projetado pelo `deploy` em `.claude/agents/`; **(B3)** auto-pilot opt-in (`claude -p` headless no hook). Capacidade separada (litmus ADR-0035): migrador de consumidores `.agent-memory/`→`.feat-memory/` (deve reinstalar hook + alertar sobre shim pipx antigo, como exigiu a própria transição deste repo). Coexistir com a memória nativa, sem integração. Ação do mantenedor: reservar `feat-memory` na PyPI + trusted publisher; renomear repo GitHub `brunoleos/agent-memory`→`feat-memory`.
 
 ## Recent
 
 | ts | author | features tocadas | summary |
 | --- | --- | --- | --- |
+| 2026-06-06T13:00:00 | claude-opus-4.8 | F-0032 | v1.1.0: gate hard doc-sync no commit (ADR-0037) — bloqueia código sem doc; complementa o soft de ADR-0016. |
 | 2026-06-06T12:00:00 | claude-opus-4.8 | — | v1.0.0: rename agent-memory→feat-memory + reposicionamento como doc viva governada (ADR-0036); 1.0 marca maturidade. |
 | 2026-06-04T18:00:00 | claude-opus-4.8 | F-0025,F-0031 | v0.15.0: dissolve F-0030 (changelog-feature); guard anti-balde no audit + litmus nas skills (ADR-0035). |
 | 2026-06-04T12:00:00 | claude-opus-4.8 | F-0027,F-0028,F-0029 | v0.14.0: DX hardening Tensegrams — schema ref gerada, autoria propõe/aprova (ADR-0032), CLI [path] uniforme (ADR-0033), polish onboarding (ADR-0034). |

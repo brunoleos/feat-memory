@@ -65,6 +65,14 @@ def main() -> int:
         cwd=root,
     )
 
+    # Gate hard (exit 1): bloqueia commits que tocam código sem mover nenhum
+    # artefato de doc (.feat-memory/STATE.md, manifest/ ou decisions/). É o
+    # complemento bloqueante do aviso soft acima — garante sincronia doc↔código.
+    doc_sync = subprocess.run(
+        ["feat-memory", "check-doc-sync-staged"],
+        cwd=root,
+    )
+
     # Guard hard (exit 1) que bloqueia commits tocando código sem bumpar
     # VERSION. No-op em projetos sem arquivo VERSION na raiz.
     bump_check = subprocess.run(
@@ -72,7 +80,7 @@ def main() -> int:
         cwd=root,
     )
 
-    return result.returncode or bump_check.returncode
+    return result.returncode or doc_sync.returncode or bump_check.returncode
 
 
 if __name__ == "__main__":
