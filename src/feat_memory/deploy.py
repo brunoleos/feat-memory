@@ -10,6 +10,8 @@ Comportamento por arquivo:
     CLAUDE.md            → copia se ausente; deixa quieto se existe
     .feat-memory/STATE.md → pula se existe (conteúdo é volátil)
     skills/              → sempre atualizadas (conteúdo de metodologia)
+    .claude/agents/      → subagents do Claude Code, sempre atualizados
+                            (wrapper fino que pré-carrega a skill homônima)
     .gitattributes       → bloco com sentinelas, refrescado a cada deploy
     .gitignore           → bloco com sentinelas garantindo .feat-memory-deploy/
     pastas               → cria se não existem
@@ -407,6 +409,32 @@ def check_v03_layout(target: Path) -> bool:
     return True
 
 
+def deploy_agents(target: Path) -> None:
+    """Deploy do(s) subagent(s) do Claude Code em .claude/agents/.
+
+    Cada arquivo é um wrapper fino que pré-carrega a skill homônima (fonte
+    única da lógica) via o campo `skills:` do frontmatter, dando ao agente um
+    contexto isolado. Sempre sobrescreve — conteúdo de metodologia, como as
+    skills. No-op silencioso se o pacote não traz a pasta agents/.
+    """
+    agents_src = _data_path("agents")
+    if not agents_src.is_dir():
+        return
+
+    print("Subagents (Claude Code):")
+    agents_dst = target / ".claude" / "agents"
+    agents_dst.mkdir(parents=True, exist_ok=True)
+
+    for agent_path in sorted(agents_src.iterdir(), key=lambda e: e.name):
+        if not (agent_path.is_file() and agent_path.name.endswith(".md")):
+            continue
+        dst_file = agents_dst / agent_path.name
+        existed = dst_file.exists()
+        _copy_resource(agent_path, dst_file)
+        verb = "atualizado" if existed else "deployado"
+        print(f"  {verb}: {agent_path.name}")
+
+
 def deploy_skills(target: Path, force: bool) -> None:
     """Deploy de skills (sempre sobrescreve; conteúdo de metodologia)."""
     print("Skills:")
@@ -549,6 +577,9 @@ def run(args: argparse.Namespace) -> int:
     print()
 
     deploy_skills(target, args.force)
+    print()
+
+    deploy_agents(target)
     print()
 
     create_directories(target)

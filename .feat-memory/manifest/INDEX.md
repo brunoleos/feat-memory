@@ -13,5 +13,6 @@
 | F-0029 | cli-path-uniformity | shipped | 0.14.0 | ADR-0033 | — |
 | F-0031 | manifest-capability-guard | shipped | 0.15.0 | ADR-0035 | — |
 | F-0032 | doc-sync-gate | shipped | 1.1.0 | ADR-0037 | — |
+| F-0033 | governance-subagent | shipped | 1.2.0 | ADR-0038 | — |
 
-_Gerado por `feat-memory audit` em 2026-06-06T05:42:21+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-06T05:52:21+00:00. Não edite manualmente._

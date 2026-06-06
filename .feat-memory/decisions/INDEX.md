@@ -36,5 +36,6 @@
 | ADR-0035 | 2026-06-04 | accepted | manifest,governance,quality,audit,methodology,dogfooding | F-0031 |
 | ADR-0036 | 2026-06-06 | accepted | naming,positioning,methodology,breaking-change,dogfooding | — |
 | ADR-0037 | 2026-06-06 | accepted | hooks,governance,enforcement,drift,dogfooding | F-0032 |
+| ADR-0038 | 2026-06-06 | accepted | subagent,skill,deploy,claude-code,adapter,methodology | F-0033 |
 
-_Gerado por `feat-memory audit` em 2026-06-06T05:42:21+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-06T05:52:21+00:00. Não edite manualmente._

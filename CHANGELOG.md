@@ -6,6 +6,14 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto ader
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-06-06
+
+Segunda peça do agente de governança: dar ao debrief um **contexto isolado** sem duplicar lógica.
+
+### Adicionado
+
+**F-0033 (governance-subagent) + ADR-0038.** O `deploy` passa a projetar um subagent do Claude Code em `.claude/agents/memory-debrief.md` (novo `deploy_agents`; nova spec canônica em `src/feat_memory/data/agents/`, registrada no package-data). O subagent é um **wrapper fino**: o campo `skills: [memory-debrief]` do frontmatter pré-carrega a skill homônima, que permanece a **fonte única** da lógica — o wrapper só adiciona a janela isolada (a leitura pesada do diff não polui a conversa principal) e as regras de operação (escreve em `.feat-memory/`, **pede confirmação antes de commitar**). É um adapter específico do Claude Code; o núcleo (skill + CLI + artefatos) segue tool-agnóstico via `AGENTS.md`. Escreve na estrutura governada, **não** na memória nativa do Claude Code (`.claude/agent-memory/`), que apenas coexiste. 2 testes novos.
+
 ## [1.1.0] - 2026-06-06
 
 Primeira peça do "agente de governança": converter a sincronização doc↔código de disciplina assistida em **garantia mecânica** no commit.

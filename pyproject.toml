@@ -47,6 +47,7 @@ feat_memory = [
     "data/templates/*",
     "data/templates/.gitattributes",
     "data/skills/**/SKILL.md",
+    "data/agents/*",
 ]
 # Hooks vivem no subpacote governance/ desde o split F-0017 (ADR-0021).
 # Sem esta entrada, o wheel omitia o pre-commit (bug corrigido em F-0021).

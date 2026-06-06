@@ -45,6 +45,31 @@ def test_deploy_creates_all_artifacts(tmp_project):
     assert (tmp_project / "skills" / "memory-pull-brief" / "SKILL.md").is_file()
 
 
+def test_deploy_creates_claude_subagent(tmp_project):
+    """B2: deploy projeta o subagent de governança em .claude/agents/."""
+    rc = deploy.run(_args(tmp_project))
+    assert rc == 0
+
+    agent = tmp_project / ".claude" / "agents" / "memory-debrief.md"
+    assert agent.is_file(), f"esperado subagent em {agent}"
+
+    fm, body = parse_frontmatter(agent)
+    assert fm["name"] == "memory-debrief"
+    # Wrapper fino: pré-carrega a skill homônima (fonte única da lógica).
+    assert "memory-debrief" in (fm.get("skills") or [])
+    # Comportamento "pede permissão antes de commitar" mora no corpo.
+    assert "commit" in body.lower()
+
+
+def test_deploy_subagent_is_idempotent(tmp_project):
+    """Redeploy sobrescreve sem duplicar (conteúdo de metodologia)."""
+    deploy.run(_args(tmp_project))
+    rc = deploy.run(_args(tmp_project))
+    assert rc == 0
+    agents_dir = tmp_project / ".claude" / "agents"
+    assert sorted(p.name for p in agents_dir.glob("*.md")) == ["memory-debrief.md"]
+
+
 def test_deploy_is_idempotent(tmp_project):
     deploy.run(_args(tmp_project))
     rc = deploy.run(_args(tmp_project))
