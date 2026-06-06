@@ -1,4 +1,4 @@
-"""Testes end-to-end do `agent-memory deploy <target>`."""
+"""Testes end-to-end do `feat-memory deploy <target>`."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from agent_memory import deploy
-from agent_memory.shared.parsing import parse_frontmatter
+from feat_memory import deploy
+from feat_memory.shared.parsing import parse_frontmatter
 
 
 def _args(target: Path | str, *, force: bool = False, no_merge: bool = False,
@@ -31,14 +31,14 @@ def test_deploy_creates_all_artifacts(tmp_project):
     for path in (
         tmp_project / "AGENTS.md",
         tmp_project / "CLAUDE.md",
-        tmp_project / ".agent-memory" / "STATE.md",
+        tmp_project / ".feat-memory" / "STATE.md",
         tmp_project / ".gitattributes",
         tmp_project / ".gitignore",
     ):
         assert path.is_file(), f"esperado: {path}"
 
-    assert (tmp_project / ".agent-memory" / "manifest" / "features").is_dir()
-    assert (tmp_project / ".agent-memory" / "decisions" / "proposals").is_dir()
+    assert (tmp_project / ".feat-memory" / "manifest" / "features").is_dir()
+    assert (tmp_project / ".feat-memory" / "decisions" / "proposals").is_dir()
     assert (tmp_project / "skills" / "memory-deploy" / "SKILL.md").is_file()
     assert (tmp_project / "skills" / "memory-bootstrap" / "SKILL.md").is_file()
     assert (tmp_project / "skills" / "memory-debrief" / "SKILL.md").is_file()
@@ -52,9 +52,9 @@ def test_deploy_is_idempotent(tmp_project):
 
     gitignore = (tmp_project / ".gitignore").read_text(encoding="utf-8")
     # Bloco de sentinelas não pode duplicar em re-execuções
-    assert gitignore.count("# >>> agent-memory >>>") == 1
-    assert gitignore.count("# <<< agent-memory <<<") == 1
-    assert ".agent-memory-deploy/" in gitignore
+    assert gitignore.count("# >>> feat-memory >>>") == 1
+    assert gitignore.count("# <<< feat-memory <<<") == 1
+    assert ".feat-memory-deploy/" in gitignore
 
 
 def test_deploy_appends_methodology_block_to_existing_agent_md(tmp_project):
@@ -71,11 +71,11 @@ def test_deploy_appends_methodology_block_to_existing_agent_md(tmp_project):
     assert "## Identidade" in content
     assert "Foo." in content
     # Bloco com sentinelas anexado
-    assert "<!-- >>> agent-memory >>> -->" in content
-    assert "<!-- <<< agent-memory <<< -->" in content
-    assert "## agent-memory" in content
+    assert "<!-- >>> feat-memory >>> -->" in content
+    assert "<!-- <<< feat-memory <<< -->" in content
+    assert "## feat-memory" in content
     # Sem fila de merge gerada (mecanismo legado removido)
-    assert not (tmp_project / ".agent-memory-deploy").exists()
+    assert not (tmp_project / ".feat-memory-deploy").exists()
 
 
 def test_deploy_redeploy_is_idempotent_on_block(tmp_project):
@@ -95,8 +95,8 @@ def test_deploy_redeploy_is_idempotent_on_block(tmp_project):
     assert "## Identidade" in final
     assert "Projeto teste." in final
     # Bloco aparece exatamente uma vez (não duplica)
-    assert final.count("<!-- >>> agent-memory >>> -->") == 1
-    assert final.count("<!-- <<< agent-memory <<< -->") == 1
+    assert final.count("<!-- >>> feat-memory >>> -->") == 1
+    assert final.count("<!-- <<< feat-memory <<< -->") == 1
 
 
 def test_deploy_force_overwrites_existing(tmp_project):
@@ -121,7 +121,7 @@ def test_deploy_no_merge_skips_existing_without_queueing(tmp_project):
     # Conteúdo preservado
     assert (tmp_project / "AGENTS.md").read_text(encoding="utf-8") == custom
     # Sem fila de merge gerada
-    assert not (tmp_project / ".agent-memory-deploy" / "merge-queue").exists()
+    assert not (tmp_project / ".feat-memory-deploy" / "merge-queue").exists()
 
 
 def test_deploy_invalid_target_returns_error(tmp_path):
@@ -144,20 +144,20 @@ def test_deploy_reaches_audit_step(tmp_project, capsys):
 
 
 @pytest.mark.skipif(
-    shutil.which("agent-memory") is None,
-    reason="agent-memory binary not on PATH; audit subprocess não pode rodar",
+    shutil.which("feat-memory") is None,
+    reason="feat-memory binary not on PATH; audit subprocess não pode rodar",
 )
 def test_deploy_audit_subprocess_succeeds(tmp_project, capsys):
     """Quando o binário está no PATH, a auditoria deve rodar sem warnings."""
     deploy.run(_args(tmp_project))
     out = capsys.readouterr().out
-    assert "AVISO: 'agent-memory' não encontrado" not in out
+    assert "AVISO: 'feat-memory' não encontrado" not in out
     assert "auditoria retornou" not in out  # só aparece se rc != 0
 
 
 def test_deploy_substitutes_version_in_agent_md(tmp_project):
     """O placeholder {VERSION} deve ser substituído pela versão atual."""
-    from agent_memory import __version__
+    from feat_memory import __version__
     deploy.run(_args(tmp_project))
     content = (tmp_project / "AGENTS.md").read_text(encoding="utf-8")
     assert "{VERSION}" not in content
@@ -173,7 +173,7 @@ def test_deploy_state_gets_real_timestamp_not_hardcoded(tmp_project):
     from datetime import datetime, timezone
 
     deploy.run(_args(tmp_project))
-    fm, _ = parse_frontmatter(tmp_project / ".agent-memory" / "STATE.md")
+    fm, _ = parse_frontmatter(tmp_project / ".feat-memory" / "STATE.md")
 
     assert fm["updated_by"] == "deploy"
     assert "{DEPLOY_DATE}" != str(fm["updated_at"])
@@ -207,7 +207,7 @@ def test_deploy_injects_frontmatter_into_legacy_agent_md(tmp_project):
     # Prosa do mantenedor preservada, abaixo do frontmatter
     assert "Somos uma SPA vanilla JS." in content
     # Bloco da metodologia também presente
-    assert "<!-- >>> agent-memory >>> -->" in content
+    assert "<!-- >>> feat-memory >>> -->" in content
 
 
 def test_deploy_does_not_inject_frontmatter_when_present(tmp_project):
@@ -238,7 +238,7 @@ def test_deploy_frontmatter_injection_is_idempotent(tmp_project):
 
     content = (tmp_project / "AGENTS.md").read_text(encoding="utf-8")
     assert content.count("schema_version:") == 1
-    assert content.count("<!-- >>> agent-memory >>> -->") == 1
+    assert content.count("<!-- >>> feat-memory >>> -->") == 1
 
 
 def test_deploy_defaults_to_cwd(tmp_project, monkeypatch):
@@ -247,7 +247,7 @@ def test_deploy_defaults_to_cwd(tmp_project, monkeypatch):
     rc = deploy.run(_args("."))
     assert rc == 0
     assert (tmp_project / "AGENTS.md").is_file()
-    assert (tmp_project / ".agent-memory" / "STATE.md").is_file()
+    assert (tmp_project / ".feat-memory" / "STATE.md").is_file()
 
 
 def test_deploy_meta_omits_cli_path(tmp_project):
@@ -255,16 +255,16 @@ def test_deploy_meta_omits_cli_path(tmp_project):
     import yaml
     deploy.run(_args(tmp_project))
     data = yaml.safe_load(
-        (tmp_project / ".agent-memory" / ".meta.yaml").read_text(encoding="utf-8")
+        (tmp_project / ".feat-memory" / ".meta.yaml").read_text(encoding="utf-8")
     )
     assert "cli_path" not in data
     assert data["version"]
 
 
 def test_deploy_cleans_stale_pending_dir(tmp_project):
-    """Re-deploy obliterates leftover .agent-memory-deploy/ from prior run."""
+    """Re-deploy obliterates leftover .feat-memory-deploy/ from prior run."""
     # Simula deploy anterior com merges pendentes
-    deploy_dir = tmp_project / ".agent-memory-deploy"
+    deploy_dir = tmp_project / ".feat-memory-deploy"
     deploy_dir.mkdir()
     (deploy_dir / "merge-queue").write_text("STALE.md\n")
     (deploy_dir / "pending").mkdir()

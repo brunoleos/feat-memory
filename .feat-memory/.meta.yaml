@@ -1,0 +1,12 @@
+# Metadata de instalação do feat-memory.
+#
+# Regenerado a cada `feat-memory deploy`. Versionado no Git do consumidor
+# para que ferramentas externas e a própria CLI (audit, telemetria) saibam
+# contra qual versão a estrutura foi produzida.
+#
+# Schema documentado em ADR-0013. Não edite manualmente — re-rode deploy.
+
+schema_version: 1
+version: 1.0.0
+deployed_at: '2026-06-06T12:00:00+00:00'
+telemetry_enabled: true

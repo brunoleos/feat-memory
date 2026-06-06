@@ -11,8 +11,8 @@ import textwrap
 
 import pytest
 
-from agent_memory.memory import schemas
-from agent_memory.shared import paths as _paths
+from feat_memory.memory import schemas
+from feat_memory.shared import paths as _paths
 
 
 def _write_feature(tmp_path, name: str):

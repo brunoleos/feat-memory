@@ -6,9 +6,9 @@ import argparse
 
 import pytest
 
-from agent_memory import __version__
-from agent_memory.governance import version_check
-from agent_memory.shared import paths as _paths
+from feat_memory import __version__
+from feat_memory.governance import version_check
+from feat_memory.shared import paths as _paths
 
 
 # --- helpers -------------------------------------------------------------
@@ -16,7 +16,7 @@ from agent_memory.shared import paths as _paths
 
 def _seed_meta(root, *, version: str = "0.7.0",
                version_check_enabled: bool | None = None) -> None:
-    am = root / ".agent-memory"
+    am = root / ".feat-memory"
     am.mkdir(parents=True, exist_ok=True)
     extra = ""
     if version_check_enabled is not None:
@@ -25,7 +25,7 @@ def _seed_meta(root, *, version: str = "0.7.0",
         f"schema_version: 1\n"
         f"version: {version}\n"
         f"deployed_at: 2026-05-05T00:00:00+00:00\n"
-        f"cli_path: /tmp/agent-memory{extra}\n",
+        f"cli_path: /tmp/feat-memory{extra}\n",
         encoding="utf-8",
     )
 
@@ -40,7 +40,7 @@ def test_notice_when_versions_differ(tmp_project):
     assert notice is not None
     assert __version__ in notice
     assert "0.5.0" in notice
-    assert "agent-memory deploy" in notice
+    assert "feat-memory deploy" in notice
 
 
 def test_no_notice_when_versions_match(tmp_project):
@@ -56,7 +56,7 @@ def test_no_notice_when_meta_absent(tmp_path):
 
 def test_no_notice_when_meta_lacks_version_field(tmp_project):
     """meta.yaml sem campo `version` → None (fail-soft)."""
-    am = tmp_project / ".agent-memory"
+    am = tmp_project / ".feat-memory"
     am.mkdir(parents=True, exist_ok=True)
     (am / ".meta.yaml").write_text(
         "schema_version: 1\ndeployed_at: 2026-05-05T00:00:00+00:00\n",
@@ -122,9 +122,9 @@ def test_run_always_exits_zero(tmp_project, monkeypatch):
 
 def test_audit_emits_notice_when_versions_differ(tmp_project, capsys, monkeypatch):
     """A1: audit imprime notice na stderr quando versões diferem, sem mudar exit code."""
-    from agent_memory.governance import audit
+    from feat_memory.governance import audit
 
-    am = tmp_project / ".agent-memory"
+    am = tmp_project / ".feat-memory"
     am.mkdir(parents=True, exist_ok=True)
     _seed_meta(tmp_project, version="0.5.0")
     (tmp_project / "AGENTS.md").write_text(
@@ -165,7 +165,7 @@ def test_audit_emits_notice_when_versions_differ(tmp_project, capsys, monkeypatc
 
 
 def test_subcommand_registered(capsys):
-    from agent_memory import cli
+    from feat_memory import cli
     with pytest.raises(SystemExit) as exc:
         cli.main(["--help"])
     assert exc.value.code == 0

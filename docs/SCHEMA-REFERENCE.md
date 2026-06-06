@@ -1,6 +1,6 @@
-# Referência de schema — artefatos do agent-memory
+# Referência de schema — artefatos do feat-memory
 
-Gerado de `agent_memory.memory.schemas` (fonte única). Não edite à mão — rode `agent-memory schema` ou regenere o doc. Campos não listados como obrigatórios são opcionais.
+Gerado de `feat_memory.memory.schemas` (fonte única). Não edite à mão — rode `feat-memory schema` ou regenere o doc. Campos não listados como obrigatórios são opcionais.
 
 ## AGENTS.md (frontmatter)
 
@@ -15,7 +15,7 @@ Gerado de `agent_memory.memory.schemas` (fonte única). Não edite à mão — r
 - `active_features`/`active_decisions`: listas de IDs em foco. `blocked_on`, `updated_by`: opcionais.
 - Tamanho **enforced**: `state_max_bytes` (default 4096B); exceder é `error`.
 
-## Feature (`.agent-memory/manifest/features/F-NNNN-slug.md`)
+## Feature (`.feat-memory/manifest/features/F-NNNN-slug.md`)
 
 - **Nome do arquivo:** `^F-\d{4}-[a-z0-9-]+\.md$`
 - **Obrigatórios:** `id`, `name`, `status`, `user_value`, `contracts`, `acceptance`
@@ -26,7 +26,7 @@ Gerado de `agent_memory.memory.schemas` (fonte única). Não edite à mão — r
 - Sem limite mecânico de tamanho — mantenha enxuto (uma capacidade, `user_value` em uma frase).
 - `name` deve nomear **uma capacidade**, não um lote de release: tokens de changelog (ex.: `polish`, `misc`, `various`) são **bloqueados** (ADR-0035). Coesão de conteúdo é julgamento humano (litmus nas skills).
 
-## Decisão / ADR (`.agent-memory/decisions/NNNN-slug.md`)
+## Decisão / ADR (`.feat-memory/decisions/NNNN-slug.md`)
 
 - **Nome do arquivo:** `^\d{4}-[a-z0-9-]+\.md$`
 - **Obrigatórios:** `id`, `date`, `status`

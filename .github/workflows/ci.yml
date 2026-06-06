@@ -27,4 +27,4 @@ jobs:
       - name: Tests
         run: python -m pytest -q
       - name: Audit (segunda linha de defesa)
-        run: agent-memory audit --strict --json
+        run: feat-memory audit --strict --json

@@ -6,13 +6,21 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto ader
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-06-06
+
+Reposicionamento e marco de maturidade: o projeto vira **`feat-memory`** — "memória de features e decisões". Mudança breaking de identidade, viável sem camada de compat por ainda não ter havido release na PyPI.
+
+### Mudado (breaking)
+
+**Hard rename `agent-memory` → `feat-memory` + ADR-0036.** Pacote import `agent_memory`→`feat_memory`; distribuição e comando CLI `agent-memory`→`feat-memory`; diretório de artefatos `.agent-memory/`→`.feat-memory/` (e `.agent-memory-deploy/`→`.feat-memory-deploy/`). Motivado por (1) o Claude Code passar a embarcar memória nativa de agente (`.claude/agent-memory/MEMORY.md`), que comoditiza o scratchpad e **colide nominalmente** com o projeto, e (2) o diferencial real ser a **governança de doc viva** (audit + constraints enforced + trilha de ADRs + gate no commit), não a memória em si. O nome novo lê como "feature memory", que é o que os artefatos efetivamente são. Diretório movido com `git mv` (preserva histórico); reescrita uniforme inclusive nos ADRs históricos (decisão do mantenedor). Equivalência provada: 215 testes verdes, `audit --strict` limpo (schema 1.00, drift 0, C1/C2 ok). A memória nativa do Claude Code passa a **coexistir** sem integração. **Ação externa do mantenedor:** reservar `feat-memory` na PyPI + renomear o repo GitHub.
+
 ## [0.12.0] - 2026-06-03
 
 Primeiro passo do posicionamento estratégico do projeto como **a melhor camada de "constitution"** do spec-driven development (SDD): tornar as restrições da constituição *enforced* em vez de só declarativas. Uma constituição verificada a cada commit supera uma que é apenas lida.
 
 ### Adicionado
 
-**F-0024 (constraint-enforcement) + ADR-0028.** Cada constraint em `AGENTS.md` pode declarar um bloco `check` opcional que o `agent-memory audit` **executa** contra o repositório. Novo módulo `governance/constraints.py` com um **conjunto fechado** de cinco checkers genéricos — `forbid_paths`, `require_paths`, `forbid_pattern`, `require_pattern`, `dependencies` — compostos via YAML sem escrever Python (o antídoto à razão que adiava o item: "cada regra exige um validador"). A violação herda a severity da constraint (hard→error/bloqueia o build, soft→warning); `check` malformado (type desconhecido, param faltando, regex inválido, dependencies sem allow/forbid) é error de schema. Vive em `governance/` e não em `memory/schemas.py` porque executar checker varre a árvore — governança, não schema (ADR-0021). Tudo stdlib + pyyaml (C2 preservada), agnóstico de linguagem: `dependencies` cobre `pyproject.toml`/`requirements.txt`/`package.json`. Novo indicador "Conformidade de constraints" no relatório e no JSON do audit. **Dogfood (C3/ADR-0009):** C1 (`forbid_paths` sobre `*.sh`/`*.bash`) e C2 (`dependencies` sobre `pyproject.toml`, allow `pyyaml`) deste repo passam a ser checadas a cada audit. C3 ("segue a metodologia") e C4 ("docs em pt-br") ficam declarativas — sem checker barato e confiável, limitação honesta.
+**F-0024 (constraint-enforcement) + ADR-0028.** Cada constraint em `AGENTS.md` pode declarar um bloco `check` opcional que o `feat-memory audit` **executa** contra o repositório. Novo módulo `governance/constraints.py` com um **conjunto fechado** de cinco checkers genéricos — `forbid_paths`, `require_paths`, `forbid_pattern`, `require_pattern`, `dependencies` — compostos via YAML sem escrever Python (o antídoto à razão que adiava o item: "cada regra exige um validador"). A violação herda a severity da constraint (hard→error/bloqueia o build, soft→warning); `check` malformado (type desconhecido, param faltando, regex inválido, dependencies sem allow/forbid) é error de schema. Vive em `governance/` e não em `memory/schemas.py` porque executar checker varre a árvore — governança, não schema (ADR-0021). Tudo stdlib + pyyaml (C2 preservada), agnóstico de linguagem: `dependencies` cobre `pyproject.toml`/`requirements.txt`/`package.json`. Novo indicador "Conformidade de constraints" no relatório e no JSON do audit. **Dogfood (C3/ADR-0009):** C1 (`forbid_paths` sobre `*.sh`/`*.bash`) e C2 (`dependencies` sobre `pyproject.toml`, allow `pyyaml`) deste repo passam a ser checadas a cada audit. C3 ("segue a metodologia") e C4 ("docs em pt-br") ficam declarativas — sem checker barato e confiável, limitação honesta.
 
 ## [0.11.0] - 2026-06-03
 
@@ -22,7 +30,7 @@ Implementa os itens do roadmap (FUTURE_IMPROVEMENTS) com valor real e aderência
 
 **F-0021 (pypi-distribution) + ADR-0025.** Distribuição via PyPI: `.github/workflows/release.yml` builda sdist+wheel e publica a cada tag `vX.Y.Z` via trusted publishing (OIDC, sem token persistente). Corrigido bug latente de `package-data` — o pre-commit hook, movido para `governance/data/hooks/` no split F-0017, era omitido do wheel (editable install mascarava). `tests/test_packaging.py` valida que todo arquivo de runtime está coberto por algum glob, sem precisar buildar. Metadados ajustados a PEP 639 (license SPDX, sem classifier de licença); `keywords`/`classifiers` adicionados.
 
-**F-0022 (ci-pipeline) + ADR-0026.** `.github/workflows/ci.yml` roda `pytest` + `agent-memory audit --strict` em push/PR, na matriz {ubuntu, macos, windows} × {3.11, 3.12}. A matriz cross-OS torna a constraint C1 verificável por execução (antes só declarada); o `audit --strict` no CI é a segunda linha de defesa para commits que pularam o pre-commit via `--no-verify`.
+**F-0022 (ci-pipeline) + ADR-0026.** `.github/workflows/ci.yml` roda `pytest` + `feat-memory audit --strict` em push/PR, na matriz {ubuntu, macos, windows} × {3.11, 3.12}. A matriz cross-OS torna a constraint C1 verificável por execução (antes só declarada); o `audit --strict` no CI é a segunda linha de defesa para commits que pularam o pre-commit via `--no-verify`.
 
 **F-0023 (adr-version-field) + ADR-0027.** O campo `version` em ADRs vira opcional formalizado: `validate_decision` valida o formato `X.Y.Z` quando presente mas nunca exige; `propose-adr` pré-preenche o campo em novos drafts (`SEMVER_RE` é a fonte única de formato); METHODOLOGY documenta a semântica (release de aceite). Sem backfill — ADRs antigos sem o campo seguem válidos. Fecha um drift conhecido.
 
@@ -36,13 +44,13 @@ Sessão de saneamento: a auditoria do próprio repo revelou drift acumulado (11 
 
 ### Adicionado
 
-**F-0020 (audit-release-status) + ADR-0024.** `agent-memory audit` passa a confrontar status de feature contra releases reais. Novo `validate_release_status`: feature com `status: in_progress` cujo `version` consta como released (seção `## [X.Y.Z]` do CHANGELOG **ou** tag `vX.Y.Z`, derivadas por `released_versions`, fail-soft) gera warning — promovido a error sob `audit --strict`, bloqueando commit de feature que mente sobre o próprio status. Em `print_report`, o frescor do STATE acima de `STALENESS_WARN_HOURS` (14 dias) ganha aviso visual; deliberadamente **não** vira Issue (staleness no commit é F-0013, soft/fail-open — ADR-0024 explica a assimetria).
+**F-0020 (audit-release-status) + ADR-0024.** `feat-memory audit` passa a confrontar status de feature contra releases reais. Novo `validate_release_status`: feature com `status: in_progress` cujo `version` consta como released (seção `## [X.Y.Z]` do CHANGELOG **ou** tag `vX.Y.Z`, derivadas por `released_versions`, fail-soft) gera warning — promovido a error sob `audit --strict`, bloqueando commit de feature que mente sobre o próprio status. Em `print_report`, o frescor do STATE acima de `STALENESS_WARN_HOURS` (14 dias) ganha aviso visual; deliberadamente **não** vira Issue (staleness no commit é F-0013, soft/fail-open — ADR-0024 explica a assimetria).
 
 ### Corrigido
 
 - `CLAUDE.md` importava `@AGENT.md` (inexistente após o rename `AGENT.md → AGENTS.md`) — a constituição não carregava no Claude Code. Agora `@AGENTS.md`.
-- Constituição (`AGENTS.md`), `README.md`, `FUTURE_IMPROVEMENTS.md` e `METHODOLOGY.md` referenciavam caminhos pré-split F-0017 (`src/agent_memory/audit.py`, `propose_adr.py`, `data/hooks/`) e o layout flat antigo do pacote — atualizados para `governance/`, `memory/` e `governance/data/hooks/`.
-- CHANGELOG da v0.7.0 afirmava que templates/skills migraram para `memory/data/`; na verdade permaneceram em `agent_memory/data/` (só hooks foram para `governance/data/`) — corrigido.
+- Constituição (`AGENTS.md`), `README.md`, `FUTURE_IMPROVEMENTS.md` e `METHODOLOGY.md` referenciavam caminhos pré-split F-0017 (`src/feat_memory/audit.py`, `propose_adr.py`, `data/hooks/`) e o layout flat antigo do pacote — atualizados para `governance/`, `memory/` e `governance/data/hooks/`.
+- CHANGELOG da v0.7.0 afirmava que templates/skills migraram para `memory/data/`; na verdade permaneceram em `feat_memory/data/` (só hooks foram para `governance/data/`) — corrigido.
 - Adicionadas as seções faltantes `[0.8.1]` e `[0.9.0]` (releases sem entrada no changelog).
 - Features F-0009..F-0019 marcadas `shipped` com `version` = release de entrega (F-0018→0.8.0, F-0019→0.9.0) e arquivadas para `manifest/archive/`.
 
@@ -52,13 +60,13 @@ ADRs `superseded` ganham casa própria, espelhando o que F-0012 fez para feature
 
 ### Adicionado
 
-**F-0019 (superseded-decisions-folder) + ADR-0023.** ADRs com `status: superseded` passam a viver em `.agent-memory/decisions/superseded/` com INDEX próprio (mesmas colunas do INDEX principal). `agent-memory audit` varre `decisions/` e `decisions/superseded/` para validação de schema e crosscheck de `active_decisions`; regenera ambos os INDEXes. `propose_adr.next_adr_number` agrega IDs de `decisions/` + `superseded/` + `proposals/` — colisão de número impossível. Movimentação para superseded é manual via `git mv` (sem subcomando dedicado). Novo helper `paths.SUPERSEDED_DIR`, `indexing.gen_superseded_decisions_index`.
+**F-0019 (superseded-decisions-folder) + ADR-0023.** ADRs com `status: superseded` passam a viver em `.feat-memory/decisions/superseded/` com INDEX próprio (mesmas colunas do INDEX principal). `feat-memory audit` varre `decisions/` e `decisions/superseded/` para validação de schema e crosscheck de `active_decisions`; regenera ambos os INDEXes. `propose_adr.next_adr_number` agrega IDs de `decisions/` + `superseded/` + `proposals/` — colisão de número impossível. Movimentação para superseded é manual via `git mv` (sem subcomando dedicado). Novo helper `paths.SUPERSEDED_DIR`, `indexing.gen_superseded_decisions_index`.
 
 ## [0.8.1] - 2026-05-10
 
 ### Adicionado
 
-**F-0019 (parcial).** `agent-memory audit` passa a emitir warning quando o tamanho dos artefatos de retomada (resumption budget) excede o orçamento declarado em `AGENTS.md::budgets`, antes que o estouro degrade silenciosamente o briefing de `memory-bootstrap`.
+**F-0019 (parcial).** `feat-memory audit` passa a emitir warning quando o tamanho dos artefatos de retomada (resumption budget) excede o orçamento declarado em `AGENTS.md::budgets`, antes que o estouro degrade silenciosamente o briefing de `memory-bootstrap`.
 
 ## [0.8.0] - 2026-05-05
 
@@ -66,13 +74,13 @@ Notificação ao consumidor quando o CLI está em versão diferente da que produ
 
 ### Adicionado
 
-**F-0018 (consumer-version-notice) + ADR-0022.** Novo módulo `governance/version_check.py` com `consumer_version_notice(root)` que compara `.agent-memory/.meta.yaml::version` a `agent_memory.__version__`. Se diferentes, retorna texto sugerindo `agent-memory deploy .`.
+**F-0018 (consumer-version-notice) + ADR-0022.** Novo módulo `governance/version_check.py` com `consumer_version_notice(root)` que compara `.feat-memory/.meta.yaml::version` a `feat_memory.__version__`. Se diferentes, retorna texto sugerindo `feat-memory deploy .`.
 
-Integração em `agent-memory audit`: após o relatório, imprime o notice na stderr (amarelo com `isatty`, plain em CI). **Não muda o exit code** — soft sempre, ADR-0008 fail-open preservado para o sinal de notificação.
+Integração em `feat-memory audit`: após o relatório, imprime o notice na stderr (amarelo com `isatty`, plain em CI). **Não muda o exit code** — soft sempre, ADR-0008 fail-open preservado para o sinal de notificação.
 
-Subcomando standalone `agent-memory version-check`: invoca a função direto, útil para CI/scripts. Imprime o notice ou `✓ agent-memory atualizado (vX.Y.Z)`. Sai com 0 sempre.
+Subcomando standalone `feat-memory version-check`: invoca a função direto, útil para CI/scripts. Imprime o notice ou `✓ feat-memory atualizado (vX.Y.Z)`. Sai com 0 sempre.
 
-Disable via `.agent-memory/.meta.yaml::version_check_enabled: false` (default `true`). Coerente com `telemetry_enabled` de F-0014.
+Disable via `.feat-memory/.meta.yaml::version_check_enabled: false` (default `true`). Coerente com `telemetry_enabled` de F-0014.
 
 ## [0.7.0] - 2026-05-05
 
@@ -80,17 +88,17 @@ Refactor arquitetural: separação completa entre **memória de agente** e **gov
 
 ### Mudado
 
-**BREAKING** (interno, para consumidores que importavam módulos diretamente). O pacote `agent_memory` agora expõe três subpacotes públicos:
+**BREAKING** (interno, para consumidores que importavam módulos diretamente). O pacote `feat_memory` agora expõe três subpacotes públicos:
 
-- `agent_memory.shared.{paths, parsing}` — utilitários sem dependências do projeto (lazy-init de paths, parse_frontmatter, read_meta).
-- `agent_memory.memory.{schemas, indexing, archive, checkpoints, propose_adr, migrate}` — artefatos canônicos da metodologia, validação de schema, geração de INDEX, ciclo de vida.
-- `agent_memory.governance.{audit, telemetry, check_staleness, check_version_bump, install_hooks}` — enforcement, métricas, telemetria, hooks.
+- `feat_memory.shared.{paths, parsing}` — utilitários sem dependências do projeto (lazy-init de paths, parse_frontmatter, read_meta).
+- `feat_memory.memory.{schemas, indexing, archive, checkpoints, propose_adr, migrate}` — artefatos canônicos da metodologia, validação de schema, geração de INDEX, ciclo de vida.
+- `feat_memory.governance.{audit, telemetry, check_staleness, check_version_bump, install_hooks}` — enforcement, métricas, telemetria, hooks.
 
 Regra de dependência hierárquica: `shared ⇐ memory ⇐ governance`. **Memória nunca importa governança** — é o invariante que torna `deploy --no-hooks` uma operação puramente memória. Verificável mecanicamente.
 
-Templates e skills permanecem em `src/agent_memory/data/` (data compartilhado no topo do pacote); hooks migraram para `src/agent_memory/governance/data/`. `deploy.py` resolve automaticamente via `_data_path` baseado no primeiro componente do path solicitado (`hooks` → governance, resto → topo).
+Templates e skills permanecem em `src/feat_memory/data/` (data compartilhado no topo do pacote); hooks migraram para `src/feat_memory/governance/data/`. `deploy.py` resolve automaticamente via `_data_path` baseado no primeiro componente do path solicitado (`hooks` → governance, resto → topo).
 
-CLI mesmo binário (`agent-memory`), mesmos subcomandos. O `--help` agora descreve subcomandos agrupados por categoria (Memória / Governança) na descrição do parser raiz.
+CLI mesmo binário (`feat-memory`), mesmos subcomandos. O `--help` agora descreve subcomandos agrupados por categoria (Memória / Governança) na descrição do parser raiz.
 
 ADR-0021 documenta a política. F-0017 declara o invariante e os critérios de aceitação.
 
@@ -104,25 +112,25 @@ Sete features novas (F-0010..F-0016) cobrindo lacunas onde o ritual da metodolog
 
 ### Adicionado
 
-**F-0010 (version-meta) + ADR-0013.** Flag `--version` no parser raiz (`agent-memory --version`) e gravação de `.agent-memory/.meta.yaml` no consumidor a cada deploy, registrando `version`, `deployed_at`, `cli_path` e `telemetry_enabled`. Habilita audit reportar contra versão e telemetria anotar eventos com a versão real. `audit.read_meta(root)` é o helper compartilhado, tolerante a ausência (consumidores pré-v0.6).
+**F-0010 (version-meta) + ADR-0013.** Flag `--version` no parser raiz (`feat-memory --version`) e gravação de `.feat-memory/.meta.yaml` no consumidor a cada deploy, registrando `version`, `deployed_at`, `cli_path` e `telemetry_enabled`. Habilita audit reportar contra versão e telemetria anotar eventos com a versão real. `audit.read_meta(root)` é o helper compartilhado, tolerante a ausência (consumidores pré-v0.6).
 
-**F-0011 (audit-state-crosscheck) + ADR-0014.** Cross-check (hard, default-on) que verifica se cada `F-NNNN` em `STATE.md::active_features` tem arquivo correspondente em `manifest/features/` ou `manifest/archive/`, e cada `ADR-NNNN` em `active_decisions` tem arquivo em `decisions/`. Falhas viram errors que bloqueiam o pre-commit hook — captura "memória mentirosa" antes que o agente confie em IDs órfãos. Plus: `agent-memory audit --check-staleness[=N]` (soft, opt-in) emite warning se commits dos últimos N dias tocaram código sem atualizar STATE.md.
+**F-0011 (audit-state-crosscheck) + ADR-0014.** Cross-check (hard, default-on) que verifica se cada `F-NNNN` em `STATE.md::active_features` tem arquivo correspondente em `manifest/features/` ou `manifest/archive/`, e cada `ADR-NNNN` em `active_decisions` tem arquivo em `decisions/`. Falhas viram errors que bloqueiam o pre-commit hook — captura "memória mentirosa" antes que o agente confie em IDs órfãos. Plus: `feat-memory audit --check-staleness[=N]` (soft, opt-in) emite warning se commits dos últimos N dias tocaram código sem atualizar STATE.md.
 
-**F-0012 (archive-shipped) + ADR-0015.** Novo subcomando `agent-memory archive [--apply]` move features `shipped` (e fora de `STATE.md::active_features`) para `.agent-memory/manifest/archive/` via `git mv` (fallback `shutil.move`). Reduz o orçamento de retomada que `memory-bootstrap` carrega. Default dry-run para evitar movimentação acidental. ADRs nunca são arquivados (registro histórico imutável). Audit valida e gera INDEX separado para o archive.
+**F-0012 (archive-shipped) + ADR-0015.** Novo subcomando `feat-memory archive [--apply]` move features `shipped` (e fora de `STATE.md::active_features`) para `.feat-memory/manifest/archive/` via `git mv` (fallback `shutil.move`). Reduz o orçamento de retomada que `memory-bootstrap` carrega. Default dry-run para evitar movimentação acidental. ADRs nunca são arquivados (registro histórico imutável). Audit valida e gera INDEX separado para o archive.
 
-**F-0013 (hook-staleness-staged) + ADR-0016.** Novo subcomando `agent-memory check-staleness-staged` invocado pelo pre-commit hook após o audit. Inspeciona `git diff --cached --name-only` e emite warning amarelo na stderr (sempre exit 0, soft) quando o commit toca código sem incluir `.agent-memory/STATE.md`. Captura debrief esquecido no momento de máxima alavancagem.
+**F-0013 (hook-staleness-staged) + ADR-0016.** Novo subcomando `feat-memory check-staleness-staged` invocado pelo pre-commit hook após o audit. Inspeciona `git diff --cached --name-only` e emite warning amarelo na stderr (sempre exit 0, soft) quando o commit toca código sem incluir `.feat-memory/STATE.md`. Captura debrief esquecido no momento de máxima alavancagem.
 
-**F-0014 (local-telemetry) + ADR-0017.** `agent-memory record EVENT [k=v ...]` anexa eventos JSONL em `.agent-memory/.telemetry.jsonl` (gitignored). `agent-memory log [--since 7d] [--summary]` lê e agrega; `--summary` deriva taxa de adesão (`session_start` com `state_read=true` / total). Default ligado, kill switch via `.meta.yaml::telemetry_enabled=false`. Skills `memory-bootstrap` e `memory-debrief` atualizadas para invocar `agent-memory record` ao final dos rituais. 100% local, nunca enviado pela rede.
+**F-0014 (local-telemetry) + ADR-0017.** `feat-memory record EVENT [k=v ...]` anexa eventos JSONL em `.feat-memory/.telemetry.jsonl` (gitignored). `feat-memory log [--since 7d] [--summary]` lê e agrega; `--summary` deriva taxa de adesão (`session_start` com `state_read=true` / total). Default ligado, kill switch via `.meta.yaml::telemetry_enabled=false`. Skills `memory-bootstrap` e `memory-debrief` atualizadas para invocar `feat-memory record` ao final dos rituais. 100% local, nunca enviado pela rede.
 
-**F-0015 (state-from-checkpoints) + ADR-0018 + ADR-0019.** Inverte o modelo de `STATE.md`: deixa de ser autorado em-place, vira view derivada de checkpoints append-only em `.agent-memory/checkpoints/YYYY-MM-DD-HHMMSS.md`. Cada sessão grava um arquivo imutável; `STATE.md` é regerado pelos N últimos (window configurável via `.meta.yaml::state_view_window`, default 1). `memory-bootstrap` continua lendo o mesmo arquivo, mesmo schema (Liskov-safe). Reescrita destrutiva fica impossível por construção. Comandos novos: `agent-memory checkpoint --summary "..."`, `agent-memory state-rebuild` (recovery), `agent-memory migrate --to=checkpoints` (migração não-destrutiva e idempotente do STATE.md legado). Skill `memory-debrief` reescrita para invocar `checkpoint`.
+**F-0015 (state-from-checkpoints) + ADR-0018 + ADR-0019.** Inverte o modelo de `STATE.md`: deixa de ser autorado em-place, vira view derivada de checkpoints append-only em `.feat-memory/checkpoints/YYYY-MM-DD-HHMMSS.md`. Cada sessão grava um arquivo imutável; `STATE.md` é regerado pelos N últimos (window configurável via `.meta.yaml::state_view_window`, default 1). `memory-bootstrap` continua lendo o mesmo arquivo, mesmo schema (Liskov-safe). Reescrita destrutiva fica impossível por construção. Comandos novos: `feat-memory checkpoint --summary "..."`, `feat-memory state-rebuild` (recovery), `feat-memory migrate --to=checkpoints` (migração não-destrutiva e idempotente do STATE.md legado). Skill `memory-debrief` reescrita para invocar `checkpoint`.
 
-**F-0016 (check-version-bump) + ADR-0020.** Novo subcomando `agent-memory check-version-bump-staged` invocado pelo pre-commit hook após `check-staleness-staged`. Bloqueia (hard, exit 1) commits que tocam código sem incluir `VERSION` no staging. Auto opt-in: no-op em projetos sem arquivo `VERSION` na raiz. Bypass deliberado via `git commit --no-verify`. Exceção justificada à fail-open de ADR-0008 — soft tornaria a versão mentirosa silenciosa, quebrando F-0010, F-0014 e F-0018 (em planejamento).
+**F-0016 (check-version-bump) + ADR-0020.** Novo subcomando `feat-memory check-version-bump-staged` invocado pelo pre-commit hook após `check-staleness-staged`. Bloqueia (hard, exit 1) commits que tocam código sem incluir `VERSION` no staging. Auto opt-in: no-op em projetos sem arquivo `VERSION` na raiz. Bypass deliberado via `git commit --no-verify`. Exceção justificada à fail-open de ADR-0008 — soft tornaria a versão mentirosa silenciosa, quebrando F-0010, F-0014 e F-0018 (em planejamento).
 
 ### Mudado
 
-`audit` ganha cross-check de IDs ativos (default-on, hard) e flag `--check-staleness[=N]` (opt-in, soft). Templates `.gitattributes` ganham regras `merge=ours` para `.agent-memory/.meta.yaml` e geração separada de `.agent-memory/manifest/archive/INDEX.md`. Pre-commit hook agora invoca três checks em sequência (`audit`, `check-staleness-staged`, `check-version-bump-staged`).
+`audit` ganha cross-check de IDs ativos (default-on, hard) e flag `--check-staleness[=N]` (opt-in, soft). Templates `.gitattributes` ganham regras `merge=ours` para `.feat-memory/.meta.yaml` e geração separada de `.feat-memory/manifest/archive/INDEX.md`. Pre-commit hook agora invoca três checks em sequência (`audit`, `check-staleness-staged`, `check-version-bump-staged`).
 
-Skill `memory-debrief` passa a invocar `agent-memory checkpoint` em vez de reescrever `STATE.md` diretamente. Skill `memory-bootstrap` e `memory-debrief` invocam `agent-memory record` ao final para alimentar telemetria de adesão. Templates `.gitignore` ganham `.agent-memory/.telemetry.jsonl` (telemetria é local, nunca versionada). Deploy cria `.agent-memory/checkpoints/.gitkeep` na inicialização.
+Skill `memory-debrief` passa a invocar `feat-memory checkpoint` em vez de reescrever `STATE.md` diretamente. Skill `memory-bootstrap` e `memory-debrief` invocam `feat-memory record` ao final para alimentar telemetria de adesão. Templates `.gitignore` ganham `.feat-memory/.telemetry.jsonl` (telemetria é local, nunca versionada). Deploy cria `.feat-memory/checkpoints/.gitkeep` na inicialização.
 
 `compute_metrics` em audit conta features ativas e arquivadas no denominador de cobertura, refletindo a separação introduzida por F-0012. INDEX principal lista só ativas (menor, mais rápido para `memory-bootstrap`); archive INDEX lista as arquivadas (discoverability preservada).
 
@@ -132,34 +140,34 @@ Skill `memory-debrief` passa a invocar `agent-memory checkpoint` em vez de reesc
 
 Quarta skill `memory-pull-brief` (F-0009) cobre o gap cognitivo pós-pull em projetos cliente. Quando o desenvolvedor faz `git pull` e recebe commits de colegas, a skill examina o diff trazido, identifica mudanças semânticas em `manifest/features/`, `decisions/` e no bloco metodológico de `AGENTS.md`, e propõe ajustes em `STATE.md` (remoção de IDs em `active_*` cuja semântica upstream invalida o foco local, entrada nova no buffer `Recent`). É read-only sobre `manifest/` e `decisions/` por design — esses já vieram corretos do pull, escrever neles seria reverter trabalho de colegas. Trigger duplo: manual (frases como "o que veio do pull", "brifa as mudanças do main") e por delegação a partir de `memory-bootstrap` quando o último commit é merge que tocou artefatos.
 
-Decisão formalizada em [ADR-0012](.agent-memory/decisions/0012-skill-memory-pull-brief.md).
+Decisão formalizada em [ADR-0012](.feat-memory/decisions/0012-skill-memory-pull-brief.md).
 
 ### Mudado
 
-Skill `memory-bootstrap` (F-0007) ganha passo de detecção de merge tocando artefatos: após o `agent-memory audit` regenerar índices, se o merge moveu `manifest/features/`, `decisions/` ou o bloco sentinela de `AGENTS.md`, a bootstrap delega para `memory-pull-brief` antes do briefing tático. Sem esse trigger, comportamento prévio é preservado.
+Skill `memory-bootstrap` (F-0007) ganha passo de detecção de merge tocando artefatos: após o `feat-memory audit` regenerar índices, se o merge moveu `manifest/features/`, `decisions/` ou o bloco sentinela de `AGENTS.md`, a bootstrap delega para `memory-pull-brief` antes do briefing tático. Sem esse trigger, comportamento prévio é preservado.
 
-Bloco "Skills disponíveis" do template `AGENTS.md` atualizado de "três skills" para "quatro skills" e ganha parágrafo sobre `memory-pull-brief`. Refresh automático no próximo `agent-memory deploy` em projetos consumidores.
+Bloco "Skills disponíveis" do template `AGENTS.md` atualizado de "três skills" para "quatro skills" e ganha parágrafo sobre `memory-pull-brief`. Refresh automático no próximo `feat-memory deploy` em projetos consumidores.
 
 ## [0.4.0] - 2026-04-30
 
 ### Mudado
 
-**BREAKING.** O `agent-memory deploy` passa a gerenciar a metodologia em `AGENTS.md` exclusivamente dentro de um bloco delimitado por sentinelas markdown (`<!-- >>> agent-memory >>> -->` / `<!-- <<< agent-memory <<< -->`). Refresh é idempotente: re-deploy substitui só o bloco, todo o resto do arquivo é preservado byte-a-byte. Identidade, restrições, convenções e qualquer outro conteúdo específico do projeto vivem fora do bloco e nunca são tocados pelo deploy ou pela skill `memory-deploy`. O comportamento anterior de "merge inteligente" baseado em comparação de headings (introduzido em v0.3.1) é abandonado em favor desta abordagem mais simples.
+**BREAKING.** O `feat-memory deploy` passa a gerenciar a metodologia em `AGENTS.md` exclusivamente dentro de um bloco delimitado por sentinelas markdown (`<!-- >>> feat-memory >>> -->` / `<!-- <<< feat-memory <<< -->`). Refresh é idempotente: re-deploy substitui só o bloco, todo o resto do arquivo é preservado byte-a-byte. Identidade, restrições, convenções e qualquer outro conteúdo específico do projeto vivem fora do bloco e nunca são tocados pelo deploy ou pela skill `memory-deploy`. O comportamento anterior de "merge inteligente" baseado em comparação de headings (introduzido em v0.3.1) é abandonado em favor desta abordagem mais simples.
 
 A skill `memory-deploy` perde a Etapa 3 (merge) e a Etapa 4 (personalização) inteiras. Em greenfield, a skill apenas roda o deploy mecânico — não pergunta sobre identidade/stack/restrições nem popula o frontmatter. Em legacy, conduz três fases de gênese retroativa: ADRs do git log, Manifest dos entrypoints, e `STATE.md::Current` descrevendo a gênese. A skill nunca toca em `AGENTS.md` fora do bloco.
 
-Decisão formalizada em [ADR-0011](.agent-memory/decisions/0011-deploy-replaces-agent-md-block-via-sentinels.md), que supersede [ADR-0010](.agent-memory/decisions/0010-merge-separates-methodology-from-project-sections.md).
+Decisão formalizada em [ADR-0011](.feat-memory/decisions/0011-deploy-replaces-agent-md-block-via-sentinels.md), que supersede [ADR-0010](.feat-memory/decisions/0010-merge-separates-methodology-from-project-sections.md).
 
 ### Removido
 
-Mecanismo de merge-queue (`<projeto>/.agent-memory-deploy/merge-queue` e `pending/`) eliminado. O deploy resolve o bloco da `AGENTS.md` diretamente via sentinelas, sem handoff intermediário. Diretório legado é removido automaticamente na primeira execução pós-upgrade.
+Mecanismo de merge-queue (`<projeto>/.feat-memory-deploy/merge-queue` e `pending/`) eliminado. O deploy resolve o bloco da `AGENTS.md` diretamente via sentinelas, sem handoff intermediário. Diretório legado é removido automaticamente na primeira execução pós-upgrade.
 
 ### Migração de 0.3.x → 0.4.0
 
 Para projetos consumidores que estão na v0.3.x:
 
 ```bash
-agent-memory deploy /caminho/projeto
+feat-memory deploy /caminho/projeto
 ```
 
 O bloco com sentinelas é anexado ao fim do `AGENTS.md` existente. O conteúdo de metodologia que estava em seções H2 separadas (`## Skills disponíveis`, `## Como retomar trabalho`) e no parágrafo introdutório fica duplicado — agora dentro do bloco e ainda nas seções antigas. Remova manualmente as seções antigas (basta deletar tudo entre `## Skills disponíveis` e `## Como retomar trabalho` inclusive, se essas eram as únicas seções de metodologia preexistentes).
@@ -172,67 +180,67 @@ Skill `memory-deploy` (Etapa 3) tinha bug de concatenação no merge do `AGENTS.
 
 ### Mudado
 
-Template `AGENTS.md` deixa de carregar placeholders para as seções de projeto (`## Identidade`, `## Restrições não-negociáveis`, `## Convenções de código`) — apenas um comentário HTML marca o ponto de inserção. A skill `memory-deploy` escreve essas seções a partir da investigação do repositório durante a Etapa 4 (personalização ou gênese retroativa). Decisão formalizada em [ADR-0010](.agent-memory/decisions/0010-merge-separates-methodology-from-project-sections.md).
+Template `AGENTS.md` deixa de carregar placeholders para as seções de projeto (`## Identidade`, `## Restrições não-negociáveis`, `## Convenções de código`) — apenas um comentário HTML marca o ponto de inserção. A skill `memory-deploy` escreve essas seções a partir da investigação do repositório durante a Etapa 4 (personalização ou gênese retroativa). Decisão formalizada em [ADR-0010](.feat-memory/decisions/0010-merge-separates-methodology-from-project-sections.md).
 
 ## [0.3.0] - 2026-04-29
 
-**BREAKING CHANGE.** Modelo de instalação muda de "clonar para `.agent-memory/`" para "instalar como pacote Python via pipx". A CLI vira `agent-memory <subcomando>` no PATH, eliminando duplicação de scripts em cada projeto consumidor e permitindo que edições no clone reflitam imediatamente em todos os projetos via editable install.
+**BREAKING CHANGE.** Modelo de instalação muda de "clonar para `.feat-memory/`" para "instalar como pacote Python via pipx". A CLI vira `feat-memory <subcomando>` no PATH, eliminando duplicação de scripts em cada projeto consumidor e permitindo que edições no clone reflitam imediatamente em todos os projetos via editable install.
 
 ### Adicionado
 
-`pyproject.toml` define o pacote `agent-memory` com entry point `agent-memory = "agent_memory.cli:main"` e package data (`templates/`, `skills/`, `hooks/`) sob `src/agent_memory/data/`. Versão é lida dinamicamente de `VERSION`.
+`pyproject.toml` define o pacote `feat-memory` com entry point `feat-memory = "feat_memory.cli:main"` e package data (`templates/`, `skills/`, `hooks/`) sob `src/feat_memory/data/`. Versão é lida dinamicamente de `VERSION`.
 
-Quatro subcomandos da CLI: `agent-memory deploy <target>`, `agent-memory audit`, `agent-memory propose-adr`, `agent-memory migrate`.
+Quatro subcomandos da CLI: `feat-memory deploy <target>`, `feat-memory audit`, `feat-memory propose-adr`, `feat-memory migrate`.
 
 Suite de testes com `pytest` em `tests/`, cobrindo a função de sentinel block, a superfície da CLI, e o fluxo end-to-end de deploy. Dev deps declarados em `pyproject.toml::[project.optional-dependencies] dev`.
 
-Seção "Implicações do editable install" no [USER_GUIDE.md](USER_GUIDE.md) explicando o que muda em `pipx install -e <clone>` vs `pipx install agent-memory` (futuro).
+Seção "Implicações do editable install" no [USER_GUIDE.md](USER_GUIDE.md) explicando o que muda em `pipx install -e <clone>` vs `pipx install feat-memory` (futuro).
 
 ### Mudado
 
-Layout do código move de top-level (`deploy.py`, `tools/`, `templates/`, `skills/`) para `src/agent_memory/` com src layout padrão de packaging Python. Templates, skills e hooks ficam em `src/agent_memory/data/` para serem acessíveis via `importlib.resources`.
+Layout do código move de top-level (`deploy.py`, `tools/`, `templates/`, `skills/`) para `src/feat_memory/` com src layout padrão de packaging Python. Templates, skills e hooks ficam em `src/feat_memory/data/` para serem acessíveis via `importlib.resources`.
 
-`deploy.py` agora aceita o caminho do projeto consumidor como argumento explícito (`agent-memory deploy <target>`), em vez de inferir pela localização do script.
+`deploy.py` agora aceita o caminho do projeto consumidor como argumento explícito (`feat-memory deploy <target>`), em vez de inferir pela localização do script.
 
-Pre-commit hook agora chama `agent-memory audit --strict --no-index` em vez de procurar `audit.py` em paths fixos. Se o `agent-memory` não está no PATH, emite warning e libera o commit (não bloqueia).
+Pre-commit hook agora chama `feat-memory audit --strict --no-index` em vez de procurar `audit.py` em paths fixos. Se o `feat-memory` não está no PATH, emite warning e libera o commit (não bloqueia).
 
-Estado transiente do deploy moveu de `.agent-memory/.merge-queue` e `.agent-memory/.pending-merge/` (dentro do clone-into-project) para `<target>/.agent-memory-deploy/{merge-queue,pending/}` (no projeto consumidor, gitignored).
+Estado transiente do deploy moveu de `.feat-memory/.merge-queue` e `.feat-memory/.pending-merge/` (dentro do clone-into-project) para `<target>/.feat-memory-deploy/{merge-queue,pending/}` (no projeto consumidor, gitignored).
 
 Skills (`memory-deploy`, `memory-bootstrap`, `memory-debrief`) e documentação atualizadas para usar a nova superfície de CLI.
 
 ### Removido
 
-Modelo de "clone para `.agent-memory/`" não é mais suportado. Quem está em v0.1.0/v0.2.0 deve seguir o caminho de migração na seção abaixo.
+Modelo de "clone para `.feat-memory/`" não é mais suportado. Quem está em v0.1.0/v0.2.0 deve seguir o caminho de migração na seção abaixo.
 
-Subcomando `agent-memory audit --init` (que apenas criava as pastas `manifest/features/` e `decisions/proposals/`) — sobreposição funcional com `agent-memory deploy <projeto>`, que faz o mesmo e mais. Usuários que dependiam de `--init` devem migrar para `agent-memory deploy`.
+Subcomando `feat-memory audit --init` (que apenas criava as pastas `manifest/features/` e `decisions/proposals/`) — sobreposição funcional com `feat-memory deploy <projeto>`, que faz o mesmo e mais. Usuários que dependiam de `--init` devem migrar para `feat-memory deploy`.
 
 ### Migração de 0.2.0 → 0.3.0
 
 ```bash
 # 1. Instalar a nova CLI (uma vez na máquina)
-git clone https://github.com/brunoleos/agent-memory.git ~/dev/agent-memory
-cd ~/dev/agent-memory && git checkout v0.3.0
-pipx install -e ~/dev/agent-memory
+git clone https://github.com/brunoleos/feat-memory.git ~/dev/feat-memory
+cd ~/dev/feat-memory && git checkout v0.3.0
+pipx install -e ~/dev/feat-memory
 
 # 2. Em cada projeto consumidor, rodar deploy (idempotente)
 cd /caminho/projeto
-agent-memory deploy /caminho/projeto
+feat-memory deploy /caminho/projeto
 
-# 3. Limpar o legado .agent-memory/ (instruções impressas pelo deploy)
-git rm -r --cached .agent-memory/
-rm -rf .agent-memory
-git commit -m "chore: drop .agent-memory/ (agent-memory v0.3.0)"
+# 3. Limpar o legado .feat-memory/ (instruções impressas pelo deploy)
+git rm -r --cached .feat-memory/
+rm -rf .feat-memory
+git commit -m "chore: drop .feat-memory/ (feat-memory v0.3.0)"
 ```
 
-Os artefatos da metodologia (`AGENTS.md`, `STATE.md`, `manifest/`, `decisions/`, `skills/`, `.gitattributes`) ficam preservados. Apenas a pasta `.agent-memory/` (que continha a tool clonada) é descartada — a tool agora vive na sua máquina, fora do projeto.
+Os artefatos da metodologia (`AGENTS.md`, `STATE.md`, `manifest/`, `decisions/`, `skills/`, `.gitattributes`) ficam preservados. Apenas a pasta `.feat-memory/` (que continha a tool clonada) é descartada — a tool agora vive na sua máquina, fora do projeto.
 
 ## [0.2.0] - 2026-04-29
 
-Modelo de instalação minimalista: `.agent-memory/` agora é gitignored no projeto consumidor e re-clonado em fresh checkouts, eliminando duplicação no histórico Git. O ciclo de update vira três comandos de shell, sem configuração persistente.
+Modelo de instalação minimalista: `.feat-memory/` agora é gitignored no projeto consumidor e re-clonado em fresh checkouts, eliminando duplicação no histórico Git. O ciclo de update vira três comandos de shell, sem configuração persistente.
 
 ### Mudado
 
-`deploy.py` agora adiciona `.agent-memory/` ao `.gitignore` do projeto consumidor automaticamente (bloco delimitado por sentinelas, idempotente).
+`deploy.py` agora adiciona `.feat-memory/` ao `.gitignore` do projeto consumidor automaticamente (bloco delimitado por sentinelas, idempotente).
 
 `deploy.py` agora sempre atualiza as skills em `skills/` a cada execução (eram puladas se já existiam). Skills são conteúdo de metodologia, não de usuário; quem precisa customizar deve copiar a skill para um nome diferente.
 
@@ -240,19 +248,19 @@ Modelo de instalação minimalista: `.agent-memory/` agora é gitignored no proj
 
 ### Removido
 
-`update.py`, `.upstream.example`, `.upstream` e `.installed-version`. O fluxo de atualização agora é `rm -rf .agent-memory && git clone --branch <tag> ... .agent-memory && python .agent-memory/deploy.py`.
+`update.py`, `.upstream.example`, `.upstream` e `.installed-version`. O fluxo de atualização agora é `rm -rf .feat-memory && git clone --branch <tag> ... .feat-memory && python .feat-memory/deploy.py`.
 
 ### Migração de 0.1.0 → 0.2.0
 
-Para projetos que instalaram a v0.1.0 e versionavam `.agent-memory/`, a migração tem quatro passos. O `deploy.py` da v0.2.0 detecta o cenário e imprime as instruções automaticamente quando rodado:
+Para projetos que instalaram a v0.1.0 e versionavam `.feat-memory/`, a migração tem quatro passos. O `deploy.py` da v0.2.0 detecta o cenário e imprime as instruções automaticamente quando rodado:
 
 ```bash
-rm -rf .agent-memory
+rm -rf .feat-memory
 git clone --depth 1 --branch v0.2.0 \
-  https://github.com/brunoleos/agent-memory.git .agent-memory
-python .agent-memory/deploy.py
-git rm -r --cached .agent-memory/
-git commit -m "chore: untrack .agent-memory/ (agent-memory v0.2.0)"
+  https://github.com/brunoleos/feat-memory.git .feat-memory
+python .feat-memory/deploy.py
+git rm -r --cached .feat-memory/
+git commit -m "chore: untrack .feat-memory/ (feat-memory v0.2.0)"
 ```
 
 Os arquivos da pasta continuam no disco; só saem do índice do Git para que mudanças futuras na tool não apareçam como diff no projeto consumidor.

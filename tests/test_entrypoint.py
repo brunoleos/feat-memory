@@ -4,7 +4,7 @@ Cobre o caminho que `tests/test_cli.py` não exercita: o setup do
 `[project.scripts]` em pyproject.toml. Se o entry point estiver
 quebrado mas `cli.main()` ainda funcionar, este teste pega.
 
-Pulado quando `agent-memory` não está no PATH (típico em ambientes que
+Pulado quando `feat-memory` não está no PATH (típico em ambientes que
 não rodaram `pip install -e ".[dev]"` no venv ativo).
 """
 
@@ -16,10 +16,10 @@ import subprocess
 import pytest
 
 
-_BIN = shutil.which("agent-memory")
+_BIN = shutil.which("feat-memory")
 _skip_no_bin = pytest.mark.skipif(
     _BIN is None,
-    reason="agent-memory binary not on PATH",
+    reason="feat-memory binary not on PATH",
 )
 
 

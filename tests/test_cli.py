@@ -2,7 +2,7 @@
 
 import pytest
 
-from agent_memory import cli
+from feat_memory import cli
 
 
 def test_top_level_help_lists_all_subcommands(capsys):
@@ -62,7 +62,7 @@ def test_schema_subcommand_listed_and_help(capsys):
 
 
 def test_schema_subcommand_prints_reference(capsys):
-    """`agent-memory schema` imprime a referência de schema (W1)."""
+    """`feat-memory schema` imprime a referência de schema (W1)."""
     rc = cli.main(["schema"])
     assert rc == 0
     out = capsys.readouterr().out
@@ -97,10 +97,10 @@ def test_no_subcommand_errors():
 
 
 def test_version_flag_prints_and_exits(capsys):
-    """`agent-memory --version` imprime versão e sai com 0 sem subcomando."""
-    from agent_memory import __version__
+    """`feat-memory --version` imprime versão e sai com 0 sem subcomando."""
+    from feat_memory import __version__
     with pytest.raises(SystemExit) as exc:
         cli.main(["--version"])
     assert exc.value.code == 0
     out = capsys.readouterr().out
-    assert f"agent-memory {__version__}" in out
+    assert f"feat-memory {__version__}" in out

@@ -7,14 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from agent_memory.governance import audit
-from agent_memory.memory import indexing, propose_adr
-from agent_memory.shared import paths as _paths
+from feat_memory.governance import audit
+from feat_memory.memory import indexing, propose_adr
+from feat_memory.shared import paths as _paths
 
 
 @pytest.fixture
 def tmp_repo(tmp_project, monkeypatch):
-    am = tmp_project / ".agent-memory"
+    am = tmp_project / ".feat-memory"
     monkeypatch.setattr(_paths, "ROOT", tmp_project, raising=False)
     monkeypatch.setattr(_paths, "AGENT", tmp_project / "AGENTS.md", raising=False)
     monkeypatch.setattr(_paths, "CLAUDE", tmp_project / "CLAUDE.md", raising=False)

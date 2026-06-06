@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from agent_memory.governance import audit, telemetry
-from agent_memory.shared import paths as _paths
+from feat_memory.governance import audit, telemetry
+from feat_memory.shared import paths as _paths
 
 
 # --- helpers -------------------------------------------------------------
@@ -18,13 +18,13 @@ from agent_memory.shared import paths as _paths
 
 def _seed_meta(root: Path, *, telemetry_enabled: bool = True,
                version: str = "0.6.0") -> None:
-    am = root / ".agent-memory"
+    am = root / ".feat-memory"
     am.mkdir(parents=True, exist_ok=True)
     (am / ".meta.yaml").write_text(
         f"schema_version: 1\n"
         f"version: {version}\n"
         f"deployed_at: 2026-05-04T00:00:00+00:00\n"
-        f"cli_path: /tmp/agent-memory\n"
+        f"cli_path: /tmp/feat-memory\n"
         f"telemetry_enabled: {'true' if telemetry_enabled else 'false'}\n",
         encoding="utf-8",
     )
@@ -42,7 +42,7 @@ def telemetry_root(tmp_path):
 def test_record_appends_event_to_jsonl(telemetry_root):
     telemetry.record(telemetry_root, "session_start", state_read=True)
 
-    path = telemetry_root / ".agent-memory" / ".telemetry.jsonl"
+    path = telemetry_root / ".feat-memory" / ".telemetry.jsonl"
     assert path.exists()
 
     lines = path.read_text(encoding="utf-8").splitlines()
@@ -59,15 +59,15 @@ def test_record_appends_event_to_jsonl(telemetry_root):
 def test_record_respects_telemetry_disabled(tmp_path):
     _seed_meta(tmp_path, telemetry_enabled=False)
     telemetry.record(tmp_path, "session_start", state_read=True)
-    path = tmp_path / ".agent-memory" / ".telemetry.jsonl"
+    path = tmp_path / ".feat-memory" / ".telemetry.jsonl"
     assert not path.exists()
 
 
 def test_record_works_without_meta_yaml(tmp_path):
     """A6 + ADR-0013: tolera consumidor pré-v0.6 sem .meta.yaml."""
-    (tmp_path / ".agent-memory").mkdir()
+    (tmp_path / ".feat-memory").mkdir()
     telemetry.record(tmp_path, "session_start")
-    path = tmp_path / ".agent-memory" / ".telemetry.jsonl"
+    path = tmp_path / ".feat-memory" / ".telemetry.jsonl"
     assert path.exists()
     lines = path.read_text(encoding="utf-8").splitlines()
     event = json.loads(lines[-1])
@@ -88,7 +88,7 @@ def test_record_appends_multiple_events(telemetry_root):
     telemetry.record(telemetry_root, "session_start", state_read=True)
     telemetry.record(telemetry_root, "debrief_run", features="F-0010")
 
-    path = telemetry_root / ".agent-memory" / ".telemetry.jsonl"
+    path = telemetry_root / ".feat-memory" / ".telemetry.jsonl"
     lines = path.read_text(encoding="utf-8").splitlines()
     assert len(lines) == 3  # header + 2 events
     e1 = json.loads(lines[1])
@@ -160,7 +160,7 @@ def test_read_events_handles_missing_file(tmp_path):
 
 def test_read_events_skips_corrupt_lines(telemetry_root):
     telemetry.record(telemetry_root, "session_start")
-    path = telemetry_root / ".agent-memory" / ".telemetry.jsonl"
+    path = telemetry_root / ".feat-memory" / ".telemetry.jsonl"
     with path.open("a", encoding="utf-8") as f:
         f.write("this is not json\n")
     telemetry.record(telemetry_root, "debrief_run")
@@ -184,7 +184,7 @@ def test_filter_by_event(telemetry_root):
 
 def test_filter_by_since_window(telemetry_root):
     """Eventos antigos (mock manual) são filtrados pela janela."""
-    path = telemetry_root / ".agent-memory" / ".telemetry.jsonl"
+    path = telemetry_root / ".feat-memory" / ".telemetry.jsonl"
     path.parent.mkdir(parents=True, exist_ok=True)
 
     old = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat(timespec="seconds")
@@ -286,17 +286,17 @@ def test_run_log_empty_state(telemetry_root, capsys, monkeypatch):
 
 
 def test_deploy_adds_telemetry_jsonl_to_gitignore(tmp_project):
-    from agent_memory import deploy
+    from feat_memory import deploy
     deploy.ensure_gitignore(tmp_project)
     gitignore = (tmp_project / ".gitignore").read_text(encoding="utf-8")
-    assert ".agent-memory/.telemetry.jsonl" in gitignore
+    assert ".feat-memory/.telemetry.jsonl" in gitignore
 
 
 # --- CLI surface --------------------------------------------------------
 
 
 def test_record_subcommand_registered(capsys):
-    from agent_memory import cli
+    from feat_memory import cli
     with pytest.raises(SystemExit) as exc:
         cli.main(["--help"])
     assert exc.value.code == 0

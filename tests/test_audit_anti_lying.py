@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from agent_memory.governance import audit
-from agent_memory.shared import paths as _paths
+from feat_memory.governance import audit
+from feat_memory.shared import paths as _paths
 
 
 # A fixture `audit_with_tmp_root` agora vive em conftest.py (compartilhada
@@ -79,7 +79,7 @@ def test_freshness_no_commits_returns_no_warning(tmp_project):
 
 def test_freshness_state_was_touched_returns_no_warning(tmp_project):
     _commit(tmp_project, {"src/foo.py": "x = 1\n"}, "feat: code")
-    _commit(tmp_project, {".agent-memory/STATE.md": "# state\n"}, "chore: state")
+    _commit(tmp_project, {".feat-memory/STATE.md": "# state\n"}, "chore: state")
     issues = audit.validate_state_freshness(tmp_project, days=7)
     assert issues == []
 

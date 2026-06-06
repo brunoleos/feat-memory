@@ -10,16 +10,16 @@ from pathlib import Path
 import pytest
 import yaml
 
-from agent_memory.governance import audit
-from agent_memory.memory import checkpoints, migrate
-from agent_memory.shared import paths as _paths
+from feat_memory.governance import audit
+from feat_memory.memory import checkpoints, migrate
+from feat_memory.shared import paths as _paths
 
 
 # --- helpers -------------------------------------------------------------
 
 
 def _seed_meta(root: Path, *, state_view_window: int | None = None) -> None:
-    am = root / ".agent-memory"
+    am = root / ".feat-memory"
     am.mkdir(parents=True, exist_ok=True)
     extra = (
         f"state_view_window: {state_view_window}\n"
@@ -29,7 +29,7 @@ def _seed_meta(root: Path, *, state_view_window: int | None = None) -> None:
         "schema_version: 1\n"
         "version: 0.6.0\n"
         "deployed_at: 2026-05-04T00:00:00+00:00\n"
-        "cli_path: /tmp/agent-memory\n"
+        "cli_path: /tmp/feat-memory\n"
         f"telemetry_enabled: true\n{extra}",
         encoding="utf-8",
     )
@@ -57,7 +57,7 @@ def test_append_creates_file_with_iso_timestamp(cp_root):
         author="test",
     )
     assert path.exists()
-    assert path.parent == cp_root / ".agent-memory" / "checkpoints"
+    assert path.parent == cp_root / ".feat-memory" / "checkpoints"
     # filename é YYYY-MM-DD-HHMMSS.md
     import re
     assert re.match(r"^\d{4}-\d{2}-\d{2}-\d{6}\.md$", path.name)
@@ -260,7 +260,7 @@ def test_write_state_overwrites_state_md(cp_root):
     checkpoints.append_checkpoint(cp_root, summary="x", current="y",
                                   author="t")
     path = checkpoints.write_state(cp_root)
-    assert path == cp_root / ".agent-memory" / "STATE.md"
+    assert path == cp_root / ".feat-memory" / "STATE.md"
     text = path.read_text(encoding="utf-8")
     assert "y" in text
 
@@ -304,7 +304,7 @@ def test_run_state_rebuild_without_checkpoints_errors(cp_root, monkeypatch, caps
 def test_run_state_rebuild_regenerates_state(cp_root, monkeypatch, capsys):
     monkeypatch.setattr(_paths, "ROOT", cp_root, raising=False)
     checkpoints.append_checkpoint(cp_root, summary="x", current="y", author="t")
-    state_path = cp_root / ".agent-memory" / "STATE.md"
+    state_path = cp_root / ".feat-memory" / "STATE.md"
     # apaga STATE.md para verificar re-render
     if state_path.exists():
         state_path.unlink()
@@ -318,7 +318,7 @@ def test_run_state_rebuild_regenerates_state(cp_root, monkeypatch, capsys):
 
 
 def test_migrate_to_checkpoints_creates_initial(tmp_project, monkeypatch):
-    am = tmp_project / ".agent-memory"
+    am = tmp_project / ".feat-memory"
     am.mkdir(parents=True, exist_ok=True)
     _seed_meta(tmp_project)
     state_path = am / "STATE.md"
@@ -362,7 +362,7 @@ def test_migrate_to_checkpoints_creates_initial(tmp_project, monkeypatch):
 
 
 def test_migrate_to_checkpoints_is_idempotent(tmp_project, monkeypatch, capsys):
-    am = tmp_project / ".agent-memory"
+    am = tmp_project / ".feat-memory"
     cp_dir = am / "checkpoints"
     cp_dir.mkdir(parents=True, exist_ok=True)
     (cp_dir / "2026-01-01-000000.md").write_text(
@@ -381,7 +381,7 @@ def test_migrate_to_checkpoints_is_idempotent(tmp_project, monkeypatch, capsys):
 
 def test_migrate_to_checkpoints_without_state_md_errors(tmp_project, monkeypatch, capsys):
     """Sem STATE.md legado: erro claro."""
-    am = tmp_project / ".agent-memory"
+    am = tmp_project / ".feat-memory"
     am.mkdir(parents=True, exist_ok=True)
     _seed_meta(tmp_project)
     monkeypatch.setattr(_paths, "ROOT", None, raising=False)
@@ -398,7 +398,7 @@ def test_migrate_to_checkpoints_without_state_md_errors(tmp_project, monkeypatch
 
 
 def test_subcommands_registered(capsys):
-    from agent_memory import cli
+    from feat_memory import cli
     with pytest.raises(SystemExit) as exc:
         cli.main(["--help"])
     assert exc.value.code == 0

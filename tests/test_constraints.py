@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from agent_memory.governance import constraints
-from agent_memory.governance import audit
+from feat_memory.governance import constraints
+from feat_memory.governance import audit
 
 
 # --- forbid_paths ----------------------------------------------------------
@@ -222,7 +222,7 @@ def test_run_audit_blocks_on_hard_violation(audit_with_tmp_root):
         "  - id: C1\n    severity: hard\n"
         "    check: {type: forbid_paths, globs: ['**/*.sh']}\n"
         "references: {}\nbudgets: {}\n---\n", encoding="utf-8")
-    _write_min_state(root / ".agent-memory" / "STATE.md")
+    _write_min_state(root / ".feat-memory" / "STATE.md")
     (root / "bad.sh").write_text("echo", encoding="utf-8")
 
     result = audit.run_audit(write_indices=False)
@@ -241,7 +241,7 @@ def test_run_audit_clean_when_constraints_satisfied(audit_with_tmp_root):
         "  - id: C1\n    severity: hard\n"
         "    check: {type: forbid_paths, globs: ['**/*.sh']}\n"
         "references: {}\nbudgets: {}\n---\n", encoding="utf-8")
-    _write_min_state(root / ".agent-memory" / "STATE.md")
+    _write_min_state(root / ".feat-memory" / "STATE.md")
 
     result = audit.run_audit(write_indices=False)
     cc = result["metrics"]["constraint_conformance"]

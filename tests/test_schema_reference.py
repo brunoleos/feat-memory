@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from agent_memory.memory import schemas as S
-from agent_memory.memory.schema_reference import render_schema_reference
+from feat_memory.memory import schemas as S
+from feat_memory.memory.schema_reference import render_schema_reference
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DOC = REPO_ROOT / "docs" / "SCHEMA-REFERENCE.md"
@@ -24,7 +24,7 @@ def test_committed_doc_matches_generator():
     actual = DOC.read_text(encoding="utf-8")
     assert actual == expected, (
         "docs/SCHEMA-REFERENCE.md divergiu de schemas.py. Regere com:\n"
-        "  agent-memory schema > docs/SCHEMA-REFERENCE.md"
+        "  feat-memory schema > docs/SCHEMA-REFERENCE.md"
     )
 
 

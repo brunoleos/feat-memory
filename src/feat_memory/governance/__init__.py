@@ -1,0 +1,10 @@
+"""Camada de governança: enforcement, telemetria, hooks, métricas.
+
+Inclui audit (orquestrador), telemetry, check-staleness, check-version-bump,
+install-hooks.
+
+Importa de `feat_memory.shared` e `feat_memory.memory` (precisa dos
+schemas para validar). Nunca é importada por `feat_memory.memory` —
+ADR-0021 fixa essa direção, garantindo que `deploy --no-hooks` produz
+operação puramente memória.
+"""

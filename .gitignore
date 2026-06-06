@@ -20,8 +20,8 @@ excalidraw.log
 .venv/
 venv/
 
-# >>> agent-memory >>>
-.agent-memory-deploy/
-.agent-memory/.telemetry.jsonl
-# <<< agent-memory <<<
+# >>> feat-memory >>>
+.feat-memory-deploy/
+.feat-memory/.telemetry.jsonl
+# <<< feat-memory <<<
 .vscode/settings.json

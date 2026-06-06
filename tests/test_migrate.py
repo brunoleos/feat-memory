@@ -1,4 +1,4 @@
-"""Testes da detecção de entrypoints do `agent-memory migrate` (ADR-0030).
+"""Testes da detecção de entrypoints do `feat-memory migrate` (ADR-0030).
 
 Foco: a varredura é agnóstica de linguagem. O `detect_entry_points` antigo só
 olhava `*.py`, então retornava vazio em projetos JS/TS/Go e o agente perdia o
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from agent_memory.memory import migrate
+from feat_memory.memory import migrate
 
 
 def _touch(root: Path, rel: str) -> None:

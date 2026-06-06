@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from agent_memory.governance import audit
+from feat_memory.governance import audit
 
 
 # --- validate_release_status (unitário) ----------------------------------
@@ -113,8 +113,8 @@ def test_run_audit_flags_shipped_but_in_progress(audit_with_tmp_root):
     agora aparece como warning no relatório."""
     root = audit_with_tmp_root
     _write_min_agent(root)
-    _write_min_state(root / ".agent-memory" / "STATE.md")
-    _write_feature(root / ".agent-memory" / "manifest" / "features",
+    _write_min_state(root / ".feat-memory" / "STATE.md")
+    _write_feature(root / ".feat-memory" / "manifest" / "features",
                    "F-0010", "in_progress", "0.6.0")
     (root / "CHANGELOG.md").write_text(
         "# Changelog\n\n## [0.6.0] - 2026-05-04\n", encoding="utf-8",

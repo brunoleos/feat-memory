@@ -1,4 +1,4 @@
-"""Testes do `agent-memory archive` (F-0012, ADR-0015)."""
+"""Testes do `feat-memory archive` (F-0012, ADR-0015)."""
 
 from __future__ import annotations
 
@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 
-from agent_memory.governance import audit
-from agent_memory.memory import archive
-from agent_memory.shared import paths as _paths
+from feat_memory.governance import audit
+from feat_memory.memory import archive
+from feat_memory.shared import paths as _paths
 
 
 # --- helpers -------------------------------------------------------------
@@ -47,7 +47,7 @@ def _args(*, apply: bool = False) -> argparse.Namespace:
 @pytest.fixture
 def archive_repo(tmp_project, monkeypatch):
     """Aponta os globals do audit para um tmp repo Git limpo."""
-    am = tmp_project / ".agent-memory"
+    am = tmp_project / ".feat-memory"
     monkeypatch.setattr(_paths, "ROOT", tmp_project, raising=False)
     monkeypatch.setattr(_paths, "AGENT", tmp_project / "AGENTS.md", raising=False)
     monkeypatch.setattr(_paths, "CLAUDE", tmp_project / "CLAUDE.md", raising=False)
@@ -157,7 +157,7 @@ def test_run_apply_moves_via_git_mv(archive_repo, capsys):
 
 def test_run_apply_falls_back_to_fs_when_no_git(tmp_path, monkeypatch):
     """A6: git mv falha (não-tracked / sem git) → shutil.move."""
-    am = tmp_path / ".agent-memory"
+    am = tmp_path / ".feat-memory"
     monkeypatch.setattr(_paths, "ROOT", tmp_path, raising=False)
     monkeypatch.setattr(_paths, "AGENT", tmp_path / "AGENTS.md", raising=False)
     monkeypatch.setattr(_paths, "CLAUDE", tmp_path / "CLAUDE.md", raising=False)
@@ -246,7 +246,7 @@ def test_audit_crosscheck_resolves_archived_id(archive_repo):
 
 
 def test_archive_subcommand_registered(capsys):
-    from agent_memory import cli
+    from feat_memory import cli
     with pytest.raises(SystemExit) as exc:
         cli.main(["archive", "--help"])
     assert exc.value.code == 0

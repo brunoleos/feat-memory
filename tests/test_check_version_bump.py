@@ -1,4 +1,4 @@
-"""Testes do `agent-memory check-version-bump-staged` (F-0016, ADR-0020)."""
+"""Testes do `feat-memory check-version-bump-staged` (F-0016, ADR-0020)."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from agent_memory.governance import audit, check_version_bump
-from agent_memory.shared import paths as _paths
+from feat_memory.governance import audit, check_version_bump
+from feat_memory.shared import paths as _paths
 
 
 # --- helpers -------------------------------------------------------------
@@ -61,7 +61,7 @@ def test_needs_bump_passes_when_only_noncode_staged(tmp_project):
         "README.md": "# hi\n",
         "tests/test_foo.py": "def test(): pass\n",
         "docs/guide.md": "# guide\n",
-        ".agent-memory/manifest/features/F-0099-foo.md": "---\nid: F-0099\n---\n",
+        ".feat-memory/manifest/features/F-0099-foo.md": "---\nid: F-0099\n---\n",
     })
 
     assert check_version_bump.needs_bump(tmp_project) is False
@@ -151,7 +151,7 @@ def test_run_exits_zero_when_no_version_file(tmp_project, capsys, monkeypatch):
 
 
 def test_subcommand_registered(capsys):
-    from agent_memory import cli
+    from feat_memory import cli
     with pytest.raises(SystemExit) as exc:
         cli.main(["--help"])
     assert exc.value.code == 0

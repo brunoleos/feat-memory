@@ -3,7 +3,7 @@ requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "agent-memory"
+name = "feat-memory"
 dynamic = ["version"]
 description = "Persistent memory methodology for LLM agents"
 readme = "README.md"
@@ -25,13 +25,13 @@ classifiers = [
 dependencies = ["pyyaml>=6.0"]
 
 [project.scripts]
-agent-memory = "agent_memory.cli:main"
+feat-memory = "feat_memory.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/brunoleos/agent-memory"
-Repository = "https://github.com/brunoleos/agent-memory"
-Changelog = "https://github.com/brunoleos/agent-memory/blob/main/CHANGELOG.md"
-Issues = "https://github.com/brunoleos/agent-memory/issues"
+Homepage = "https://github.com/brunoleos/feat-memory"
+Repository = "https://github.com/brunoleos/feat-memory"
+Changelog = "https://github.com/brunoleos/feat-memory/blob/main/CHANGELOG.md"
+Issues = "https://github.com/brunoleos/feat-memory/issues"
 
 [project.optional-dependencies]
 dev = ["pytest>=7"]
@@ -43,13 +43,13 @@ version = {file = "VERSION"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-agent_memory = [
+feat_memory = [
     "data/templates/*",
     "data/templates/.gitattributes",
     "data/skills/**/SKILL.md",
 ]
 # Hooks vivem no subpacote governance/ desde o split F-0017 (ADR-0021).
 # Sem esta entrada, o wheel omitia o pre-commit (bug corrigido em F-0021).
-"agent_memory.governance" = [
+"feat_memory.governance" = [
     "data/hooks/*",
 ]

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from agent_memory.memory import schemas, propose_adr
+from feat_memory.memory import schemas, propose_adr
 
 
 def _write_decision(d: Path, body_fm: str) -> Path:

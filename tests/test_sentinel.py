@@ -1,6 +1,6 @@
 """Testes da função _replace_sentinel_block — base da idempotência do deploy."""
 
-from agent_memory.deploy import (
+from feat_memory.deploy import (
     SENTINEL_BEGIN,
     SENTINEL_END,
     _replace_sentinel_block,

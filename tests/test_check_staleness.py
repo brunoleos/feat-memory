@@ -1,4 +1,4 @@
-"""Testes do `agent-memory check-staleness-staged` (F-0013, ADR-0016)."""
+"""Testes do `feat-memory check-staleness-staged` (F-0013, ADR-0016)."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from agent_memory.governance import audit, check_staleness
-from agent_memory.shared import paths as _paths
+from feat_memory.governance import audit, check_staleness
+from feat_memory.shared import paths as _paths
 
 
 # --- helpers -------------------------------------------------------------
@@ -37,7 +37,7 @@ def test_staged_warning_returns_text_when_code_no_state(tmp_project):
 def test_staged_warning_silent_when_state_in_staging(tmp_project):
     _stage(tmp_project, {
         "src/foo.py": "x = 1\n",
-        ".agent-memory/STATE.md": "# state\n",
+        ".feat-memory/STATE.md": "# state\n",
     })
     msg = check_staleness.staged_warning(tmp_project)
     assert msg is None
@@ -48,7 +48,7 @@ def test_staged_warning_silent_when_only_noncode_staged(tmp_project):
         "README.md": "# hi\n",
         "docs/guide.md": "# guide\n",
         "tests/test_foo.py": "def test(): pass\n",
-        ".agent-memory/manifest/features/F-0099-foo.md": "---\nid: F-0099\n---\n",
+        ".feat-memory/manifest/features/F-0099-foo.md": "---\nid: F-0099\n---\n",
     })
     msg = check_staleness.staged_warning(tmp_project)
     assert msg is None
@@ -85,7 +85,7 @@ def test_run_always_exits_zero_with_warning(tmp_project, capsys, monkeypatch):
 def test_run_exits_zero_silent_when_clean(tmp_project, capsys, monkeypatch):
     monkeypatch.setattr(_paths, "ROOT", None, raising=False)
     monkeypatch.chdir(tmp_project)
-    _stage(tmp_project, {".agent-memory/STATE.md": "# state\n"})
+    _stage(tmp_project, {".feat-memory/STATE.md": "# state\n"})
 
     rc = check_staleness.run(argparse.Namespace())
 
@@ -99,7 +99,7 @@ def test_run_exits_zero_silent_when_clean(tmp_project, capsys, monkeypatch):
 
 
 def test_subcommand_registered(capsys):
-    from agent_memory import cli
+    from feat_memory import cli
     with pytest.raises(SystemExit) as exc:
         cli.main(["--help"])
     assert exc.value.code == 0
