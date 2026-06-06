@@ -1,11 +1,11 @@
 ---
 schema_version: 2
-updated_at: '2026-06-06T14:00:00+00:00'
+updated_at: '2026-06-06T15:00:00+00:00'
 updated_by: claude-opus-4.8
 active_features:
-- F-0033
+- F-0034
 active_decisions:
-- ADR-0038
+- ADR-0039
 blocked_on: null
 ---
 
@@ -13,16 +13,17 @@ blocked_on: null
 
 ## Current
 
-**v1.2.0 — B2 do agente de governança: subagent de contexto isolado.** O `deploy` projeta `.claude/agents/memory-debrief.md` (F-0033, ADR-0038) — wrapper fino cujo `skills: [memory-debrief]` pré-carrega a skill homônima (fonte única da lógica); o wrapper só adiciona a janela isolada (a leitura do diff não polui a conversa principal) e as regras de operação (escreve em `.feat-memory/`, **pede confirmação antes de commitar**). Adapter Claude-Code; núcleo segue tool-agnóstico. Coexiste com a memória nativa, sem integração. Dogfood: o próprio repo tem `.claude/agents/memory-debrief.md`. 227 testes verdes (2 novos), audit limpo. Antes: v1.1.0 gate doc-sync (ADR-0037); v1.0.0 rename+reposição (ADR-0036).
+**v1.3.0 — migração de consumidores + refino do subagent.** O `deploy` auto-migra o layout legado `.agent-memory/`→`.feat-memory/` (F-0034, ADR-0039) — idempotente, não-destrutivo, limpa transiente e avisa (reinstalar hook + `pipx uninstall agent-memory`): upgrade de um comando para quem vinha de `agent-memory`. Refino: `.claude/` virou não-código no gate doc-sync (specs de subagent são metodologia, não produto); `deploy_agents` avisa a versionar `.claude/agents/`; `.gitignore` deste repo passou a `.claude/*` + `!.claude/agents/`, versionando o próprio subagent (dogfood real, corrigindo a v1.2.0 onde ele ficava gitignored). 231 testes verdes (4 novos), audit limpo. Núcleo do plano feat-memory entregue: v1.0.0 rename/reposição (ADR-0036), v1.1.0 gate doc-sync (ADR-0037), v1.2.0 subagent (ADR-0038), v1.3.0 migração (ADR-0039).
 
 ## Next
 
-**(B3)** auto-pilot opt-in: o pre-commit chama `claude -p`/Agent SDK headless para rodar o debrief e stageiar a atualização, re-checando o gate; off por default, e se o gerador falhar → bloqueia (estrito). Capacidade separada (litmus ADR-0035): migrador de consumidores `.agent-memory/`→`.feat-memory/` (deve reinstalar hook + alertar sobre shim pipx antigo, como exigiu a transição deste repo). Cleanup: reinstalar pipx p/ versão final + bumpar `.meta.yaml`; depois push + PR. Ação do mantenedor: reservar `feat-memory` na PyPI; renomear repo GitHub.
+Abrir PR da branch `feat/rename-feat-memory-governance-agent`. **Follow-up descopado deste ciclo (decisão do mantenedor):** B3 auto-pilot opt-in — pre-commit chama `claude -p`/Agent SDK headless para rodar o debrief e stageiar, re-checando o gate; off por default, falha→bloqueia. Não-testável no ambiente atual (sem claude headless), por isso vira issue própria. Cleanup pendente: reinstalar pipx p/ 1.3.0 + bumpar `.meta.yaml`. Ação do mantenedor (externa): reservar `feat-memory` na PyPI + trusted publisher; renomear repo GitHub `brunoleos/agent-memory`→`feat-memory`.
 
 ## Recent
 
 | ts | author | features tocadas | summary |
 | --- | --- | --- | --- |
+| 2026-06-06T15:00:00 | claude-opus-4.8 | F-0034 | v1.3.0: deploy auto-migra .agent-memory/→.feat-memory/ (ADR-0039); .claude/ não-código no gate; dogfood do subagent versionado. |
 | 2026-06-06T14:00:00 | claude-opus-4.8 | F-0033 | v1.2.0: subagent de governança projetado pelo deploy (ADR-0038) — wrapper que pré-carrega a skill (fonte única), contexto isolado, pede confirmação p/ commitar. |
 | 2026-06-06T13:00:00 | claude-opus-4.8 | F-0032 | v1.1.0: gate hard doc-sync no commit (ADR-0037) — bloqueia código sem doc; complementa o soft de ADR-0016. |
 | 2026-06-06T12:00:00 | claude-opus-4.8 | — | v1.0.0: rename agent-memory→feat-memory + reposicionamento como doc viva governada (ADR-0036); 1.0 marca maturidade. |

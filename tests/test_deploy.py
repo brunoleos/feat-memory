@@ -45,6 +45,42 @@ def test_deploy_creates_all_artifacts(tmp_project):
     assert (tmp_project / "skills" / "memory-pull-brief" / "SKILL.md").is_file()
 
 
+def test_deploy_migrates_legacy_agent_memory_layout(tmp_project):
+    """Consumidor no layout antigo: deploy migra .agent-memory/ → .feat-memory/."""
+    old = tmp_project / ".agent-memory" / "manifest" / "features"
+    old.mkdir(parents=True)
+    (tmp_project / ".agent-memory" / "STATE.md").write_text(
+        "# old state\n", encoding="utf-8")
+
+    rc = deploy.run(_args(tmp_project))
+    assert rc == 0
+    assert not (tmp_project / ".agent-memory").exists()
+    assert (tmp_project / ".feat-memory" / "STATE.md").is_file()
+    # STATE preservado (deploy não sobrescreve STATE existente)
+    assert "old state" in (tmp_project / ".feat-memory" / "STATE.md").read_text(
+        encoding="utf-8")
+
+
+def test_migrate_legacy_layout_is_noop_when_already_new(tmp_project):
+    (tmp_project / ".feat-memory").mkdir()
+    migrated = deploy.migrate_legacy_layout(tmp_project)
+    assert migrated is False
+    assert (tmp_project / ".feat-memory").is_dir()
+
+
+def test_migrate_legacy_layout_does_not_clobber_existing(tmp_project):
+    """Se ambos existem, não sobrescreve o novo — deixa o legado p/ revisão."""
+    (tmp_project / ".agent-memory").mkdir()
+    (tmp_project / ".feat-memory").mkdir()
+    (tmp_project / ".feat-memory" / "marker").write_text("keep", encoding="utf-8")
+
+    migrated = deploy.migrate_legacy_layout(tmp_project)
+    assert migrated is False
+    assert (tmp_project / ".feat-memory" / "marker").read_text(
+        encoding="utf-8") == "keep"
+    assert (tmp_project / ".agent-memory").exists()
+
+
 def test_deploy_creates_claude_subagent(tmp_project):
     """B2: deploy projeta o subagent de governança em .claude/agents/."""
     rc = deploy.run(_args(tmp_project))

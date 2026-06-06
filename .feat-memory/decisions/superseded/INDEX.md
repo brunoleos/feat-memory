@@ -10,4 +10,4 @@ diretórios); ficam aqui para não onerar o INDEX principal.
 | ADR-0006 | 2026-04-29 | superseded | installation,distribution | F-0001 |
 | ADR-0010 | 2026-04-30 | superseded | deploy,merge,template,skill | F-0001,F-0006 |
 
-_Gerado por `feat-memory audit` em 2026-06-06T05:52:21+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-06T06:06:04+00:00. Não edite manualmente._

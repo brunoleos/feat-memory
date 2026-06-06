@@ -37,5 +37,6 @@
 | ADR-0036 | 2026-06-06 | accepted | naming,positioning,methodology,breaking-change,dogfooding | — |
 | ADR-0037 | 2026-06-06 | accepted | hooks,governance,enforcement,drift,dogfooding | F-0032 |
 | ADR-0038 | 2026-06-06 | accepted | subagent,skill,deploy,claude-code,adapter,methodology | F-0033 |
+| ADR-0039 | 2026-06-06 | accepted | deploy,migration,legacy,upgrade,breaking-change,dogfooding | F-0034 |
 
-_Gerado por `feat-memory audit` em 2026-06-06T05:52:21+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-06T06:06:04+00:00. Não edite manualmente._

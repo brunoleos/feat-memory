@@ -409,6 +409,41 @@ def check_v03_layout(target: Path) -> bool:
     return True
 
 
+def migrate_legacy_layout(target: Path) -> bool:
+    """Migra o layout legado `.agent-memory/` → `.feat-memory/` (rename do projeto).
+
+    Caminho de upgrade para consumidores que adotaram a metodologia quando ela se
+    chamava `agent-memory` (ADR-0036). Idempotente: no-op se já está no layout novo.
+    Não-destrutivo: se `.agent-memory/` E `.feat-memory/` coexistem, não sobrescreve
+    — deixa o legado para revisão manual e avisa. Retorna True se migrou.
+
+    O `deploy` que chama isto em seguida reinstala o pre-commit hook (passa a chamar
+    `feat-memory`) e refresca o bloco em AGENTS.md, completando a transição.
+    """
+    legacy = target / ".agent-memory"
+    current = target / ".feat-memory"
+
+    # Diretório transiente legado do deploy antigo: descartável sempre.
+    legacy_deploy = target / ".agent-memory-deploy"
+    if legacy_deploy.exists():
+        shutil.rmtree(legacy_deploy, ignore_errors=True)
+
+    if not legacy.is_dir():
+        return False
+
+    if current.exists():
+        print("AVISO: existem .agent-memory/ E .feat-memory/ — não vou "
+              "sobrescrever.")
+        print("  Reconcilie manualmente e remova .agent-memory/.")
+        return False
+
+    legacy.rename(current)
+    print("Migração de layout: .agent-memory/ → .feat-memory/ (rename para feat-memory)")
+    print("  O pre-commit hook será reinstalado para chamar `feat-memory`.")
+    print("  Se houver um pacote pipx antigo, remova: pipx uninstall agent-memory")
+    return True
+
+
 def deploy_agents(target: Path) -> None:
     """Deploy do(s) subagent(s) do Claude Code em .claude/agents/.
 
@@ -433,6 +468,9 @@ def deploy_agents(target: Path) -> None:
         _copy_resource(agent_path, dst_file)
         verb = "atualizado" if existed else "deployado"
         print(f"  {verb}: {agent_path.name}")
+
+    print("  → se .claude/ está no seu .gitignore, rastreie os subagents "
+          "(ex.: troque `.claude/` por `.claude/*` + `!.claude/agents/`)")
 
 
 def deploy_skills(target: Path, force: bool) -> None:
@@ -553,6 +591,9 @@ def run(args: argparse.Namespace) -> int:
 
     if check_v03_layout(target):
         return 1
+
+    if migrate_legacy_layout(target):
+        print()
 
     deploy_dir = target / ".feat-memory-deploy"
     # Remove o diretório transiente legado (de versões anteriores que tinham

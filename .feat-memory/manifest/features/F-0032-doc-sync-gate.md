@@ -19,7 +19,7 @@ contracts:
 acceptance:
   - {id: A1, pattern: event, trigger: "o staging toca código sem nenhum artefato de doc (STATE/manifest/decisions) staged", response: "`check-doc-sync-staged` retorna exit 1 e o pre-commit bloqueia o commit, com remediação (/memory-debrief ou --no-verify)"}
   - {id: A2, pattern: event, trigger: "o staging toca código E inclui qualquer um de STATE.md, manifest/** ou decisions/**", response: "exit 0 — a doc acompanhou, commit liberado"}
-  - {id: A3, pattern: ubiquitous, requirement: "tests/, docs/, README e nomes não-código (heurística `_is_code_path`) não contam como código e nunca disparam o gate sozinhos"}
+  - {id: A3, pattern: ubiquitous, requirement: "tests/, docs/, .claude/, README e nomes não-código (heurística `_is_code_path`) não contam como código e nunca disparam o gate sozinhos"}
   - {id: A4, pattern: unwanted, trigger: "não há repositório Git", response: "fail-soft — não bloqueia (a fail-open de binário-ausente fica no hook, ADR-0008)"}
 depends_on: []
 decisions: [ADR-0037]

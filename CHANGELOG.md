@@ -6,6 +6,18 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto ader
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-06-06
+
+Caminho de upgrade para o rename (ADR-0036) e ajustes para o subagent (F-0033) cair bem em projetos reais.
+
+### Adicionado
+
+**F-0034 (legacy-layout-migration) + ADR-0039.** O `deploy` passa a auto-migrar o layout legado no início do fluxo (`migrate_legacy_layout`): renomeia `.agent-memory/`→`.feat-memory/` quando só o legado existe, idempotente e não-destrutivo (não sobrescreve um `.feat-memory/` existente — avisa e deixa para reconciliação manual), limpa o transiente `.agent-memory-deploy/` e emite avisos acionáveis (reinstalar hook — que o deploy já faz — e `pipx uninstall agent-memory`). Upgrade de um comando para quem vinha de `agent-memory`. 3 testes novos.
+
+### Mudado
+
+**`.claude/` é não-código no gate doc-sync (refino de F-0032).** Specs de subagent (`.claude/agents/`) são conteúdo de metodologia, não produto — entram em `STALENESS_NONCODE_PREFIXES` e não disparam o gate `check-doc-sync-staged` sozinhas. O `deploy_agents` agora avisa a versionar `.claude/agents/` quando `.claude/` está no `.gitignore` (a regra de exclusão de pai do Git impede um fix automático confiável). Dogfood: o `.gitignore` deste repo passou a `.claude/*` + `!.claude/agents/`, versionando o próprio subagent. 1 teste novo.
+
 ## [1.2.0] - 2026-06-06
 
 Segunda peça do agente de governança: dar ao debrief um **contexto isolado** sem duplicar lógica.

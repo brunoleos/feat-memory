@@ -192,7 +192,7 @@ def validate_release_status(features: list[dict],
 # Paths considerados "código" para staleness check. Tudo que NÃO tem
 # um destes prefixos / não é um destes nomes exatos é tratado como
 # código (ADR-0014). Lista deliberadamente conservadora.
-STALENESS_NONCODE_PREFIXES = (".feat-memory/", "tests/", "docs/")
+STALENESS_NONCODE_PREFIXES = (".feat-memory/", "tests/", "docs/", ".claude/")
 STALENESS_NONCODE_EXACT = {
     "README.md", "CHANGELOG.md", "METHODOLOGY.md",
     "USER_GUIDE.md", "FUTURE_IMPROVEMENTS.md", "LICENSE",

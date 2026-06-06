@@ -1,5 +1,6 @@
-# Configuração local do Claude Code
-.claude/
+# Configuração local do Claude Code (mas versionamos os subagents da metodologia)
+.claude/*
+!.claude/agents/
 
 # Artefatos de build/install do Python
 __pycache__/

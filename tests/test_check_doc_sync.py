@@ -73,6 +73,14 @@ def test_silent_when_only_noncode_staged(tmp_project):
     assert check_doc_sync.staged_block_reason(tmp_project) is None
 
 
+def test_silent_when_only_claude_agents_staged(tmp_project):
+    """Specs de subagent em .claude/ são metodologia, não produto → não-código."""
+    _stage(tmp_project, {
+        ".claude/agents/memory-debrief.md": "---\nname: memory-debrief\n---\n",
+    })
+    assert check_doc_sync.staged_block_reason(tmp_project) is None
+
+
 def test_silent_when_nothing_staged(tmp_project):
     assert check_doc_sync.staged_block_reason(tmp_project) is None
 
