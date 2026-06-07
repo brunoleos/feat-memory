@@ -81,6 +81,19 @@ def test_migrate_legacy_layout_does_not_clobber_existing(tmp_project):
     assert (tmp_project / ".agent-memory").exists()
 
 
+def test_migrate_legacy_layout_handles_rename_error(tmp_project, monkeypatch):
+    """Erro de rename (lock/permissão) → avisa e retorna False, sem traceback cru."""
+    (tmp_project / ".agent-memory").mkdir()
+
+    def _boom(self, *a, **k):
+        raise OSError("arquivo travado")
+
+    monkeypatch.setattr(Path, "rename", _boom)
+    assert deploy.migrate_legacy_layout(tmp_project) is False
+    # não destruiu o legado ao falhar
+    assert (tmp_project / ".agent-memory").exists()
+
+
 def test_deploy_creates_claude_subagent(tmp_project):
     """B2: deploy projeta o subagent de governança em .claude/agents/."""
     rc = deploy.run(_args(tmp_project))

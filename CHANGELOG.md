@@ -6,6 +6,16 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto ader
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-06-07
+
+Correções de code/doc review antes do merge na main.
+
+### Corrigido
+
+- **Classifier `Development Status` → `5 - Production/Stable`** (era `4 - Beta`), coerente com o compromisso de estabilidade do 1.0.0 (ADR-0036).
+- **`migrate_legacy_layout` captura `OSError` no rename** (lock/permissão/cross-device): emite mensagem acionável e retorna `False` em vez de propagar traceback cru num projeto consumidor. 1 teste novo.
+- **Docstring de `staged_block_reason`** passa a documentar o caminho `git inacessível → None` (fail-soft), antes implícito.
+
 ## [1.3.0] - 2026-06-06
 
 Caminho de upgrade para o rename (ADR-0036) e ajustes para o subagent (F-0033) cair bem em projetos reais.

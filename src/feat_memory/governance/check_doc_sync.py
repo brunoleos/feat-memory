@@ -51,7 +51,8 @@ def staged_block_reason(root: Path) -> str | None:
     """Retorna o texto do bloqueio ou None.
 
     Núcleo testável — não imprime nem sai, apenas decide. None quando: nada
-    staged, nenhum código staged, ou algum artefato de doc staged.
+    staged (ou git inacessível — fail-soft), nenhum código staged, ou algum
+    artefato de doc staged.
     """
     paths = _staged_paths(root)
     if not paths:

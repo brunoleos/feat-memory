@@ -437,7 +437,15 @@ def migrate_legacy_layout(target: Path) -> bool:
         print("  Reconcilie manualmente e remova .agent-memory/.")
         return False
 
-    legacy.rename(current)
+    try:
+        legacy.rename(current)
+    except OSError as e:
+        print(f"AVISO: não foi possível migrar .agent-memory/ → .feat-memory/: {e}",
+              file=sys.stderr)
+        print("  Renomeie o diretório manualmente e rode `feat-memory deploy` de novo.",
+              file=sys.stderr)
+        return False
+
     print("Migração de layout: .agent-memory/ → .feat-memory/ (rename para feat-memory)")
     print("  O pre-commit hook será reinstalado para chamar `feat-memory`.")
     print("  Se houver um pacote pipx antigo, remova: pipx uninstall agent-memory")
