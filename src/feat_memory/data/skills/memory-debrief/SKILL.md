@@ -66,6 +66,8 @@ Critério: se um contribuidor lendo o commit em 6 meses precisaria de explicaç�
 
 **Superseding um ADR existente.** Quando esta sessão marca um ADR com `status: superseded` (e adiciona `superseded_by` apontando para o novo), mova o arquivo para `.feat-memory/decisions/superseded/` via `git mv` (ADR-0023, F-0019). IDs continuam resolvíveis pelo crosscheck e citáveis por `superseded_by` em ADRs novos; o move desonera o INDEX principal. Sem subcomando — operação manual.
 
+**Supersede parcial (ADR-0040).** Se a decisão nova invalida só **parte** de um ADR, não deixe o base meio-válido (parte obsoleta + parte vigente no mesmo arquivo é ambíguo). Marque o base **inteiro** como `superseded` e divida em ADRs novos: um com a decisão nova, outro(s) re-afirmando a parte que continua válida. O `superseded_by` do base lista **todos** os sucessores. Assim todo ADR vigente é verdadeiro por inteiro.
+
 ### 5. Valide
 
 `feat-memory audit --strict --no-index`. Drift = caminho em `contracts` virou inválido ou arquivo removido sem deprecar a feature.

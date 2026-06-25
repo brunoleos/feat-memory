@@ -6,6 +6,14 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto ader
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-06-25
+
+Governança de decisões: regra para supersede parcial de ADR.
+
+### Adicionado
+
+**ADR-0040 (supersede parcial).** Quando uma decisão nova invalida só **parte** de um ADR, marca-se o base inteiro como `superseded` e divide-se em ADRs novos — um com a novidade, outro(s) re-afirmando a parte mantida —, com o `superseded_by` do base listando todos os sucessores. Invariante: todo ADR vigente é verdadeiro por inteiro, nunca parcialmente falso. Documentada no skill `memory-debrief` (§4) e em METHODOLOGY §4. Sem mudança de código — o schema já aceitava `superseded_by` em lista.
+
 ## [1.3.1] - 2026-06-07
 
 Correções de code/doc review antes do merge na main.

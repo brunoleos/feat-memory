@@ -91,6 +91,8 @@ O corpo segue quatro seções padronizadas: Contexto (o problema), Decisão (a e
 
 Quando uma decisão é substituída, o ADR original tem apenas seu campo `superseded_by` atualizado — nada mais é alterado. O ADR substituto explica o motivo da mudança em sua seção de Contexto. Esta convenção preserva o raciocínio original mesmo quando as conclusões mudam.
 
+Quando a substituição é apenas **parcial** — a decisão nova invalida só parte do ADR — não se deixa o original meio-válido. Marca-se o ADR-base inteiro como `superseded` e divide-se seu conteúdo em ADRs novos: um com a decisão nova, outro(s) re-afirmando a parte que continua válida, com o `superseded_by` do base listando todos os sucessores. Assim nenhum ADR vigente é parcialmente falso (ADR-0040).
+
 ### Propostas de ADR (`.feat-memory/decisions/proposals/`)
 
 Drafts gerados pela ferramenta `feat-memory propose-adr` ficam em uma subpasta separada que o `feat-memory audit` ignora explicitamente. Drafts não são ADRs e não têm validade arquitetural — são pontos de partida para conversa. Quando um draft é revisado e aprovado, o arquivo é renomeado com slug definitivo e movido para `.feat-memory/decisions/`, momento em que passa a ser auditado normalmente.

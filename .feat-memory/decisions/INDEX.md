@@ -38,5 +38,6 @@
 | ADR-0037 | 2026-06-06 | accepted | hooks,governance,enforcement,drift,dogfooding | F-0032 |
 | ADR-0038 | 2026-06-06 | accepted | subagent,skill,deploy,claude-code,adapter,methodology | F-0033 |
 | ADR-0039 | 2026-06-06 | accepted | deploy,migration,legacy,upgrade,breaking-change,dogfooding | F-0034 |
+| ADR-0040 | 2026-06-25 | accepted | decisions,governance,supersede | — |
 
-_Gerado por `feat-memory audit` em 2026-06-07T04:44:52+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-25T22:51:04+00:00. Não edite manualmente._
