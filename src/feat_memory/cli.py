@@ -12,6 +12,7 @@ import sys
 from feat_memory import __version__, deploy
 from feat_memory.memory import (
     archive,
+    changelog,
     checkpoints,
     migrate,
     propose_adr,
@@ -51,6 +52,7 @@ def main(argv: list[str] | None = None) -> int:
     propose_adr.add_subparser(sub)
     migrate.add_subparser(sub)
     archive.add_subparser(sub)
+    changelog.add_subparser(sub)
     checkpoints.add_subparser(sub)
     schema_reference.add_subparser(sub)
 

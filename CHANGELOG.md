@@ -6,6 +6,14 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto ader
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-06-26
+
+Núcleo aditivo do redesenho: pasta de changelog por-tag + UNRELEASED vivo (coexiste com STATE.md/CHANGELOG.md até a migração da 2.0.0).
+
+### Adicionado
+
+**F-0035/F-0036 (in_progress) — `changelog.py` + comando `feat-memory release`.** Histórico como pasta `.feat-memory/changelog/` com 1 arquivo imutável por tag + `INDEX.md` gerado (ADR-0042); `changelog/UNRELEASED.md` guarda o trabalho não-lançado e o **orçamento de retomada é derivado** das refs `F`/`ADR` das suas entradas-bullet (ADR-0043). `release X.Y.Z` valida o bump SemVer, congela o UNRELEASED em `<X.Y.Z>.md`, reinicia o UNRELEASED, bumpa VERSION e regenera o INDEX. Git commit/tag e a migração do layout legado vêm a seguir. 14 testes novos.
+
 ## [1.6.0] - 2026-06-26
 
 Fundação do redesenho changelog/estado (Fase 1): destrava ancorar features cedo.

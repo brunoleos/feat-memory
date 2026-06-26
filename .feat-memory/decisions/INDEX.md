@@ -44,4 +44,4 @@
 | ADR-0043 | 2026-06-26 | proposed | state,changelog,unreleased,resumption,methodology | F-0036,F-0037 |
 | ADR-0044 | 2026-06-26 | accepted | audit,manifest,drift,planned,methodology | — |
 
-_Gerado por `feat-memory audit` em 2026-06-26T03:22:44+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-26T03:40:27+00:00. Não edite manualmente._

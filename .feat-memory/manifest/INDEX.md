@@ -15,8 +15,8 @@
 | F-0032 | doc-sync-gate | shipped | 1.1.0 | ADR-0037 | — |
 | F-0033 | governance-subagent | shipped | 1.2.0 | ADR-0038 | — |
 | F-0034 | legacy-layout-migration | shipped | 1.3.0 | ADR-0039 | — |
-| F-0035 | changelog-folder | planned | 2.0.0 | ADR-0042 | — |
-| F-0036 | unreleased-living-state | planned | 2.0.0 | ADR-0043 | F-0035 |
+| F-0035 | changelog-folder | in_progress | 2.0.0 | ADR-0042 | — |
+| F-0036 | unreleased-living-state | in_progress | 2.0.0 | ADR-0043 | F-0035 |
 | F-0037 | changelog-layout-migration | planned | 2.0.0 | ADR-0042,ADR-0043 | F-0035,F-0036 |
 
-_Gerado por `feat-memory audit` em 2026-06-26T03:22:44+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-26T03:40:27+00:00. Não edite manualmente._
