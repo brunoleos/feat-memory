@@ -40,5 +40,8 @@
 | ADR-0039 | 2026-06-06 | accepted | deploy,migration,legacy,upgrade,breaking-change,dogfooding | F-0034 |
 | ADR-0040 | 2026-06-25 | accepted | decisions,governance,supersede | — |
 | ADR-0041 | 2026-06-25 | accepted | decisions,manifest,state,methodology,planning | — |
+| ADR-0042 | 2026-06-26 | proposed | changelog,history,folder,convention,multiagent | F-0035,F-0037 |
+| ADR-0043 | 2026-06-26 | proposed | state,changelog,unreleased,resumption,methodology | F-0036,F-0037 |
+| ADR-0044 | 2026-06-26 | accepted | audit,manifest,drift,planned,methodology | — |
 
-_Gerado por `feat-memory audit` em 2026-06-26T02:51:43+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-26T03:22:44+00:00. Não edite manualmente._
