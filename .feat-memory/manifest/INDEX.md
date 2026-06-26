@@ -16,4 +16,4 @@
 | F-0033 | governance-subagent | shipped | 1.2.0 | ADR-0038 | — |
 | F-0034 | legacy-layout-migration | shipped | 1.3.0 | ADR-0039 | — |
 
-_Gerado por `feat-memory audit` em 2026-06-25T22:51:04+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-26T02:51:43+00:00. Não edite manualmente._

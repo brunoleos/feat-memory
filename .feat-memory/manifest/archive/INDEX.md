@@ -28,4 +28,4 @@ principal.
 | F-0019 | superseded-decisions-folder | shipped | 0.9.0 | ADR-0023 | F-0011 |
 | F-0020 | audit-release-status | shipped | 0.10.0 | ADR-0024 | F-0011 |
 
-_Gerado por `feat-memory audit` em 2026-06-25T22:51:04+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-26T02:51:43+00:00. Não edite manualmente._

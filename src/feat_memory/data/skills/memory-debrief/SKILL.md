@@ -173,3 +173,4 @@ O que decidiu e o porquê dominante. Embuta trade-offs aqui ("aceitamos custo X 
 - **Duplicar frontmatter no body** de feature ou ADR.
 - **Forçar ADR** para mudança mecânica.
 - **Promover drafts** de `decisions/proposals/` para `decisions/` sem revisão humana.
+- **Persistir specs / planos longos.** O registro durável de uma sessão é ADR + Feature, não um design doc paralelo; planejamento é efêmero (conversa/plan mode). Proponha ADRs cedo (`proposed`) e stubs de feature (`planned`) para a retomada não depender de plano efêmero (ADR-0041).

@@ -6,6 +6,14 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto ader
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-06-25
+
+Princípio de operação: planejamento efêmero; registro durável é ADR + Feature.
+
+### Adicionado
+
+**ADR-0041 (sem specs persistentes).** Formaliza que o planejamento de uma sessão é efêmero (conversa/plan mode) e não vira um quinto artefato persistente (spec/design doc). O registro durável é ADR (porquê) + Feature (o quê); a disciplina é escrevê-los cedo (ADR `proposed`, feature `planned`) para a retomada não depender de plano efêmero. Documentado em METHODOLOGY (§Princípios = o que não é artefato; §Protocolo do agente = a doutrina de definir ADR `proposed` + feature `planned` cedo) e no anti-padrão do skill `memory-debrief`.
+
 ## [1.4.0] - 2026-06-25
 
 Governança de decisões: regra para supersede parcial de ADR.
