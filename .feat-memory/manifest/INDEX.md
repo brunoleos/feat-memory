@@ -21,4 +21,4 @@
 | F-0038 | ideas-funnel | shipped | 2.2.0 | ADR-0047 | F-0036 |
 | F-0039 | debrief-retrospective | shipped | 2.1.0 | ADR-0048 | F-0038 |
 
-_Gerado por `feat-memory audit` em 2026-06-26T20:34:18+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-26T21:06:45+00:00. Não edite manualmente._

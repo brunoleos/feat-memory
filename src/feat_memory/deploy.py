@@ -295,26 +295,56 @@ def deploy_changelog(target: Path) -> None:
         print("  criado: .feat-memory/changelog/UNRELEASED.md")
 
 
-def deploy_ideas(target: Path) -> None:
-    """Cria .feat-memory/ideas.md se ausente — funil do futuro (ADR-0047).
+_IDEAS_MARKER = "<!-- Entradas"
 
-    Upgrade: se existe um `suggestions.md` legado (2.1.x), renomeia o conteúdo
-    para `ideas.md` em vez de criar do zero (preserva as entradas). Pula se já
-    existe; merge normal, nunca sobrescreve.
+
+def _ideas_entries(text: str) -> str:
+    """Entradas (`## ...`) de um ideas.md/suggestions.md, sem o cabeçalho."""
+    i = text.find(_IDEAS_MARKER)
+    if i >= 0:
+        eol = text.find("\n", i)
+        return text[eol + 1:].strip() if eol >= 0 else ""
+    m = re.search(r"^## ", text, re.MULTILINE)
+    return text[m.start():].strip() if m else ""
+
+
+def deploy_ideas(target: Path) -> None:
+    """Cria/refresca .feat-memory/ideas.md — funil do futuro (ADR-0047).
+
+    O **cabeçalho** (descrição + tabela de triagem) é conteúdo de metodologia e
+    é refrescado a cada deploy, como o bloco do AGENTS.md; as **entradas** do
+    usuário (`## ...`) são preservadas. Migra um `suggestions.md` legado (2.1.x)
+    preservando as entradas e trocando o header velho pelo novo (senão o arquivo
+    migrado se descreveria com o escopo antigo — contradição com as skills).
     """
     print("Funil do futuro (.feat-memory/ideas.md):")
     fm_dir = target / ".feat-memory"
     fm_dir.mkdir(parents=True, exist_ok=True)
     dst = fm_dir / "ideas.md"
     legacy = fm_dir / "suggestions.md"
-    if dst.exists():
-        print("  já existe: .feat-memory/ideas.md")
-    elif legacy.exists():
-        legacy.rename(dst)
-        print("  migrado: suggestions.md → ideas.md (entradas preservadas)")
-    else:
-        _copy_template(_data_path("templates", "ideas.md"), dst)
+
+    header = _substitute_tokens(
+        _data_path("templates", "ideas.md").read_text(encoding="utf-8")
+    ).rstrip("\n") + "\n"
+    source = dst if dst.exists() else (legacy if legacy.exists() else None)
+    entries = _ideas_entries(source.read_text(encoding="utf-8")) if source else ""
+    content = header + (f"\n{entries}\n" if entries else "")
+
+    migrated = legacy.exists() and not dst.exists()
+    before = dst.read_text(encoding="utf-8") if dst.exists() else None
+    if before != content:
+        dst.write_text(content, encoding="utf-8")
+    if legacy.exists():
+        legacy.unlink()
+
+    if migrated:
+        print("  migrado: suggestions.md → ideas.md (header refrescado, entradas preservadas)")
+    elif before is None:
         print("  criado: .feat-memory/ideas.md")
+    elif before != content:
+        print("  header refrescado: .feat-memory/ideas.md (entradas preservadas)")
+    else:
+        print("  já atualizado: .feat-memory/ideas.md")
 
 
 def migrate_planned_to_proposed(target: Path) -> None:
@@ -661,6 +691,9 @@ def run(args: argparse.Namespace) -> int:
 
     deploy_ideas(target)
     migrate_planned_to_proposed(target)
+    from feat_memory.memory import changelog as _changelog
+    if _changelog.patch_agents_frontmatter(target):
+        print("AGENTS.md: frontmatter atualizado (references.state → unreleased)")
     print()
 
     deploy_gitattributes(target)

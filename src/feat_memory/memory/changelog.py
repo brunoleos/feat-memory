@@ -343,7 +343,7 @@ def _write_migrated_unreleased(root: Path, unreleased_body: str) -> None:
     unreleased_path(root).write_text("\n".join(parts) + "\n", encoding="utf-8")
 
 
-def _patch_agents_frontmatter(root: Path) -> bool:
+def patch_agents_frontmatter(root: Path) -> bool:
     """Atualiza o frontmatter do AGENTS.md no cutover: `references.state`
     (aponta para o STATE.md removido) → `unreleased`, e remove
     `budgets.state_max_bytes`. Sem isso, o deploy só refresca o bloco entre
@@ -403,7 +403,7 @@ def migrate_to_changelog_folder(root: Path) -> tuple[bool, str]:
     if changelog_md.exists():
         changelog_md.unlink()
     _remove_legacy_state(root)
-    patched = _patch_agents_frontmatter(root)
+    patched = patch_agents_frontmatter(root)
     extra = "; frontmatter do AGENTS.md atualizado" if patched else ""
     return True, f"{n} release(s) migrado(s); UNRELEASED criado; legados removidos{extra}"
 

@@ -296,6 +296,35 @@ def test_deploy_frontmatter_injection_is_idempotent(tmp_project):
     assert content.count("<!-- >>> feat-memory >>> -->") == 1
 
 
+def test_deploy_ideas_refreshes_stale_header_preserves_entries(tmp_project):
+    """Defeito 2.2.0: ideas.md migrado mantinha header velho. Deploy refresca o
+    header (conteúdo de metodologia) e preserva as entradas do usuário."""
+    fm = tmp_project / ".feat-memory"
+    fm.mkdir(parents=True, exist_ok=True)
+    (fm / "ideas.md").write_text(
+        "# Backlog de sugestões\n\nPropostas de evolução do sistema (ADR-0046).\n\n"
+        "<!-- Entradas abaixo. -->\n\n## minha-ideia\n\n- **tipo:** produto-capacidade\n",
+        encoding="utf-8")
+    deploy.run(_args(tmp_project))
+    ideas = (fm / "ideas.md").read_text(encoding="utf-8")
+    assert "## minha-ideia" in ideas            # entrada do usuário preservada
+    assert "funil do futuro" in ideas           # header novo (ADR-0047)
+    assert "Backlog de sugestões" not in ideas  # header velho sumiu
+
+
+def test_deploy_migrates_suggestions_to_ideas(tmp_project):
+    """suggestions.md legado (2.1.x) → ideas.md, entradas preservadas, arquivo antigo removido."""
+    fm = tmp_project / ".feat-memory"
+    fm.mkdir(parents=True, exist_ok=True)
+    (fm / "suggestions.md").write_text(
+        "# Backlog\n\n<!-- Entradas abaixo. -->\n\n## ideia-x\n\n- contexto: y\n",
+        encoding="utf-8")
+    deploy.run(_args(tmp_project))
+    assert not (fm / "suggestions.md").exists()
+    ideas = (fm / "ideas.md").read_text(encoding="utf-8")
+    assert "## ideia-x" in ideas and "funil do futuro" in ideas
+
+
 def test_deploy_does_not_create_legacy_artifacts(tmp_project):
     """Regressão do cutover 2.0.0: deploy não recria STATE.md/checkpoints/CHANGELOG.md."""
     deploy.run(_args(tmp_project))
