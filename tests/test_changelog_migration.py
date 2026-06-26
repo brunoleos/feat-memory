@@ -50,10 +50,26 @@ implementar routing no motor unificado
 """
 
 
+LEGACY_AGENTS = """\
+---
+references:
+  manifest_index: ./.feat-memory/manifest/INDEX.md
+  state: ./.feat-memory/STATE.md
+  decisions_index: ./.feat-memory/decisions/INDEX.md
+budgets:
+  resumption_max_bytes: 12288
+  state_max_bytes: 4096
+---
+
+# Constituição
+"""
+
+
 @pytest.fixture
 def legacy(tmp_path):
     (tmp_path / ".feat-memory").mkdir()
     (tmp_path / "CHANGELOG.md").write_text(LEGACY_CHANGELOG, encoding="utf-8")
+    (tmp_path / "AGENTS.md").write_text(LEGACY_AGENTS, encoding="utf-8")
     (tmp_path / ".feat-memory" / "STATE.md").write_text(LEGACY_STATE, encoding="utf-8")
     cp = tmp_path / ".feat-memory" / "checkpoints"
     cp.mkdir()
@@ -82,6 +98,15 @@ def test_migrate_splits_changelog_and_removes_legacy(legacy):
     assert not (legacy / "CHANGELOG.md").exists()
     assert not (legacy / ".feat-memory" / "STATE.md").exists()
     assert not (legacy / ".feat-memory" / "checkpoints").exists()
+
+
+def test_migrate_patches_agents_frontmatter(legacy):
+    """references.state→unreleased e state_max_bytes removido (#1 do dogfood)."""
+    changelog.migrate_to_changelog_folder(legacy)
+    text = (legacy / "AGENTS.md").read_text(encoding="utf-8")
+    assert "state: ./.feat-memory/STATE.md" not in text
+    assert "unreleased: ./.feat-memory/changelog/UNRELEASED.md" in text
+    assert "state_max_bytes" not in text
 
 
 def test_migrate_is_idempotent(legacy):

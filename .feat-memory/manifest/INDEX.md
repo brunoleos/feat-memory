@@ -21,4 +21,4 @@
 | F-0038 | suggestions-backlog | shipped | 2.1.0 | ADR-0046 | F-0036 |
 | F-0039 | debrief-retrospective | shipped | 2.1.0 | ADR-0046 | F-0038 |
 
-_Gerado por `feat-memory audit` em 2026-06-26T19:18:13+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-26T19:35:34+00:00. Não edite manualmente._

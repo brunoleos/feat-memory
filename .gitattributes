@@ -16,6 +16,14 @@
 #
 #   git config merge.ours.driver true
 
+# Normalização de EOL: os artefatos da metodologia são sempre LF, matando o
+# churn CRLF↔LF em working trees Windows (cada commit reportava "CRLF will be
+# replaced by LF"). Escopo só nos artefatos do feat-memory — não impõe política
+# repo-wide ao código do consumidor.
+.feat-memory/**                            text eol=lf
+AGENTS.md                                  text eol=lf
+CLAUDE.md                                  text eol=lf
+
 .feat-memory/manifest/INDEX.md             merge=ours
 .feat-memory/manifest/archive/INDEX.md     merge=ours
 .feat-memory/decisions/INDEX.md            merge=ours
