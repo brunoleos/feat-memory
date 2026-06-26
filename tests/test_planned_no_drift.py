@@ -40,8 +40,8 @@ def _root(tmp_path, monkeypatch):
     monkeypatch.setattr(_paths, "ROOT", tmp_path, raising=False)
 
 
-def test_planned_feature_skips_contract_drift(tmp_path):
-    p = _write_feature(tmp_path, "planned")
+def test_proposed_feature_skips_contract_drift(tmp_path):
+    p = _write_feature(tmp_path, "proposed")
     _, issues = schemas.validate_feature(p)
     assert not any("caminho inexistente" in i.message for i in issues), issues
 

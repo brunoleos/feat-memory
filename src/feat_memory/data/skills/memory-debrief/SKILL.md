@@ -32,7 +32,7 @@ Se passou do alvo, corte. Detalhes mecânicos já vivem no código e na mensagem
 ### 2. Atualize features tocadas
 
 Para cada feature cujo código foi tocado:
-- `status` se transitou (`planned` → `in_progress` → `shipped` → `deprecated`)
+- `status` se transitou (`proposed` → `in_progress` → `shipped` → `deprecated`)
 - `version` se a release mudou
 - `acceptance` apenas se o comportamento mudou (ajuste o critério existente; não duplique)
 - `metrics` apenas com medição real desta sessão; sem número, sem campo
@@ -83,11 +83,20 @@ feat-memory record debrief_run features=F-NNNN[,F-NNNN]
 
 Local-only, falha não bloqueia (F-0014, ADR-0017).
 
-### 8. Retrospectiva e sugestões de evolução (ADR-0046)
+### 8. Retrospectiva e triagem de ideias (ADR-0047, ADR-0048)
 
-Feche com uma **retrospectiva inline** — não persista a narrativa, só reflita na conversa: o que foi entregue (escopo + magnitude), bugs diagnosticados, achados (arquiteturais/processuais) e um **resumo honesto** (o que funcionou, o que custou mais do que devia, qual o risco residual). As saídas duráveis já têm lar — não duplique: release→entrada no `UNRELEASED`, decisão→ADR, capacidade→Feature.
+Feche com uma **retrospectiva inline** — não persista a narrativa, só reflita na conversa: o que foi entregue (escopo + magnitude), bugs diagnosticados, achados (arquiteturais/processuais) e um **resumo honesto** (o que funcionou, o que custou mais do que devia, qual o risco residual).
 
-Se durante a sessão surgiu uma **proposta de evolução do próprio sistema** (skill nova, regra de `AGENTS.md`, ADR transversal, refactor, heurística frouxa), aplique **ask-before-register**: pergunte ao usuário se quer **resolver agora**, **adiar** (registrar em `.feat-memory/suggestions.md`) ou **descartar**. Nunca persista silenciosamente; duplicata de uma pendência já listada é só um bump de `occ`. O backlog é o funil pré-feature e o fallback de retomada quando o `UNRELEASED` está vazio.
+Se a sessão produziu **ideias para o futuro** (uma capacidade, uma decisão a tomar, uma melhoria do sistema de agentes), aplique **ask-before-register** e **trie** pelo tipo:
+
+| Tipo de ideia | Destino |
+|---|---|
+| Capacidade nova do produto | Feature `proposed` em `manifest/features/` |
+| Decisão de arquitetura | ADR `proposed` em `decisions/proposals/` |
+| Evolução do sistema de agentes (skill/regra/doc-gap) | aplica direto, ou registra em `.feat-memory/ideas.md` |
+| Ainda cru / indeciso | `.feat-memory/ideas.md` (funil do futuro) até amadurecer |
+
+Pergunte ao usuário **resolver agora** / **adiar** (entra no `ideas.md`) / **descartar** — nunca persista silenciosamente; duplicata de uma ideia já listada é só um bump de `occ`. **Na dúvida sobre o tipo, devolva a bifurcação ao usuário em vez de decidir sozinho.** O `ideas.md` é o estágio cru do pipeline (ideia → `proposed` → realizando → realizado) e o fallback de retomada quando o `UNRELEASED` está vazio.
 
 ## Feature mínima
 
@@ -176,4 +185,4 @@ O que decidiu e o porquê dominante. Embuta trade-offs aqui ("aceitamos custo X 
 - **Duplicar frontmatter no body** de feature ou ADR.
 - **Forçar ADR** para mudança mecânica.
 - **Promover drafts** de `decisions/proposals/` para `decisions/` sem revisão humana.
-- **Persistir specs / planos longos.** O registro durável de uma sessão é ADR + Feature, não um design doc paralelo; planejamento é efêmero (conversa/plan mode). Proponha ADRs cedo (`proposed`) e stubs de feature (`planned`) para a retomada não depender de plano efêmero (ADR-0041).
+- **Persistir specs / planos longos.** O registro durável de uma sessão é ADR + Feature, não um design doc paralelo; planejamento é efêmero (conversa/plan mode). Proponha ADRs e stubs de feature cedo, ambos como `proposed`, para a retomada não depender de plano efêmero (ADR-0041).

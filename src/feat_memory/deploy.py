@@ -20,6 +20,7 @@ Comportamento por arquivo:
 from __future__ import annotations
 
 import argparse
+import re
 import shutil
 import subprocess
 import sys
@@ -294,21 +295,43 @@ def deploy_changelog(target: Path) -> None:
         print("  criado: .feat-memory/changelog/UNRELEASED.md")
 
 
-def deploy_suggestions(target: Path) -> None:
-    """Cria .feat-memory/suggestions.md se ausente (backlog commitado, ADR-0046).
+def deploy_ideas(target: Path) -> None:
+    """Cria .feat-memory/ideas.md se ausente — funil do futuro (ADR-0047).
 
-    Funil pré-feature de propostas de evolução do sistema. Pula se existe
-    (acumula entradas entre sessões); merge normal, nunca sobrescreve.
+    Upgrade: se existe um `suggestions.md` legado (2.1.x), renomeia o conteúdo
+    para `ideas.md` em vez de criar do zero (preserva as entradas). Pula se já
+    existe; merge normal, nunca sobrescreve.
     """
-    print("Backlog de sugestões (.feat-memory/suggestions.md):")
-    src = _data_path("templates", "suggestions.md")
-    dst = target / ".feat-memory" / "suggestions.md"
-    dst.parent.mkdir(parents=True, exist_ok=True)
+    print("Funil do futuro (.feat-memory/ideas.md):")
+    fm_dir = target / ".feat-memory"
+    fm_dir.mkdir(parents=True, exist_ok=True)
+    dst = fm_dir / "ideas.md"
+    legacy = fm_dir / "suggestions.md"
     if dst.exists():
-        print("  já existe: .feat-memory/suggestions.md")
+        print("  já existe: .feat-memory/ideas.md")
+    elif legacy.exists():
+        legacy.rename(dst)
+        print("  migrado: suggestions.md → ideas.md (entradas preservadas)")
     else:
-        _copy_template(src, dst)
-        print("  criado: .feat-memory/suggestions.md")
+        _copy_template(_data_path("templates", "ideas.md"), dst)
+        print("  criado: .feat-memory/ideas.md")
+
+
+def migrate_planned_to_proposed(target: Path) -> None:
+    """Renomeia features `status: planned` → `proposed` (ADR-0047). Idempotente."""
+    feat_dir = target / ".feat-memory" / "manifest" / "features"
+    if not feat_dir.exists():
+        return
+    n = 0
+    for fp in feat_dir.glob("F-*.md"):
+        text = fp.read_text(encoding="utf-8")
+        new = re.sub(r"^status:[ \t]*planned[ \t]*$", "status: proposed",
+                     text, count=1, flags=re.MULTILINE)
+        if new != text:
+            fp.write_text(new, encoding="utf-8")
+            n += 1
+    if n:
+        print(f"Status: {n} feature(s) planned → proposed (ADR-0047)")
 
 
 def deploy_gitattributes(target: Path) -> None:
@@ -636,7 +659,8 @@ def run(args: argparse.Namespace) -> int:
     deploy_changelog(target)
     print()
 
-    deploy_suggestions(target)
+    deploy_ideas(target)
+    migrate_planned_to_proposed(target)
     print()
 
     deploy_gitattributes(target)

@@ -16,17 +16,17 @@ def _skill(name: str) -> str:
     )
 
 
-def test_debrief_has_retrospective_and_suggestions():
+def test_debrief_has_retrospective_and_ideas_triage():
     text = _skill("memory-debrief")
     assert "Retrospectiva" in text
-    assert "suggestions.md" in text
+    assert "ideas.md" in text
 
 
 def test_debrief_registers_in_unreleased():
     assert "UNRELEASED" in _skill("memory-debrief")
 
 
-def test_bootstrap_reads_unreleased_and_backlog_fallback():
+def test_bootstrap_reads_unreleased_and_ideas_fallback():
     text = _skill("memory-bootstrap")
     assert "UNRELEASED" in text
-    assert "suggestions.md" in text
+    assert "ideas.md" in text

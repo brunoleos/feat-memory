@@ -11,5 +11,6 @@ diretórios); ficam aqui para não onerar o INDEX principal.
 | ADR-0010 | 2026-04-30 | superseded | deploy,merge,template,skill | F-0001,F-0006 |
 | ADR-0018 | 2026-05-04 | superseded | state,checkpoint,model,retomada,dogfooding | F-0015 |
 | ADR-0019 | 2026-05-04 | superseded | state,checkpoint,schema,migration | F-0015 |
+| ADR-0046 | 2026-06-26 | superseded | debrief,retrospective,suggestions,methodology | F-0038,F-0039 |
 
-_Gerado por `feat-memory audit` em 2026-06-26T19:35:34+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-26T20:34:18+00:00. Não edite manualmente._

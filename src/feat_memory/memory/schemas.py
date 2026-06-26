@@ -26,7 +26,7 @@ DECISION_FILE_RE = re.compile(r"^\d{4}-[a-z0-9-]+\.md$")
 # por compatibilidade com os ADRs da gênese (v0.3.0), que usaram `vX.Y.Z`.
 SEMVER_RE = re.compile(r"^v?\d+\.\d+\.\d+$")
 
-VALID_FEATURE_STATUS = {"planned", "in_progress", "shipped", "deprecated"}
+VALID_FEATURE_STATUS = {"proposed", "in_progress", "shipped", "deprecated"}
 VALID_DECISION_STATUS = {"proposed", "accepted", "superseded", "deprecated"}
 
 # Palavras de "balde de changelog" — tokens que, no NOME de uma feature, são um
@@ -195,11 +195,12 @@ def validate_feature(path: Path) -> tuple[dict, list[Issue]]:
             ))
 
     # Só features que afirmam estar construídas (in_progress/shipped) sofrem
-    # o check de existência de contracts (ADR-0044). Em `planned` o código
+    # o check de existência de contracts (ADR-0044). Em `proposed` o código
     # ainda não existe (alvo pretendido); em `deprecated` o código pode ter
     # sido removido (sumiço esperado) — em ambos, path inexistente não é drift.
+    # (`proposed` era `planned` antes do ADR-0047 unificar o vocabulário.)
     contracts = fm.get("contracts") or {}
-    if status not in ("planned", "deprecated"):
+    if status not in ("proposed", "deprecated"):
         for p in _collect_contract_paths(contracts):
             file_part = p.split("::")[0]
             if not (_paths.ROOT / file_part).exists():

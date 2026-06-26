@@ -43,7 +43,7 @@ Cada arquivo de feature tem o nome `F-NNNN-slug.md`, onde NNNN é um número mon
 
 Os campos obrigatórios do frontmatter são `id`, `name`, `status`, `user_value`, `contracts` e `acceptance`. Os opcionais incluem `version` (semver da última release que tocou a feature), `owner` (time ou pessoa), `depends_on` (lista de IDs de outras features), `decisions` (lista de IDs de ADRs relacionados) e `metrics` (medidas operacionais, com timestamp).
 
-O campo `status` aceita quatro valores: `planned` (especificada mas não construída), `in_progress` (em construção ativa), `shipped` (entregue e em uso) e `deprecated` (mantida apenas para compatibilidade reversa). A transição de status é registrada no commit que faz a mudança.
+O campo `status` aceita quatro valores: `proposed` (intencionada, ainda não construída), `in_progress` (em construção ativa), `shipped` (entregue e em uso) e `deprecated` (mantida apenas para compatibilidade reversa). A transição de status é registrada no commit que faz a mudança. `proposed` é o **mesmo estado de entrada de um ADR** — o vocabulário do futuro é unificado entre Feature e ADR (ADR-0047).
 
 O campo `contracts` é o mais importante porque torna o arquivo automaticamente verificável. Cada caminho referenciado deve apontar para um arquivo que existe no código (`src/api/search.py::search_endpoint` significa "função `search_endpoint` no módulo `src/api/search.py`"). O `feat-memory audit` checa estes caminhos e marca como drift qualquer referência quebrada.
 
@@ -99,6 +99,12 @@ Drafts gerados pela ferramenta `feat-memory propose-adr` ficam em uma subpasta s
 
 A separação é deliberada: ADRs são imutáveis e proposals são mutáveis, e misturar os dois quebraria a invariante de imutabilidade. Drafts podem (e devem) ser editados livremente até o momento da promoção; uma vez em `.feat-memory/decisions/`, ficam congelados.
 
+## 5. O futuro: `.feat-memory/ideas.md`
+
+Se o passado mora em `decisions/`/`changelog/` e o presente no `UNRELEASED`, o futuro tem dois estágios. O **comprometido** já vive nos artefatos: uma capacidade intencionada é uma Feature `proposed`; uma decisão em gestação é um ADR `proposed` (em `proposals/`). O **cru** — ideias ainda não triadas — mora no `.feat-memory/ideas.md`: um funil commitado e compartilhado entre agentes (merge normal, **não** `merge=ours`) para capacidades de produto, decisões a tomar e melhorias do próprio sistema de agentes. Existe porque não se pode contar com um issue tracker no projeto cliente, e porque uma ideia crua ainda não merece o peso de um Feature/ADR.
+
+O pipeline é único: **ideia (`ideas.md`) → `proposed` (Feature/ADR) → realizando (`in_progress` / decidindo) → realizado (`shipped` / `accepted`)**. A triagem, no debrief, roteia cada ideia pelo tipo — capacidade→Feature `proposed`; decisão→ADR `proposed`; evolução do sistema→aplica direto; senão descarta. A disciplina é anti-tracker: itens curtos e transitórios — uma ideia promovida ou descartada **sai** do funil. Quando o `UNRELEASED` está vazio, a `memory-bootstrap` oferece candidatos do `ideas.md` como próximo foco (ADR-0047).
+
 ## Skills
 
 A metodologia inclui quatro skills em `skills/` na raiz do workspace (deployadas pelo `feat-memory deploy` a partir do package data em `src/feat_memory/data/skills/`) que orientam o agente nos fluxos críticos. Elas são opcionais — todo o protocolo está documentado neste arquivo — mas sua presença torna a aplicação consistente e libera o agente de precisar relembrar a doutrina inteira a cada interação.
@@ -139,9 +145,9 @@ Na inicialização, o agente carrega `AGENTS.md`, `.feat-memory/changelog/UNRELE
 
 Durante o trabalho, qualquer mudança de comportamento exige atualizar a feature correspondente no Manifest no mesmo commit do código. O Manifest é a única fonte de verdade sobre o que o sistema faz; se uma capacidade não está no Manifest, ela não existe, mesmo que o código já tenha sido escrito. Esta rigidez parece custosa mas paga dividendos imediatos: o problema clássico de agentes inventando features que não combinam com o sistema existente desaparece.
 
-A definição não espera o commit final. Uma capacidade nova nasce **cedo** como feature `planned`, e a decisão que a molda como ADR `proposed` — ainda durante o trabalho, antes de o código estar pronto. Assim a retomada se ancora sempre em ADR+Feature, que o agente já sabe carregar, e nunca num plano efêmero que some no próximo reset de contexto. O planejamento vive na conversa ou no plan mode da ferramenta; não vira um spec persistente (ADR-0041).
+A definição não espera o commit final. Uma capacidade nova nasce **cedo** como feature `proposed`, e a decisão que a molda como ADR `proposed` — ainda durante o trabalho, antes de o código estar pronto. Assim a retomada se ancora sempre em ADR+Feature, que o agente já sabe carregar, e nunca num plano efêmero que some no próximo reset de contexto. O planejamento vive na conversa ou no plan mode da ferramenta; não vira um spec persistente (ADR-0041).
 
-No debrief, o agente registra o trabalho como uma entrada-bullet no `.feat-memory/changelog/UNRELEASED.md` (citando as F/ADR que tocou), atualiza ou cria entradas no Manifest para features tocadas, e cria um ADR se a sessão produziu uma decisão arquitetural não-trivial. Fecha com uma retrospectiva inline e captura propostas de evolução no backlog (ADR-0046). O debrief é parte do trabalho, não opcional — uma sessão sem debrief é trabalho perdido.
+No debrief, o agente registra o trabalho como uma entrada-bullet no `.feat-memory/changelog/UNRELEASED.md` (citando as F/ADR que tocou), atualiza ou cria entradas no Manifest para features tocadas, e cria um ADR se a sessão produziu uma decisão arquitetural não-trivial. Fecha com uma retrospectiva inline e tria as ideias do futuro para o funil `ideas.md` (ADR-0047/0048). O debrief é parte do trabalho, não opcional — uma sessão sem debrief é trabalho perdido.
 
 ## Auditoria
 

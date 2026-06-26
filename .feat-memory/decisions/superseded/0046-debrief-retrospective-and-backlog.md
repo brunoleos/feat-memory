@@ -1,10 +1,10 @@
 ---
 id: ADR-0046
 date: 2026-06-26
-status: accepted
+status: superseded
 version: 2.1.0
 supersedes: null
-superseded_by: null
+superseded_by: [ADR-0047, ADR-0048]
 affects_features: [F-0038, F-0039]
 related: [ADR-0004, ADR-0041, ADR-0043]
 tags: [debrief, retrospective, suggestions, methodology]

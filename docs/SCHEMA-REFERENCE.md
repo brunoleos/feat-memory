@@ -20,7 +20,7 @@ Gerado de `feat_memory.memory.schemas` (fonte única). Não edite à mão — ro
 - **Nome do arquivo:** `^F-\d{4}-[a-z0-9-]+\.md$`
 - **Obrigatórios:** `id`, `name`, `status`, `user_value`, `contracts`, `acceptance`
 - **Opcionais reconhecidos:** `version`, `owner`, `introduced`, `depends_on`, `decisions`, `metrics`
-- `status` ∈ {`deprecated`, `in_progress`, `planned`, `shipped`}
+- `status` ∈ {`deprecated`, `in_progress`, `proposed`, `shipped`}
 - `contracts`: mapa com chaves `api`, `schemas`, `tests` (str, lista ou mapa de caminhos reais; `arquivo::símbolo` aceito). Caminho inexistente → `warning` de drift.
 - `acceptance`: lista de critérios EARS (ver seção *EARS*).
 - Sem limite mecânico de tamanho — mantenha enxuto (uma capacidade, `user_value` em uma frase).

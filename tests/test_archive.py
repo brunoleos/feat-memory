@@ -97,7 +97,7 @@ def test_collect_eligible_active_overrides_shipped(archive_repo):
 def test_collect_eligible_skips_non_shipped(archive_repo):
     feat_dir = _paths.FEATURES_DIR
     _write_feature(feat_dir, "F-0001", "wip", status="in_progress")
-    _write_feature(feat_dir, "F-0002", "planned", status="planned")
+    _write_feature(feat_dir, "F-0002", "proposed", status="proposed")
     _write_feature(feat_dir, "F-0003", "deprecated-feat", status="deprecated")
     eligible = archive.collect_eligible(feat_dir, {"active_features": []})
     assert eligible == []
