@@ -45,4 +45,4 @@
 | ADR-0044 | 2026-06-26 | accepted | audit,manifest,drift,planned,methodology | — |
 | ADR-0045 | 2026-06-26 | accepted | release,versioning,git,tags,methodology | F-0035 |
 
-_Gerado por `feat-memory audit` em 2026-06-26T04:04:27+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-26T04:21:50+00:00. Não edite manualmente._

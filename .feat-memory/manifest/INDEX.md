@@ -19,4 +19,4 @@
 | F-0036 | unreleased-living-state | in_progress | 2.0.0 | ADR-0043 | F-0035 |
 | F-0037 | changelog-layout-migration | in_progress | 2.0.0 | ADR-0042,ADR-0043 | F-0035,F-0036 |
 
-_Gerado por `feat-memory audit` em 2026-06-26T04:04:27+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-26T04:21:50+00:00. Não edite manualmente._

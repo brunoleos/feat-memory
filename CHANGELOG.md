@@ -6,6 +6,14 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto ader
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-06-26
+
+Tooling passa a suportar o layout sem STATE (preparação do cutover 2.0.0).
+
+### Adicionado
+
+**`audit` STATE-opcional (F-0036).** Quando `.feat-memory/STATE.md` não existe (layout novo), o `audit` deriva o orçamento de retomada das referências `F`/`ADR` do `changelog/UNRELEASED.md` (ADR-0043), em vez de exigir o STATE. Com STATE presente, comportamento inalterado. Habilita a remoção do STATE no cutover sem quebrar o gate `--strict`.
+
 ## [1.9.0] - 2026-06-26
 
 Comando de migração do layout legado para o novo (aditivo; o cutover roda na 2.0.0).

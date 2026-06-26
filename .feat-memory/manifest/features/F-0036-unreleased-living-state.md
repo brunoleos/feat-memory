@@ -12,6 +12,7 @@ acceptance:
   - {id: A1, pattern: event, trigger: "memory-bootstrap carrega o contexto inicial", response: "lê changelog/UNRELEASED.md e expande apenas as F/ADR referenciadas nas entradas"}
   - {id: A2, pattern: state, state: "UNRELEASED.md está vazio", response: "a retomada aponta para o último release no INDEX (ou o backlog, na Fase 2)"}
   - {id: A3, pattern: ubiquitous, requirement: "não existe STATE.md nem lista active_* hand-maintained"}
+  - {id: A4, pattern: state, state: "STATE.md ausente (layout novo)", response: "o audit deriva o orçamento de retomada das refs F/ADR do changelog/UNRELEASED.md, sem exigir STATE"}
 depends_on: [F-0035]
 decisions: [ADR-0043]
 ---

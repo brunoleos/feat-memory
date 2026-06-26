@@ -448,8 +448,19 @@ def run_audit(write_indices: bool = True,
     max_state = (agent_fm.get("budgets") or {}).get(
         "state_max_bytes", DEFAULT_STATE_BUDGET
     )
-    state_fm, issues = validate_state(_paths.STATE, max_state)
-    all_issues.extend(issues)
+    if _paths.STATE.exists():
+        state_fm, issues = validate_state(_paths.STATE, max_state)
+        all_issues.extend(issues)
+    else:
+        # Layout novo (sem STATE.md): o orçamento de retomada é derivado das
+        # referências do changelog/UNRELEASED.md (ADR-0043). Mantém o mesmo
+        # shape consumido por compute_metrics e validate_state_crosscheck.
+        from feat_memory.memory import changelog
+        active = changelog.derive_active_refs(_paths.ROOT)
+        state_fm = {
+            "active_features": active["features"],
+            "active_decisions": active["decisions"],
+        }
 
     features: list[dict] = []
     if _paths.FEATURES_DIR.exists():
