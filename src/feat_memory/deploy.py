@@ -294,6 +294,23 @@ def deploy_changelog(target: Path) -> None:
         print("  criado: .feat-memory/changelog/UNRELEASED.md")
 
 
+def deploy_suggestions(target: Path) -> None:
+    """Cria .feat-memory/suggestions.md se ausente (backlog commitado, ADR-0046).
+
+    Funil pré-feature de propostas de evolução do sistema. Pula se existe
+    (acumula entradas entre sessões); merge normal, nunca sobrescreve.
+    """
+    print("Backlog de sugestões (.feat-memory/suggestions.md):")
+    src = _data_path("templates", "suggestions.md")
+    dst = target / ".feat-memory" / "suggestions.md"
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    if dst.exists():
+        print("  já existe: .feat-memory/suggestions.md")
+    else:
+        _copy_template(src, dst)
+        print("  criado: .feat-memory/suggestions.md")
+
+
 def deploy_gitattributes(target: Path) -> None:
     """Deploy do .gitattributes (bloco com sentinelas) + driver de merge."""
     print("Configuração de merge (.gitattributes):")
@@ -617,6 +634,9 @@ def run(args: argparse.Namespace) -> int:
     print()
 
     deploy_changelog(target)
+    print()
+
+    deploy_suggestions(target)
     print()
 
     deploy_gitattributes(target)

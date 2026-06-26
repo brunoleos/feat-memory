@@ -40,7 +40,7 @@ Em seguida, verifique se o merge tocou artefatos da metodologia: `git log -1 --n
 
 O conjunto ativo **é derivado** das referências `F-NNNN`/`ADR-NNNN` nas **entradas-bullet** do `changelog/UNRELEASED.md` (ADR-0043) — não há mais lista `active_*` hand-maintained. Carregue **somente** os arquivos correspondentes em `.feat-memory/manifest/features/F-NNNN-*.md` e `.feat-memory/decisions/NNNN-*.md`. Não carregue o Manifest inteiro nem todos os ADRs.
 
-Se o `UNRELEASED.md` está **vazio** (nada em voo), não há conjunto ativo — olhe o último release em `.feat-memory/changelog/INDEX.md` para situar onde o projeto parou.
+Se o `UNRELEASED.md` está **vazio** (nada em voo), não há conjunto ativo — olhe o último release em `.feat-memory/changelog/INDEX.md` para situar onde o projeto parou, e consulte `.feat-memory/suggestions.md` (backlog de evolução) para oferecer candidatos de próximo foco (ADR-0046).
 
 ### 3. Apresente um briefing tático
 

@@ -18,5 +18,7 @@
 | F-0035 | changelog-folder | shipped | 2.0.0 | ADR-0042,ADR-0045 | — |
 | F-0036 | unreleased-living-state | shipped | 2.0.0 | ADR-0043 | F-0035 |
 | F-0037 | changelog-layout-migration | shipped | 2.0.0 | ADR-0042,ADR-0043 | F-0035,F-0036 |
+| F-0038 | suggestions-backlog | shipped | 2.1.0 | ADR-0046 | F-0036 |
+| F-0039 | debrief-retrospective | shipped | 2.1.0 | ADR-0046 | F-0038 |
 
-_Gerado por `feat-memory audit` em 2026-06-26T04:52:51+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-26T17:34:59+00:00. Não edite manualmente._

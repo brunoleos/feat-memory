@@ -83,6 +83,12 @@ feat-memory record debrief_run features=F-NNNN[,F-NNNN]
 
 Local-only, falha não bloqueia (F-0014, ADR-0017).
 
+### 8. Retrospectiva e sugestões de evolução (ADR-0046)
+
+Feche com uma **retrospectiva inline** — não persista a narrativa, só reflita na conversa: o que foi entregue (escopo + magnitude), bugs diagnosticados, achados (arquiteturais/processuais) e um **resumo honesto** (o que funcionou, o que custou mais do que devia, qual o risco residual). As saídas duráveis já têm lar — não duplique: release→entrada no `UNRELEASED`, decisão→ADR, capacidade→Feature.
+
+Se durante a sessão surgiu uma **proposta de evolução do próprio sistema** (skill nova, regra de `AGENTS.md`, ADR transversal, refactor, heurística frouxa), aplique **ask-before-register**: pergunte ao usuário se quer **resolver agora**, **adiar** (registrar em `.feat-memory/suggestions.md`) ou **descartar**. Nunca persista silenciosamente; duplicata de uma pendência já listada é só um bump de `occ`. O backlog é o funil pré-feature e o fallback de retomada quando o `UNRELEASED` está vazio.
+
 ## Feature mínima
 
 ```yaml

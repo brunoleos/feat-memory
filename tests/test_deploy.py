@@ -32,6 +32,7 @@ def test_deploy_creates_all_artifacts(tmp_project):
         tmp_project / "AGENTS.md",
         tmp_project / "CLAUDE.md",
         tmp_project / ".feat-memory" / "changelog" / "UNRELEASED.md",
+        tmp_project / ".feat-memory" / "suggestions.md",
         tmp_project / ".gitattributes",
         tmp_project / ".gitignore",
     ):
