@@ -28,7 +28,7 @@ constraints:
     rule: "Toda documentação em pt-br."
 references:
   manifest_index: ./.feat-memory/manifest/INDEX.md
-  state: ./.feat-memory/STATE.md
+  unreleased: ./.feat-memory/changelog/UNRELEASED.md
   decisions_index: ./.feat-memory/decisions/INDEX.md
   methodology: ./METHODOLOGY.md
   skills: ./skills/
@@ -41,7 +41,7 @@ budgets:
 
 ## Identidade
 
-`feat-memory` é uma CLI Python que distribui uma metodologia de memória persistente para agentes LLM (Claude Code, Cursor, Aider e qualquer ferramenta que reconheça `AGENTS.md`). Quatro artefatos versionados (`AGENTS.md` na raiz; `STATE.md`, `manifest/` e `decisions/` em `.feat-memory/`) dão ao agente contexto durável entre sessões; um conjunto de subcomandos (`deploy`, `audit`, `propose-adr`, `migrate`, `archive`, `checkpoint`, `record`/`log`, `version-check`, `check-*-staged`) automatiza instalação, validação, gênese retroativa e governança. Quatro skills (`memory-deploy`, `memory-bootstrap`, `memory-debrief`, `memory-pull-brief`) orientam os fluxos críticos. Usuários: desenvolvedores que querem que seu agente preserve foco e decisões arquiteturais sem reler o código a cada sessão.
+`feat-memory` é uma CLI Python que distribui uma metodologia de memória persistente para agentes LLM (Claude Code, Cursor, Aider e qualquer ferramenta que reconheça `AGENTS.md`). Quatro artefatos versionados (`AGENTS.md` na raiz; `manifest/`, `decisions/` e `changelog/` em `.feat-memory/`) dão ao agente contexto durável entre sessões; um conjunto de subcomandos (`deploy`, `audit`, `propose-adr`, `migrate`, `archive`, `release`, `record`/`log`, `version-check`, `check-*-staged`) automatiza instalação, validação, gênese retroativa e governança. Quatro skills (`memory-deploy`, `memory-bootstrap`, `memory-debrief`, `memory-pull-brief`) orientam os fluxos críticos. Usuários: desenvolvedores que querem que seu agente preserve foco e decisões arquiteturais sem reler o código a cada sessão.
 
 Este repositório é simultaneamente a tool e a metodologia — vale o C3: o projeto segue o próprio protocolo.
 
@@ -78,7 +78,7 @@ Não use `pip install -e .` — colide com o shim do pipx em `~/.local/bin/feat-
 <!-- >>> feat-memory >>> -->
 ## feat-memory
 
-Sessões começam por `.feat-memory/STATE.md` (foco atual) e `.feat-memory/manifest/INDEX.md` (mapa de capacidades). Detalhes de uma feature ficam em `.feat-memory/manifest/features/F-NNNN-*.md`. Decisões arquiteturais em `.feat-memory/decisions/`. A metodologia completa está documentada no repositório do feat-memory: <https://github.com/brunoleos/feat-memory/blob/v1.10.0/METHODOLOGY.md>.
+Sessões começam por `.feat-memory/changelog/UNRELEASED.md` (trabalho em voo) e `.feat-memory/manifest/INDEX.md` (mapa de capacidades). Detalhes de uma feature ficam em `.feat-memory/manifest/features/F-NNNN-*.md`. Decisões arquiteturais em `.feat-memory/decisions/`. O histórico de releases vive em `.feat-memory/changelog/<tag>.md`. A metodologia completa está documentada no repositório do feat-memory: <https://github.com/brunoleos/feat-memory/blob/v2.0.0/METHODOLOGY.md>.
 
 Este bloco é refrescado a cada `feat-memory deploy`. Não edite diretamente — mudanças aqui são sobrescritas no próximo redeploy. Conteúdo específico do projeto vai fora das marcações HTML que delimitam este bloco.
 
@@ -88,10 +88,10 @@ Quatro skills em `skills/` orientam os fluxos críticos. Leia o `SKILL.md` de ca
 
 - **`memory-deploy`** — instalar/adotar a metodologia num projeto: deploy mecânico e, em legacy, gênese retroativa multi-fonte (testes, telas, código, deps; git secundário).
 - **`memory-bootstrap`** — retomar uma sessão: carregar o contexto e dar o briefing tático ("onde paramos", "qual o status").
-- **`memory-debrief`** — fechar/commitar uma sessão: atualizar Manifest e STATE e propor ADR a partir do diff. A mais usada no dia-a-dia.
-- **`memory-pull-brief`** — após `git pull`, brifar o que veio do remote e ressincronizar o STATE.
+- **`memory-debrief`** — fechar/commitar uma sessão: atualizar Manifest e registrar o trabalho no `changelog/UNRELEASED.md` e propor ADR a partir do diff. A mais usada no dia-a-dia.
+- **`memory-pull-brief`** — após `git pull`, brifar o que veio do remote e reconciliar o `UNRELEASED.md`.
 
 ### Como retomar trabalho
 
-A constituição é carregada automaticamente. Em seguida, você deve carregar `.feat-memory/STATE.md` para descobrir o foco da sessão e os IDs de features e decisões ativas. Apenas as features e ADRs listados em `STATE.md::active_features` e `STATE.md::active_decisions` precisam ser expandidos no contexto inicial — carregar o Manifest inteiro ou todos os ADRs viola o orçamento de retomada.
+A constituição é carregada automaticamente. Em seguida, você deve carregar `.feat-memory/changelog/UNRELEASED.md` para descobrir o trabalho em voo. O conjunto ativo de features e ADRs é **derivado** das referências `F-NNNN`/`ADR-NNNN` nas entradas-bullet do UNRELEASED (ADR-0043) — apenas esses precisam ser expandidos no contexto inicial; carregar o Manifest inteiro ou todos os ADRs viola o orçamento de retomada. UNRELEASED vazio = nada em voo (veja o último release em `changelog/INDEX.md`).
 <!-- <<< feat-memory <<< -->

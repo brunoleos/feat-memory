@@ -1,7 +1,7 @@
 ---
 id: ADR-0042
 date: 2026-06-26
-status: proposed
+status: accepted
 version: 2.0.0
 supersedes: null
 superseded_by: null

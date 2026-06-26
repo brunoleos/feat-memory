@@ -39,79 +39,6 @@ import sys
 from pathlib import Path
 
 
-def _run_to_checkpoints(root: Path | None = None) -> int:
-    """Cria o primeiro checkpoint a partir de STATE.md legado.
-
-    Idempotente: se .feat-memory/checkpoints/ já tem arquivos, retorna 0
-    sem mexer. Não-destrutivo: o STATE.md original é preservado (regerado
-    com mesmo conteúdo, agora derivado do checkpoint). ADR-0019.
-    """
-    from feat_memory.shared import paths as _paths
-    from feat_memory.shared.parsing import parse_frontmatter
-    from feat_memory.memory import checkpoints as cp
-
-    _paths._init_paths(root)
-    cp_dir = cp._checkpoints_dir(_paths.ROOT)
-    if cp_dir.exists() and any(cp_dir.glob("*.md")):
-        print("Checkpoints já existem em .feat-memory/checkpoints/. "
-              "Migração é idempotente — nada a fazer.")
-        return 0
-
-    state_path = cp._state_path(_paths.ROOT)
-    if not state_path.exists():
-        print("STATE.md não existe em .feat-memory/. "
-              "Crie um com `feat-memory deploy` ou rode "
-              "`feat-memory checkpoint --summary '...'` direto.",
-              file=sys.stderr)
-        return 1
-
-    try:
-        fm, body = parse_frontmatter(state_path)
-    except ValueError as e:
-        print(f"ERRO ao ler STATE.md: {e}", file=sys.stderr)
-        return 1
-
-    current = _extract_section(body, "Current") or "(não detectado em STATE.md legado)"
-    next_ = _extract_section(body, "Next") or "TODO"
-    summary = f"{current} | next: {next_}"
-
-    ts_raw = fm.get("updated_at")
-    now = None
-    if ts_raw:
-        try:
-            from datetime import datetime, timezone
-            s = str(ts_raw).replace("Z", "+00:00")
-            now = datetime.fromisoformat(s)
-            if now.tzinfo is None:
-                now = now.replace(tzinfo=timezone.utc)
-        except ValueError:
-            now = None
-
-    cp_path = cp.append_checkpoint(
-        _paths.ROOT,
-        summary=summary,
-        current=current,
-        next_=next_,
-        features=list(fm.get("active_features") or []),
-        decisions=list(fm.get("active_decisions") or []),
-        blocked_on=fm.get("blocked_on"),
-        author=str(fm.get("updated_by") or "migration"),
-        body=f"_(corpo preservado do STATE.md legado durante migração)_\n\n{body.strip()}\n",
-        now=now,
-    )
-    state_new = cp.write_state(_paths.ROOT)
-
-    rel_cp = cp_path.relative_to(_paths.ROOT)
-    rel_st = state_new.relative_to(_paths.ROOT)
-    print("✓ migração concluída.")
-    print(f"  checkpoint inicial: {rel_cp}")
-    print(f"  STATE.md regerado:  {rel_st}")
-    print()
-    print("A partir daqui, use `feat-memory checkpoint --summary '...'` "
-          "(ou a skill memory-debrief) para registrar novas sessões.")
-    return 0
-
-
 def _run_to_changelog(root: Path | None = None) -> int:
     """Migra o layout legado (CHANGELOG.md + STATE.md + checkpoints/) para
     o novo (changelog/ + UNRELEASED.md). Idempotente (F-0037, ADR-0042/0043).
@@ -126,22 +53,6 @@ def _run_to_changelog(root: Path | None = None) -> int:
         print("\nLayout novo em .feat-memory/changelog/. Os legados "
               "(CHANGELOG.md, STATE.md, checkpoints/) foram removidos.")
     return 0
-
-
-def _extract_section(body: str, name: str) -> str | None:
-    """Pega a primeira linha não-vazia da seção H2 indicada."""
-    pattern = re.compile(rf"^##\s+{re.escape(name)}\s*$", re.MULTILINE)
-    m = pattern.search(body)
-    if not m:
-        return None
-    rest = body[m.end():]
-    next_h = re.search(r"^##\s", rest, re.MULTILINE)
-    section = rest[:next_h.start()] if next_h else rest
-    for line in section.splitlines():
-        s = line.strip()
-        if s:
-            return s
-    return None
 
 
 def find_project_root() -> Path:
@@ -341,19 +252,15 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
                    help="número de commits a examinar (padrão: 100)")
     p.add_argument("--json", action="store_true",
                    help="output em JSON")
-    p.add_argument("--to", choices=["checkpoints", "changelog"], default=None,
-                   help="modo de migração explícita: --to=checkpoints cria o "
-                        "primeiro checkpoint do STATE.md legado (ADR-0019); "
-                        "--to=changelog migra o layout para changelog/ + "
+    p.add_argument("--to", choices=["changelog"], default=None,
+                   help="migração explícita: --to=changelog migra o layout legado "
+                        "(CHANGELOG.md + STATE.md + checkpoints/) para changelog/ + "
                         "UNRELEASED.md e remove os legados (F-0037, ADR-0042/0043)")
     p.set_defaults(func=run)
 
 
 def run(args: argparse.Namespace) -> int:
     explicit = Path(args.path).resolve() if getattr(args, "path", None) else None
-
-    if getattr(args, "to", None) == "checkpoints":
-        return _run_to_checkpoints(explicit)
 
     if getattr(args, "to", None) == "changelog":
         return _run_to_changelog(explicit)

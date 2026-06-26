@@ -1,7 +1,7 @@
 ---
 id: F-0035
 name: changelog-folder
-status: in_progress
+status: shipped
 introduced: 2026-06-26
 version: 2.0.0
 user_value: O histórico de releases vive como um arquivo imutável por tag em .feat-memory/changelog/, com INDEX gerado e um comando que congela cada release.

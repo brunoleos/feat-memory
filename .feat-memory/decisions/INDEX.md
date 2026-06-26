@@ -16,8 +16,6 @@
 | ADR-0015 | 2026-05-04 | accepted | manifest,archive,retention,retomada,dogfooding | F-0012 |
 | ADR-0016 | 2026-05-04 | accepted | hooks,audit,ux,fail-open | F-0013 |
 | ADR-0017 | 2026-05-04 | accepted | telemetry,observability,privacy,dogfooding | F-0014 |
-| ADR-0018 | 2026-05-04 | accepted | state,checkpoint,model,retomada,dogfooding | F-0015 |
-| ADR-0019 | 2026-05-04 | accepted | state,checkpoint,schema,migration | F-0015 |
 | ADR-0020 | 2026-05-04 | accepted | hooks,semver,release,fail-open-exception | F-0016 |
 | ADR-0021 | 2026-05-05 | accepted | architecture,separation-of-concerns,refactor,packaging | F-0017 |
 | ADR-0022 | 2026-05-05 | accepted | governance,observability,consumer-notice,soft-warning | F-0018 |
@@ -40,9 +38,9 @@
 | ADR-0039 | 2026-06-06 | accepted | deploy,migration,legacy,upgrade,breaking-change,dogfooding | F-0034 |
 | ADR-0040 | 2026-06-25 | accepted | decisions,governance,supersede | — |
 | ADR-0041 | 2026-06-25 | accepted | decisions,manifest,state,methodology,planning | — |
-| ADR-0042 | 2026-06-26 | proposed | changelog,history,folder,convention,multiagent | F-0035,F-0037 |
-| ADR-0043 | 2026-06-26 | proposed | state,changelog,unreleased,resumption,methodology | F-0036,F-0037 |
+| ADR-0042 | 2026-06-26 | accepted | changelog,history,folder,convention,multiagent | F-0035,F-0037 |
+| ADR-0043 | 2026-06-26 | accepted | state,changelog,unreleased,resumption,methodology | F-0036,F-0037 |
 | ADR-0044 | 2026-06-26 | accepted | audit,manifest,drift,planned,methodology | — |
 | ADR-0045 | 2026-06-26 | accepted | release,versioning,git,tags,methodology | F-0035 |
 
-_Gerado por `feat-memory audit` em 2026-06-26T04:21:50+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-26T04:52:51+00:00. Não edite manualmente._

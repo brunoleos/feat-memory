@@ -31,7 +31,7 @@ def test_deploy_creates_all_artifacts(tmp_project):
     for path in (
         tmp_project / "AGENTS.md",
         tmp_project / "CLAUDE.md",
-        tmp_project / ".feat-memory" / "STATE.md",
+        tmp_project / ".feat-memory" / "changelog" / "UNRELEASED.md",
         tmp_project / ".gitattributes",
         tmp_project / ".gitignore",
     ):
@@ -238,26 +238,6 @@ def test_deploy_substitutes_version_in_agent_md(tmp_project):
     assert f"v{__version__}/METHODOLOGY.md" in content
 
 
-def test_deploy_state_gets_real_timestamp_not_hardcoded(tmp_project):
-    """STATE.md nasce com updated_at do deploy, não a data fixa do template.
-
-    Regressão: o template tinha `updated_at: 2026-04-28` hardcoded, então a
-    auditoria pós-deploy lia semanas de drift num arquivo recém-criado.
-    """
-    from datetime import datetime, timezone
-
-    deploy.run(_args(tmp_project))
-    fm, _ = parse_frontmatter(tmp_project / ".feat-memory" / "STATE.md")
-
-    assert fm["updated_by"] == "deploy"
-    assert "{DEPLOY_DATE}" != str(fm["updated_at"])
-    ts = datetime.fromisoformat(str(fm["updated_at"]).replace("Z", "+00:00"))
-    if ts.tzinfo is None:
-        ts = ts.replace(tzinfo=timezone.utc)
-    # Deploy acabou de rodar: o timestamp é recente, não 2026-04.
-    assert abs((datetime.now(timezone.utc) - ts).total_seconds()) < 300
-
-
 def test_deploy_injects_frontmatter_into_legacy_agent_md(tmp_project):
     """AGENTS.md em prosa, sem frontmatter, recebe o esqueleto injetado.
 
@@ -321,7 +301,7 @@ def test_deploy_defaults_to_cwd(tmp_project, monkeypatch):
     rc = deploy.run(_args("."))
     assert rc == 0
     assert (tmp_project / "AGENTS.md").is_file()
-    assert (tmp_project / ".feat-memory" / "STATE.md").is_file()
+    assert (tmp_project / ".feat-memory" / "changelog" / "UNRELEASED.md").is_file()
 
 
 def test_deploy_meta_omits_cli_path(tmp_project):

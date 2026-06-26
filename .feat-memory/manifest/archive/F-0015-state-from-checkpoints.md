@@ -1,7 +1,7 @@
 ---
 id: F-0015
 name: state-from-checkpoints
-status: shipped
+status: deprecated
 introduced: 2026-05-04
 version: 0.6.0
 user_value: Inverte STATE.md de fonte da verdade para view derivada de checkpoints append-only, eliminando reescrita destrutiva por debriefs apressados. memory-bootstrap continua lendo o mesmo arquivo (Liskov-safe).
@@ -26,3 +26,6 @@ acceptance:
 depends_on: [F-0008, F-0014]
 decisions: [ADR-0018, ADR-0019]
 ---
+
+**Deprecada na 2.0.0.** O event-sourcing de checkpoints (ADR-0018/0019) foi removido — o STATE dissolveu em `changelog/UNRELEASED.md` e o orçamento de retomada passou a ser derivado das refs das entradas (F-0036, ADR-0043). `checkpoints.py`, `STATE.md` e os comandos `checkpoint`/`state-rebuild` não existem mais; os contracts acima apontam para código removido (sem drift por serem de feature `deprecated`, ADR-0044).
+

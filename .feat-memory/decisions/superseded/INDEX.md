@@ -9,5 +9,7 @@ diretórios); ficam aqui para não onerar o INDEX principal.
 | ADR-0005 | 2026-04-28 | superseded | installation,distribution | — |
 | ADR-0006 | 2026-04-29 | superseded | installation,distribution | F-0001 |
 | ADR-0010 | 2026-04-30 | superseded | deploy,merge,template,skill | F-0001,F-0006 |
+| ADR-0018 | 2026-05-04 | superseded | state,checkpoint,model,retomada,dogfooding | F-0015 |
+| ADR-0019 | 2026-05-04 | superseded | state,checkpoint,schema,migration | F-0015 |
 
-_Gerado por `feat-memory audit` em 2026-06-26T04:21:50+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-26T04:52:51+00:00. Não edite manualmente._

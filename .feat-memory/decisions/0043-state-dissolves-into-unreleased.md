@@ -1,9 +1,9 @@
 ---
 id: ADR-0043
 date: 2026-06-26
-status: proposed
+status: accepted
 version: 2.0.0
-supersedes: null
+supersedes: [ADR-0018, ADR-0019]
 superseded_by: null
 affects_features: [F-0036, F-0037]
 related: [ADR-0018, ADR-0019, ADR-0016]

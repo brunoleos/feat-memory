@@ -8,7 +8,7 @@ Comportamento por arquivo:
                             deploy; conteúdo do usuário fora do bloco nunca
                             é tocado
     CLAUDE.md            → copia se ausente; deixa quieto se existe
-    .feat-memory/STATE.md → pula se existe (conteúdo é volátil)
+    .feat-memory/changelog/UNRELEASED.md → pula se existe (volátil)
     skills/              → sempre atualizadas (conteúdo de metodologia)
     .claude/agents/      → subagents do Claude Code, sempre atualizados
                             (wrapper fino que pré-carrega a skill homônima)
@@ -277,22 +277,21 @@ def deploy_meta(target: Path) -> None:
     print(f"  {verb}: .feat-memory/.meta.yaml (v{__version__})")
 
 
-def deploy_state(target: Path, force: bool) -> None:
-    """Deploy de STATE.md em .feat-memory/ (sempre pula se existe; conteúdo é volátil)."""
-    print("Estado (.feat-memory/STATE.md):")
-    src = _data_path("templates", "STATE.md")
-    feat_memory_dir = target / ".feat-memory"
-    feat_memory_dir.mkdir(parents=True, exist_ok=True)
-    dst = feat_memory_dir / "STATE.md"
+def deploy_changelog(target: Path) -> None:
+    """Cria changelog/UNRELEASED.md em .feat-memory/ (pula se existe).
 
-    if not dst.exists():
-        _copy_template(src, dst)
-        print("  criado: .feat-memory/STATE.md")
-    elif force:
-        _copy_template(src, dst)
-        print("  sobrescrito: .feat-memory/STATE.md (--force)")
+    Substitui o antigo STATE.md: o foco da sessão e o orçamento de retomada
+    vivem nas entradas do UNRELEASED (ADR-0043). Conteúdo volátil — nunca
+    sobrescreve um existente.
+    """
+    from feat_memory.memory import changelog
+    print("Changelog vivo (.feat-memory/changelog/UNRELEASED.md):")
+    up = changelog.unreleased_path(target)
+    if up.exists():
+        print("  já existe: .feat-memory/changelog/UNRELEASED.md")
     else:
-        print("  pulado: .feat-memory/STATE.md (já existe; foco da sessão é volátil)")
+        changelog.ensure_scaffold(target)
+        print("  criado: .feat-memory/changelog/UNRELEASED.md")
 
 
 def deploy_gitattributes(target: Path) -> None:
@@ -512,10 +511,10 @@ def deploy_skills(target: Path, force: bool) -> None:
 
 
 def create_directories(target: Path) -> None:
-    """Cria estrutura de pastas .feat-memory/manifest/, decisions/, checkpoints/."""
+    """Cria estrutura de pastas .feat-memory/manifest/, decisions/, changelog/."""
     print("Estrutura de pastas:")
     base = target / ".feat-memory"
-    for rel in ("manifest/features", "decisions/proposals", "checkpoints"):
+    for rel in ("manifest/features", "decisions/proposals", "changelog"):
         full = base / rel
         if full.exists():
             print(f"  já existe: .feat-memory/{rel}/")
@@ -554,7 +553,8 @@ def print_next_steps(target: Path) -> None:
     print(f"  1. Preencha/aprove o frontmatter de {target / 'AGENTS.md'} "
           "(project, stack, constraints) — a skill memory-deploy propõe a partir "
           "do código e você aprova; `feat-memory schema` mostra a forma dos campos")
-    print(f"  2. Edite {target / '.feat-memory' / 'STATE.md'} (Current, Next)")
+    print(f"  2. Registre o trabalho em voo em "
+          f"{target / '.feat-memory' / 'changelog' / 'UNRELEASED.md'}")
     print("  3. (Opcional) Adicione seções específicas do projeto à AGENTS.md "
           "fora do bloco feat-memory")
     print("  4. Crie sua primeira feature em .feat-memory/manifest/features/ "
@@ -616,7 +616,7 @@ def run(args: argparse.Namespace) -> int:
     deploy_meta(target)
     print()
 
-    deploy_state(target, args.force)
+    deploy_changelog(target)
     print()
 
     deploy_gitattributes(target)

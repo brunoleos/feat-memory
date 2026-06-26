@@ -194,12 +194,12 @@ def validate_feature(path: Path) -> tuple[dict, list[Issue]]:
                 f"(ADR-0035)",
             ))
 
-    # Features `planned` ainda não têm código — seus contracts são alvos
-    # pretendidos, não drift. Só features que afirmam estar construídas
-    # (in_progress/shipped) sofrem o check de existência (ADR-0044), o que
-    # viabiliza a doutrina de ancorar features cedo (ADR-0041).
+    # Só features que afirmam estar construídas (in_progress/shipped) sofrem
+    # o check de existência de contracts (ADR-0044). Em `planned` o código
+    # ainda não existe (alvo pretendido); em `deprecated` o código pode ter
+    # sido removido (sumiço esperado) — em ambos, path inexistente não é drift.
     contracts = fm.get("contracts") or {}
-    if status != "planned":
+    if status not in ("planned", "deprecated"):
         for p in _collect_contract_paths(contracts):
             file_part = p.split("::")[0]
             if not (_paths.ROOT / file_part).exists():

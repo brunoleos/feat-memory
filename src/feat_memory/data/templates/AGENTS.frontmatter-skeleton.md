@@ -6,7 +6,7 @@ stack:
 constraints: []
 references:
   manifest_index: ./.feat-memory/manifest/INDEX.md
-  state: ./.feat-memory/STATE.md
+  unreleased: ./.feat-memory/changelog/UNRELEASED.md
   decisions_index: ./.feat-memory/decisions/INDEX.md
   methodology: https://github.com/brunoleos/feat-memory/blob/v{VERSION}/METHODOLOGY.md
   skills: ./skills/

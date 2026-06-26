@@ -13,7 +13,6 @@ from feat_memory import __version__, deploy
 from feat_memory.memory import (
     archive,
     changelog,
-    checkpoints,
     migrate,
     propose_adr,
     schema_reference,
@@ -35,7 +34,7 @@ def main(argv: list[str] | None = None) -> int:
             "Persistent memory methodology for LLM agents.\n\n"
             "Subcomandos agrupados por concern (F-0017, ADR-0021):\n"
             "  Memória:    deploy, audit, propose-adr, migrate, archive,\n"
-            "              checkpoint, state-rebuild\n"
+            "              release\n"
             "  Governança: record, log, check-staleness-staged,\n"
             "              check-version-bump-staged"
         ),
@@ -53,7 +52,6 @@ def main(argv: list[str] | None = None) -> int:
     migrate.add_subparser(sub)
     archive.add_subparser(sub)
     changelog.add_subparser(sub)
-    checkpoints.add_subparser(sub)
     schema_reference.add_subparser(sub)
 
     # Subcomandos de governança (telemetria, hooks, version-check)

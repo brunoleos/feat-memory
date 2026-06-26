@@ -1,7 +1,7 @@
 ---
 id: F-0036
 name: unreleased-living-state
-status: in_progress
+status: shipped
 introduced: 2026-06-26
 version: 2.0.0
 user_value: O foco em-voo e o orçamento de retomada vivem em changelog/UNRELEASED.md; o conjunto ativo de F/ADR é derivado das referências das entradas, sem lista hand-maintained.

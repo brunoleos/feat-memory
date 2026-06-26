@@ -1,9 +1,9 @@
 ---
 id: ADR-0018
 date: 2026-05-04
-status: accepted
+status: superseded
 supersedes: null
-superseded_by: null
+superseded_by: ADR-0043
 affects_features: [F-0015]
 related: [ADR-0009, ADR-0014]
 tags: [state, checkpoint, model, retomada, dogfooding]
