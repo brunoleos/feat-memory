@@ -43,5 +43,6 @@
 | ADR-0042 | 2026-06-26 | proposed | changelog,history,folder,convention,multiagent | F-0035,F-0037 |
 | ADR-0043 | 2026-06-26 | proposed | state,changelog,unreleased,resumption,methodology | F-0036,F-0037 |
 | ADR-0044 | 2026-06-26 | accepted | audit,manifest,drift,planned,methodology | — |
+| ADR-0045 | 2026-06-26 | accepted | release,versioning,git,tags,methodology | F-0035 |
 
-_Gerado por `feat-memory audit` em 2026-06-26T03:40:27+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-26T03:56:45+00:00. Não edite manualmente._

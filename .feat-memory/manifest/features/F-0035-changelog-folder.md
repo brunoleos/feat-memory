@@ -9,9 +9,9 @@ contracts:
   api: src/feat_memory/memory/changelog.py::run_release
   tests: tests/test_changelog.py
 acceptance:
-  - {id: A1, pattern: event, trigger: "feat-memory release X.Y.Z é invocado", response: "valida o bump SemVer, bumpa VERSION, congela UNRELEASED.md em changelog/X.Y.Z.md, cria UNRELEASED.md vazio, regenera INDEX.md e cria commit + tag vX.Y.Z"}
+  - {id: A1, pattern: event, trigger: "feat-memory release é invocado", response: "congela UNRELEASED.md em changelog/<VERSION>.md (VERSION atual, sem bump — ADR-0045), reinicia o UNRELEASED, regenera INDEX.md, commita e cria a tag v<VERSION>"}
   - {id: A2, pattern: ubiquitous, requirement: "cada changelog/<tag>.md é imutável após o release"}
   - {id: A3, pattern: optional, feature: "--no-commit/--no-tag", response: "deixa as mutações staged para revisão humana antes de fechar"}
 depends_on: []
-decisions: [ADR-0042]
+decisions: [ADR-0042, ADR-0045]
 ---

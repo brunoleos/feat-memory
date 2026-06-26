@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import subprocess
 import sys
 from datetime import date
 from pathlib import Path
@@ -87,11 +88,6 @@ def _semver_tuple(v: str) -> tuple[int, int, int]:
     core = v[1:] if v.startswith("v") else v
     major, minor, patch = (int(x) for x in core.split("."))
     return major, minor, patch
-
-
-def is_forward_bump(current: str, target: str) -> bool:
-    """True se `target` é estritamente maior que `current` (SemVer)."""
-    return _semver_tuple(target) > _semver_tuple(current)
 
 
 # --- releases / index ----------------------------------------------------
@@ -205,17 +201,20 @@ def freeze_unreleased(root: Path, version: str, on: str) -> Path:
     return target
 
 
+def _git(root: Path, *args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        ["git", "-C", str(root), *args], capture_output=True, text=True
+    )
+
+
 def run_release(args: argparse.Namespace) -> int:
     _paths._init_paths()
     root = _paths.ROOT
-    version = args.version
+    # A versão é a do arquivo VERSION (bumpada per-commit, ADR-0020). O
+    # release não bumpa: fotografa a versão corrente e a tagueia (ADR-0045).
+    version = args.version or read_version(root)
     if not SEMVER_RE.match(version):
         print(f"Erro: versão inválida '{version}' (esperado X.Y.Z)", file=sys.stderr)
-        return 1
-
-    current = read_version(root)
-    if not is_forward_bump(current, version):
-        print(f"Erro: {version} não é um bump à frente de {current}.", file=sys.stderr)
         return 1
 
     ensure_scaffold(root)
@@ -231,26 +230,45 @@ def run_release(args: argparse.Namespace) -> int:
     except FileExistsError as e:
         print(f"Erro: {e}", file=sys.stderr)
         return 1
-    write_version(root, version)
 
     rel = target.relative_to(root)
-    print(f"✓ release {version} congelado: {rel}")
-    print(f"✓ VERSION → {version}; UNRELEASED.md reiniciado; INDEX regenerado")
-    print("\nPróximos passos (git ainda manual nesta fase):")
-    print("  1. revise o diff")
-    print(f"  2. git add -A && git commit -m 'release v{version}'")
-    print(f"  3. git tag -a v{version} -m 'v{version}' && git push --follow-tags")
+    print(f"✓ release {version} congelado: {rel}; UNRELEASED reiniciado; INDEX regenerado")
+
+    if args.no_commit:
+        print("(--no-commit) mutações deixadas no working tree para revisão.")
+        return 0
+
+    _git(root, "add", "-A")
+    cp = _git(root, "commit", "-m", f"release v{version}")
+    if cp.returncode != 0:
+        print(f"Erro no commit de release:\n{cp.stderr}", file=sys.stderr)
+        return 1
+    print("✓ commit de release criado")
+
+    if not args.no_tag:
+        cp = _git(root, "tag", "-a", f"v{version}", "-m", f"v{version}")
+        if cp.returncode != 0:
+            print(f"Erro ao criar a tag v{version}:\n{cp.stderr}", file=sys.stderr)
+            return 1
+        print(f"✓ tag v{version} criada")
+
+    print("\nPara publicar: git push --follow-tags")
     return 0
 
 
 def add_subparser(subparsers: argparse._SubParsersAction) -> None:
     p = subparsers.add_parser(
         "release",
-        help="Congela UNRELEASED.md em changelog/<X.Y.Z>.md, bumpa VERSION "
-             "e regenera o INDEX (ADR-0042).",
+        help="Congela UNRELEASED.md em changelog/<VERSION>.md, commita e cria "
+             "a tag v<VERSION> (ADR-0042, ADR-0045). Não bumpa VERSION.",
     )
-    p.add_argument("version", help="versão SemVer do release (X.Y.Z)")
+    p.add_argument("version", nargs="?",
+                   help="versão a taguear (default: VERSION atual)")
     p.add_argument("--date", help="data ISO (default: hoje)")
     p.add_argument("--allow-empty", action="store_true",
                    help="permite release sem entradas no UNRELEASED")
+    p.add_argument("--no-commit", action="store_true",
+                   help="não commita/tagueia; deixa as mutações staged")
+    p.add_argument("--no-tag", action="store_true",
+                   help="cria o commit de release mas não a tag")
     p.set_defaults(func=run_release)

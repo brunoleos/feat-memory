@@ -54,20 +54,6 @@ def test_derive_active_refs_empty_when_no_refs(root):
     assert active == {"features": [], "decisions": []}
 
 
-# --- bump validation -----------------------------------------------------
-
-
-@pytest.mark.parametrize("cur,tgt,ok", [
-    ("1.6.0", "1.7.0", True),
-    ("1.6.0", "2.0.0", True),
-    ("1.6.0", "1.6.1", True),
-    ("1.6.0", "1.6.0", False),
-    ("1.6.0", "1.5.0", False),
-])
-def test_is_forward_bump(cur, tgt, ok):
-    assert changelog.is_forward_bump(cur, tgt) is ok
-
-
 # --- freeze / release ----------------------------------------------------
 
 
@@ -112,24 +98,35 @@ def _patch_root(root, monkeypatch):
     return root
 
 
-def _args(version, date=None, allow_empty=False):
-    return argparse.Namespace(version=version, date=date, allow_empty=allow_empty)
+def _args(version=None, date=None, allow_empty=False, no_commit=True, no_tag=False):
+    return argparse.Namespace(version=version, date=date, allow_empty=allow_empty,
+                              no_commit=no_commit, no_tag=no_tag)
 
 
-def test_run_release_happy_path(_patch_root):
+def test_run_release_freezes_current_version(_patch_root):
+    # default = VERSION atual (1.6.0); o release não bumpa (ADR-0045)
     _write_unreleased(_patch_root, "## Adicionado\n- algo (F-0035, ADR-0042)\n")
-    rc = changelog.run_release(_args("1.7.0", date="2026-06-26"))
+    rc = changelog.run_release(_args(date="2026-06-26"))
     assert rc == 0
-    assert changelog.release_path(_patch_root, "1.7.0").exists()
-    assert changelog.read_version(_patch_root) == "1.7.0"
-
-
-def test_run_release_rejects_non_forward_bump(_patch_root):
-    _write_unreleased(_patch_root, "- x (F-0035)\n")
-    assert changelog.run_release(_args("1.5.0")) == 1
+    assert changelog.release_path(_patch_root, "1.6.0").exists()
+    assert changelog.read_version(_patch_root) == "1.6.0"  # inalterado
 
 
 def test_run_release_rejects_empty_without_flag(_patch_root):
     changelog.ensure_scaffold(_patch_root)  # UNRELEASED sem refs
     assert changelog.run_release(_args("1.7.0")) == 1
     assert changelog.run_release(_args("1.7.0", allow_empty=True)) == 0
+
+
+def test_run_release_creates_commit_and_tag(_patch_root):
+    root = _patch_root
+    changelog._git(root, "init")
+    changelog._git(root, "config", "user.email", "t@t")
+    changelog._git(root, "config", "user.name", "t")
+    changelog._git(root, "add", "-A")
+    changelog._git(root, "commit", "-m", "init")
+    _write_unreleased(root, "## Adicionado\n- algo (F-0035)\n")
+    rc = changelog.run_release(_args(no_commit=False))  # commit + tag
+    assert rc == 0
+    tags = changelog._git(root, "tag", "-l").stdout.split()
+    assert "v1.6.0" in tags
