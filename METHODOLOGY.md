@@ -10,7 +10,7 @@ A escolha de quatro artefatos não é arbitrária. Cada um responde uma pergunta
 |---|---|---|---|
 | `AGENTS.md` | Sob quais regras? | Normativa | Rara |
 | `.feat-memory/manifest/` | O que existe hoje? | Descritiva | Append-only |
-| `.feat-memory/STATE.md` | Onde estamos agora? | Volátil | Reescrita bounded |
+| `.feat-memory/changelog/` | O que está em voo / o que shippou? | Volátil + imutável | UNRELEASED editável; releases imutáveis |
 | `.feat-memory/decisions/` | Por que escolhemos assim? | Histórica | Imutável + supersede |
 
 A metodologia adota convenções consolidadas em vez de inventar vocabulário. O arquivo `AGENTS.md` segue a convenção multi-agente reconhecida por ferramentas como Claude Code, Cursor, Aider e Continue; ADRs em pasta `decisions/` seguem o padrão de Michael Nygard de 2011; os critérios de aceitação seguem a notação EARS (Easy Approach to Requirements Syntax) com seus cinco padrões canônicos. Toda a inteligência mora na disciplina das mutações, não em ferramentas exclusivas.
@@ -27,7 +27,7 @@ O frontmatter YAML torna o conteúdo parseável por scripts sem sacrificar legib
 
 Cada restrição pode declarar um bloco `check` opcional que a torna **enforced** em vez de só declarativa: o `feat-memory audit` o executa contra o repositório e emite uma violação herdando a `severity` da restrição. O conjunto de checkers é fechado e genérico — `forbid_paths`, `require_paths`, `forbid_pattern`, `require_pattern` e `dependencies` — composto via YAML, sem código por regra ([ADR-0028](.feat-memory/decisions/0028-constraints-declarative-checkers.md)). Restrição sem `check` permanece puramente declarativa. Nem toda regra é mecanizável de forma barata e confiável (o idioma da documentação, por exemplo); o schema não finge que é — enforça onde dá, declara onde não dá. Tudo opera com a dependência única do projeto, sem ferramentas externas.
 
-O campo `budgets` define os orçamentos de tamanho que o sistema impõe sobre si mesmo. O orçamento de retomada (CLAUDE + STATE + dois índices) deve ficar abaixo de doze kilobytes para que um agente possa carregar todo o contexto inicial em poucos tokens. O orçamento do State é mais agressivo, quatro kilobytes, porque o State é reescrito a cada sessão e crescimento descontrolado significa que o agente não está consolidando direito.
+O campo `budgets` define os orçamentos de tamanho que o sistema impõe sobre si mesmo. O orçamento de retomada (CLAUDE + UNRELEASED + dois índices) deve ficar abaixo de doze kilobytes para que um agente possa carregar todo o contexto inicial em poucos tokens. O `UNRELEASED.md` deve ficar enxuto pela mesma razão: crescimento descontrolado significa que o agente não está promovendo o trabalho para release nem para os artefatos apropriados.
 
 Mudanças em `AGENTS.md` exigem ADR sempre que alteram restrições `hard` ou referenciam novas convenções arquiteturais. A regra prática é: se a mudança requer explicação para um futuro contribuidor, ela merece ADR.
 
@@ -71,15 +71,13 @@ A unidade de uma feature é uma capacidade coerente que entrega valor identific�
 
 Features podem (e frequentemente devem) depender umas das outras. `F-0007 vector-similarity-search` depende de `F-0003 docling-ingest` e `F-0005 embedding-pipeline`, e essa cadeia fica explícita em `depends_on`. Quando uma feature é deprecada, o `feat-memory audit` detecta automaticamente outras features que ainda dependem dela e gera warning.
 
-## 3. State: `.feat-memory/STATE.md`
+## 3. Changelog vivo: `.feat-memory/changelog/`
 
-O State é o único artefato verdadeiramente volátil. Ele tem orçamento de tamanho rígido (4KB) e estrutura fixa em três zonas: `Current` (estado agora, reescrito a cada sessão), `Next` (próxima ação concreta, também reescrita) e `Recent` (buffer circular de cinco linhas com SITREPs anteriores).
+O changelog é o artefato volátil — e também o histórico imutável, na mesma pasta, distinguidos só por estarem ou não tagueados. `changelog/UNRELEASED.md` guarda o **trabalho em voo** (concluído mas não lançado): entradas-bullet no estilo Keep-a-Changelog, cada uma referenciando as `F-NNNN`/`ADR-NNNN` que toca. `changelog/<X.Y.Z>.md` é um arquivo **imutável por tag** — o histórico de releases; `changelog/INDEX.md` é gerado (ADR-0042).
 
-O orçamento não é cosmético — ultrapassá-lo é o sinal mais confiável de que o agente está acumulando contexto efêmero em vez de promovê-lo para os artefatos apropriados. Quando o State começa a inchar, as opções são duas: ou alguma decisão deveria ter virado ADR, ou alguma mudança de comportamento deveria ter virado entrada no Manifest.
+O **orçamento de retomada é derivado**: o conjunto de features e ADRs ativos é a união das referências citadas nas entradas-bullet do UNRELEASED — não há lista `active_*` mantida à mão (que envelhecia silenciosamente). Isso transforma o UNRELEASED num cursor sobre o Manifest: o agente carrega só os arquivos referenciados, mantendo o contexto enxuto. UNRELEASED vazio = nada em voo — a `memory-bootstrap` então olha o último release no `INDEX` e o backlog de sugestões (ADR-0043, ADR-0046).
 
-O campo `active_features` no frontmatter lista os IDs das features sendo tocadas na sessão atual. Isso transforma o State em um cursor sobre o Manifest: o agente carrega apenas os arquivos de feature listados aqui, mantendo o contexto enxuto. O mesmo se aplica a `active_decisions`.
-
-A coluna `features touched` em `Recent` cria rastreabilidade reversa sem custo adicional. Dado um problema descoberto em produção, `git log .feat-memory/STATE.md | grep F-0007` produz a linha do tempo exata de quando essa feature foi tocada e por qual agente. Esta é a métrica de observabilidade mais barata do sistema.
+`feat-memory release X.Y.Z` fecha um ciclo: congela o UNRELEASED em `changelog/<X.Y.Z>.md`, reinicia o UNRELEASED, regenera o INDEX e cria a tag `vX.Y.Z`. O bump de `VERSION` é **per-commit** (a versão evolui visível); a **tag, só no release** (ADR-0045). A imutabilidade dos arquivos por-tag dá a rastreabilidade reversa que o `Recent` dava, sem buffer circular a manter — e a pasta por-tag não colide em merge multiagente como o `STATE.md`/`CHANGELOG.md` monolíticos colidiam (ADR-0042/0043, que superseded o event-sourcing de STATE da ADR-0018/0019).
 
 ## 4. Decisions: `.feat-memory/decisions/`
 
@@ -105,13 +103,13 @@ A separação é deliberada: ADRs são imutáveis e proposals são mutáveis, e 
 
 A metodologia inclui quatro skills em `skills/` na raiz do workspace (deployadas pelo `feat-memory deploy` a partir do package data em `src/feat_memory/data/skills/`) que orientam o agente nos fluxos críticos. Elas são opcionais — todo o protocolo está documentado neste arquivo — mas sua presença torna a aplicação consistente e libera o agente de precisar relembrar a doutrina inteira a cada interação.
 
-A skill `memory-deploy` cobre a adoção inicial. Ela é o ponto de entrada único para instalar a metodologia em qualquer projeto, ativando quando o usuário pede para configurar ou adotar a estrutura. A skill detecta automaticamente se o projeto é greenfield (poucos commits, pouco código, sem entrypoints públicos) ou legacy (histórico substancial, código de produção, stack identificável), e ramifica para o fluxo apropriado. Em ambos os casos, ela executa o `feat-memory deploy` para a estrutura mecânica antes de personalizar — o comando é a infraestrutura subjacente que a skill orquestra. Para greenfield, segue personalização interativa em diálogo curto sobre identidade, stack, restrições e foco inicial. Para legacy, segue gênese retroativa em quatro fases revisadas (constituição a partir do código, ADRs a partir do git log, Manifest a partir dos entrypoints, STATE inicial), com o princípio fundamental de que cristalização silenciosa de interpretações erradas é o pior erro possível.
+A skill `memory-deploy` cobre a adoção inicial. Ela é o ponto de entrada único para instalar a metodologia em qualquer projeto, ativando quando o usuário pede para configurar ou adotar a estrutura. A skill detecta automaticamente se o projeto é greenfield (poucos commits, pouco código, sem entrypoints públicos) ou legacy (histórico substancial, código de produção, stack identificável), e ramifica para o fluxo apropriado. Em ambos os casos, ela executa o `feat-memory deploy` para a estrutura mecânica antes de personalizar — o comando é a infraestrutura subjacente que a skill orquestra. Para greenfield, segue personalização interativa em diálogo curto sobre identidade, stack, restrições e foco inicial. Para legacy, segue gênese retroativa em quatro fases revisadas (constituição a partir do código, ADRs a partir do git log, Manifest a partir dos entrypoints, `changelog/UNRELEASED.md` inicial vazio), com o princípio fundamental de que cristalização silenciosa de interpretações erradas é o pior erro possível.
 
-A skill `memory-bootstrap` cobre o início de sessão. Ela ativa quando o usuário pergunta sobre o estado atual do projeto e instrui o agente a carregar `.feat-memory/STATE.md` e os índices, expandir apenas features e ADRs ativos, e apresentar um briefing tático curto antes de prosseguir. Quando detecta que o último commit é um merge que tocou artefatos da metodologia, ela delega para `memory-pull-brief` antes do briefing tático.
+A skill `memory-bootstrap` cobre o início de sessão. Ela ativa quando o usuário pergunta sobre o estado atual do projeto e instrui o agente a carregar `.feat-memory/changelog/UNRELEASED.md` e os índices, expandir apenas as features e ADRs referenciados nas entradas em voo, e apresentar um briefing tático curto antes de prosseguir. Quando detecta que o último commit é um merge que tocou artefatos da metodologia, ela delega para `memory-pull-brief` antes do briefing tático.
 
-A skill `memory-debrief` cobre o fim de unidade de trabalho. Ela ativa quando o usuário sinaliza intenção de commitar e instrui o agente a examinar o diff, atualizar entradas do Manifest para features tocadas, reescrever as zonas `Current` e `Next` do `.feat-memory/STATE.md`, e gerar proposta de ADR via `feat-memory propose-adr` se a sessão produziu uma decisão arquitetural não-trivial. Esta é a skill mais usada no dia-a-dia, porque cobre o momento em que o trabalho realizado precisa ser refletido na memória persistente antes de virar commit.
+A skill `memory-debrief` cobre o fim de unidade de trabalho. Ela ativa quando o usuário sinaliza intenção de commitar e instrui o agente a examinar o diff, atualizar entradas do Manifest para features tocadas, registrar o trabalho como entrada-bullet no `.feat-memory/changelog/UNRELEASED.md` (citando as F/ADR tocadas), e gerar proposta de ADR via `feat-memory propose-adr` se a sessão produziu uma decisão arquitetural não-trivial. Fecha com retrospectiva inline e captura de sugestões no backlog (ADR-0046). Esta é a skill mais usada no dia-a-dia, porque cobre o momento em que o trabalho realizado precisa ser refletido na memória persistente antes de virar commit.
 
-A skill `memory-pull-brief` cobre o momento pós-`git pull` em projeto cliente que recebeu commits de colegas. Ela ativa por trigger manual ("o que veio do pull", "brifa as mudanças do main") ou por delegação a partir da `memory-bootstrap`. Examina o diff trazido pelo pull, identifica mudanças semânticas em features e ADRs (transições de status, novos IDs, supersedes), cruza com `STATE.md::active_features` e `active_decisions` do desenvolvedor local, e propõe ajustes em `.feat-memory/STATE.md` para refletir a nova realidade. Por design é read-only sobre `.feat-memory/manifest/` e `.feat-memory/decisions/` — esses já vieram corretos do pull, e escrever neles seria reverter trabalho de colegas.
+A skill `memory-pull-brief` cobre o momento pós-`git pull` em projeto cliente que recebeu commits de colegas. Ela ativa por trigger manual ("o que veio do pull", "brifa as mudanças do main") ou por delegação a partir da `memory-bootstrap`. Examina o diff trazido pelo pull, identifica mudanças semânticas em features e ADRs (transições de status, novos IDs, supersedes), cruza com as referências `F`/`ADR` nas entradas do `.feat-memory/changelog/UNRELEASED.md` local, e propõe ajustes nele para refletir a nova realidade. Por design é read-only sobre `.feat-memory/manifest/` e `.feat-memory/decisions/` — esses já vieram corretos do pull, e escrever neles seria reverter trabalho de colegas.
 
 A separação em quatro skills em vez de uma reflete a estrutura real do trabalho com a metodologia: quatro momentos qualitativamente diferentes (adoção, início de sessão, fim de unidade, sincronização pós-pull), cada um com sua própria checklist e cada um com seus próprios riscos de ser executado errado. Skills monolíticas tendem a ser ignoradas; skills específicas e curtas tendem a ser invocadas no momento certo.
 
@@ -121,7 +119,7 @@ A escolha de fazer da `memory-deploy` o ponto de entrada — em vez de exigir qu
 
 Os quatro artefatos têm comportamentos qualitativamente diferentes sob merge, e tratá-los uniformemente produz resultados ruins. A metodologia adota estratégias diferenciadas suportadas por configuração Git e por convenções de workflow que as skills já promovem implicitamente.
 
-O `.feat-memory/STATE.md` é o caso patológico clássico. Duas branches paralelas reescrevem `Current` e `Next` para refletir focos diferentes, e o merge produz conflito em praticamente todo commit colaborativo. A configuração `merge=ours` no `.gitattributes` resolve automaticamente, mantendo a versão da branch destino. O `.feat-memory/STATE.md` não é fonte de verdade compartilhada — é o cursor da última sessão de trabalho ativa, e tentar mesclar duas visões paralelas produz texto incoerente sem ganho operacional.
+O `.feat-memory/changelog/UNRELEASED.md` é o caso patológico clássico. Duas branches paralelas registram trabalho em voo diferente, e o merge produziria conflito. A configuração `merge=ours` no `.gitattributes` resolve automaticamente, mantendo a versão da branch destino. O UNRELEASED não é fonte de verdade compartilhada — é o cursor da última sessão de trabalho ativa, e tentar mesclar duas visões paralelas produz texto incoerente sem ganho operacional. Os arquivos por-tag `changelog/<X.Y.Z>.md`, ao contrário, são imutáveis e merge-safe.
 
 Os índices gerados (`.feat-memory/manifest/INDEX.md` e `.feat-memory/decisions/INDEX.md`) seguem a mesma estratégia. Eles são recriados a cada execução do `feat-memory audit`, então a regra prática é resolver o conflito escolhendo qualquer versão e regenerar. A configuração `merge=ours` para esses dois arquivos elimina o conflito explicitamente, e a skill `memory-bootstrap` detecta sessões pós-merge para regenerar automaticamente.
 
@@ -137,13 +135,13 @@ A configuração do driver `merge.ours.driver` no Git é feita automaticamente p
 
 O protocolo cabe em três frases e opera sobre os quatro artefatos sem precisar de skill customizada — agentes que reconhecem `AGENTS.md` (Claude Code via redirect, Cursor, Aider, Continue) já carregam a constituição automaticamente.
 
-Na inicialização, o agente carrega `AGENTS.md`, `.feat-memory/STATE.md`, `.feat-memory/manifest/INDEX.md` e `.feat-memory/decisions/INDEX.md`. O total fica dentro do orçamento de doze kilobytes definido em `AGENTS.md::budgets::resumption_max_bytes`. O agente então expande apenas as features listadas em `STATE.md::active_features` e os ADRs em `STATE.md::active_decisions`.
+Na inicialização, o agente carrega `AGENTS.md`, `.feat-memory/changelog/UNRELEASED.md`, `.feat-memory/manifest/INDEX.md` e `.feat-memory/decisions/INDEX.md`. O total fica dentro do orçamento de doze kilobytes definido em `AGENTS.md::budgets::resumption_max_bytes`. O agente então expande apenas as features e ADRs **referenciados** nas entradas-bullet do UNRELEASED — o conjunto ativo é derivado, não uma lista mantida à mão.
 
 Durante o trabalho, qualquer mudança de comportamento exige atualizar a feature correspondente no Manifest no mesmo commit do código. O Manifest é a única fonte de verdade sobre o que o sistema faz; se uma capacidade não está no Manifest, ela não existe, mesmo que o código já tenha sido escrito. Esta rigidez parece custosa mas paga dividendos imediatos: o problema clássico de agentes inventando features que não combinam com o sistema existente desaparece.
 
 A definição não espera o commit final. Uma capacidade nova nasce **cedo** como feature `planned`, e a decisão que a molda como ADR `proposed` — ainda durante o trabalho, antes de o código estar pronto. Assim a retomada se ancora sempre em ADR+Feature, que o agente já sabe carregar, e nunca num plano efêmero que some no próximo reset de contexto. O planejamento vive na conversa ou no plan mode da ferramenta; não vira um spec persistente (ADR-0041).
 
-No debrief, o agente reescreve as seções `Current` e `Next` do `.feat-memory/STATE.md`, adiciona uma linha em `Recent`, atualiza ou cria entradas no Manifest para features tocadas, e cria um ADR se a sessão produziu uma decisão arquitetural não-trivial. O debrief é parte do trabalho, não opcional — uma sessão sem debrief é trabalho perdido.
+No debrief, o agente registra o trabalho como uma entrada-bullet no `.feat-memory/changelog/UNRELEASED.md` (citando as F/ADR que tocou), atualiza ou cria entradas no Manifest para features tocadas, e cria um ADR se a sessão produziu uma decisão arquitetural não-trivial. Fecha com uma retrospectiva inline e captura propostas de evolução no backlog (ADR-0046). O debrief é parte do trabalho, não opcional — uma sessão sem debrief é trabalho perdido.
 
 ## Auditoria
 
@@ -153,9 +151,9 @@ A **conformidade de schema** mede se todos os artefatos passam validação estru
 
 A **conformidade de constraints** mede as restrições `hard`/`soft` que declaram um bloco `check`: o audit executa cada checker contra o repositório e reporta quantas foram checadas e quantas violaram. Violação de restrição `hard` é error e bloqueia o build; `soft` é warning. Restrições sem `check` não entram na conta. É o indicador que torna a constituição enforced em vez de só lida (ADR-0028).
 
-O **custo de retomada** soma os bytes de `AGENTS.md`, `CLAUDE.md` (quando presente como redirect), `.feat-memory/STATE.md` e os dois índices. Acima de doze kilobytes, o sistema está consumindo tokens demais antes mesmo do trabalho começar; é hora de compactar índices ou consolidar State.
+O **custo de retomada** soma os bytes de `AGENTS.md`, `CLAUDE.md` (quando presente como redirect), `.feat-memory/changelog/UNRELEASED.md` e os dois índices. Acima de doze kilobytes, o sistema está consumindo tokens demais antes mesmo do trabalho começar; é hora de compactar índices ou enxugar o UNRELEASED.
 
-O **frescor de estado** mede o tempo desde o último update do `.feat-memory/STATE.md`. Acima de uma semana, a última sessão não fez debriefing — bug de processo, não de software.
+O **frescor** mede o tempo desde o último update do `.feat-memory/changelog/UNRELEASED.md`. Acima de uma semana com trabalho em voo, a última sessão não fez debriefing — bug de processo, não de software.
 
 A **cobertura do manifest** mede a porcentagem de features cujo campo `contracts.tests` aponta para arquivos de teste que existem. Cobertura caindo significa que estamos enviando capacidades sem rede de segurança.
 
@@ -189,7 +187,7 @@ A separação entre detecção e redação é deliberada. A detecção é determ
 
 ## Migração
 
-Para um projeto novo, criar `AGENTS.md`, `.feat-memory/STATE.md`, `.feat-memory/manifest/` e `.feat-memory/decisions/` leva minutos, e a primeira feature a ser entregue já segue o protocolo. Para projetos legados, a migração tem dois passos sequenciais.
+Para um projeto novo, criar `AGENTS.md`, `.feat-memory/changelog/`, `.feat-memory/manifest/` e `.feat-memory/decisions/` leva minutos, e a primeira feature a ser entregue já segue o protocolo. Para projetos legados, a migração tem dois passos sequenciais.
 
 Primeiro, `feat-memory migrate` examina os últimos cem ou duzentos commits e propõe ADRs candidatos a partir de mensagens contendo padrões como "switched", "instead of", "revert", "decided to". Os candidatos são impressos para revisão humana, não escritos automaticamente. Esta restrição é deliberada — gênese retroativa não pode ser silenciosa, sob pena de cristalizar interpretações erradas como decisões oficiais.
 
@@ -197,7 +195,7 @@ Segundo, o agente examina os módulos públicos do código (entrypoints da API, 
 
 ## Casos de borda
 
-**E quando duas sessões paralelas tocam o State?** A versão atual assume sessão única em série. Para múltiplos agentes simultâneos, ver `FUTURE_IMPROVEMENTS.md` (item de coordenação multi-agente). A heurística atual é que `.feat-memory/STATE.md` é append-only estrito em `Recent` com IDs monotônicos por SITREP, e `Current` e `Next` ficam sob lock pessimista do Git (último commit ganha, e o conflito é visível).
+**E quando duas sessões paralelas tocam o changelog vivo?** Os arquivos por-tag (`changelog/<X.Y.Z>.md`) são imutáveis e não colidem em merge — vantagem direta sobre o `STATE.md`/`CHANGELOG.md` monolíticos. O `UNRELEASED.md` é marcado `merge=ours` no `.gitattributes` (volátil; cada working tree mantém o seu), e o conjunto ativo é derivado das suas entradas. Para coordenação simultânea mais forte, ver `FUTURE_IMPROVEMENTS.md`.
 
 **E features muito pequenas?** Se uma capacidade não merece um arquivo próprio, provavelmente é parte de uma feature maior. Resista à tentação de criar features triviais — o Manifest perde valor quando vira lista de funções. A regra é a mesma do início: `user_value` em uma frase sem termos puramente técnicos.
 

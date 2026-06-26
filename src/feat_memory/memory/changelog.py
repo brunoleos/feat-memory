@@ -275,19 +275,48 @@ def _split_changelog(text: str) -> list[tuple[str, str | None, str]]:
     return out
 
 
-def _state_active_seed(root: Path) -> str:
-    """Bullet com as refs ativas do STATE.md legado, p/ a derivação herdar."""
+def _extract_state_section(body: str, name: str) -> str:
+    """1ª linha de prosa da seção H2 `name` no STATE legado (Current/Next)."""
+    m = re.search(rf"^##\s+{re.escape(name)}\s*$", body, re.MULTILINE)
+    if not m:
+        return ""
+    rest = body[m.end():]
+    nxt = re.search(r"^##\s", rest, re.MULTILINE)
+    section = (rest[:nxt.start()] if nxt else rest).strip()
+    for line in section.splitlines():
+        s = line.strip()
+        if s and not s.startswith("#"):
+            return s
+    return ""
+
+
+def _state_seed(root: Path) -> str:
+    """Semeia o UNRELEASED a partir do STATE.md legado.
+
+    Preserva a **prosa** de Current/Next (o "o que está em voo" de fato), não
+    só as refs `active_*` — senão a migração perde o foco real da sessão.
+    """
     state = root / ".feat-memory" / "STATE.md"
     if not state.exists():
         return ""
     try:
-        fm, _ = parse_frontmatter(state)
+        fm, body = parse_frontmatter(state)
     except ValueError:
         return ""
     refs = list(fm.get("active_features") or []) + list(fm.get("active_decisions") or [])
-    if not refs:
+    current = _extract_state_section(body, "Current")
+    next_ = _extract_state_section(body, "Next")
+    if not (refs or current or next_):
         return ""
-    return "## Em andamento\n\n- Foco herdado do STATE: " + ", ".join(refs)
+    refs_suffix = f" ({', '.join(refs)})" if refs else ""
+    lines = ["## Em andamento", ""]
+    if current:
+        lines.append(f"- {current}{refs_suffix}")
+    elif refs:
+        lines.append(f"- Foco herdado do STATE{refs_suffix}")
+    if next_:
+        lines.append(f"- Próximo: {next_}")
+    return "\n".join(lines)
 
 
 def _remove_legacy_state(root: Path) -> None:
@@ -301,7 +330,7 @@ def _remove_legacy_state(root: Path) -> None:
 
 
 def _write_migrated_unreleased(root: Path, unreleased_body: str) -> None:
-    seed = _state_active_seed(root)
+    seed = _state_seed(root)
     body = unreleased_body.strip()
     if not body and not seed:
         unreleased_path(root).write_text(UNRELEASED_TEMPLATE, encoding="utf-8")

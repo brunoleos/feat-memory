@@ -12,7 +12,6 @@ references:
   skills: ./skills/
 budgets:
   resumption_max_bytes: 12288
-  state_max_bytes: 4096
 ---
 
 <!-- feat-memory injetou este frontmatter porque a AGENTS.md existente não tinha

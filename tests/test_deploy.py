@@ -296,6 +296,14 @@ def test_deploy_frontmatter_injection_is_idempotent(tmp_project):
     assert content.count("<!-- >>> feat-memory >>> -->") == 1
 
 
+def test_deploy_does_not_create_legacy_artifacts(tmp_project):
+    """Regressão do cutover 2.0.0: deploy não recria STATE.md/checkpoints/CHANGELOG.md."""
+    deploy.run(_args(tmp_project))
+    assert not (tmp_project / ".feat-memory" / "STATE.md").exists()
+    assert not (tmp_project / ".feat-memory" / "checkpoints").exists()
+    assert not (tmp_project / "CHANGELOG.md").exists()
+
+
 def test_deploy_defaults_to_cwd(tmp_project, monkeypatch):
     """deploy sem target usa o diretório atual (W3, ADR-0033)."""
     monkeypatch.chdir(tmp_project)

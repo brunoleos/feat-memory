@@ -79,6 +79,19 @@ def test_index_lists_releases_newest_first(root):
     assert idx.index("1.8.0") < idx.index("1.7.0")  # mais recente primeiro
 
 
+def test_released_versions_reads_changelog_folder(root):
+    """released_versions deriva as versões da pasta changelog/ (ADR-0042),
+    não só de CHANGELOG.md/git tags."""
+    from feat_memory.governance import audit
+    changelog.ensure_scaffold(root)
+    changelog.release_path(root, "1.0.0").write_text(
+        "---\nversion: 1.0.0\ndate: x\n---\n", encoding="utf-8")
+    changelog.release_path(root, "1.2.0").write_text(
+        "---\nversion: 1.2.0\ndate: x\n---\n", encoding="utf-8")
+    vers = audit.released_versions(root)
+    assert {"1.0.0", "1.2.0"} <= vers
+
+
 def test_list_releases_sorted_by_semver(root):
     changelog.ensure_scaffold(root)
     for v in ["1.10.0", "1.9.0", "1.7.0"]:

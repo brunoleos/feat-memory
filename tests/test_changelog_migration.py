@@ -42,7 +42,11 @@ blocked_on: null
 
 ## Current
 
-foo
+reconciliação ADR↔código do motor físico
+
+## Next
+
+implementar routing no motor unificado
 """
 
 
@@ -69,7 +73,9 @@ def test_migrate_splits_changelog_and_removes_legacy(legacy):
     # UNRELEASED com o não-lançado + seed do STATE
     up = changelog.unreleased_path(legacy).read_text(encoding="utf-8")
     assert "F-0035" in up                          # do [Unreleased]
-    assert "F-0040" in up and "ADR-0099" in up     # seed do STATE
+    assert "F-0040" in up and "ADR-0099" in up     # seed do STATE (refs)
+    assert "reconciliação ADR" in up               # prosa de Current preservada
+    assert "implementar routing" in up             # prosa de Next preservada
     # INDEX gerado
     assert changelog.index_path(legacy).exists()
     # legados removidos

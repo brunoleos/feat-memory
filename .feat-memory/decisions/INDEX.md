@@ -44,4 +44,4 @@
 | ADR-0045 | 2026-06-26 | accepted | release,versioning,git,tags,methodology | F-0035 |
 | ADR-0046 | 2026-06-26 | accepted | debrief,retrospective,suggestions,methodology | F-0038,F-0039 |
 
-_Gerado por `feat-memory audit` em 2026-06-26T17:34:59+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-26T19:18:13+00:00. Não edite manualmente._

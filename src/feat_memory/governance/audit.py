@@ -123,17 +123,24 @@ def validate_state_crosscheck(state_fm: dict,
 
 
 def released_versions(root: Path) -> set[str]:
-    """Conjunto de versões já released, derivado de CHANGELOG e git tags.
+    """Conjunto de versões já released, derivado do changelog e git tags.
 
-    Fonte de verdade dupla, fail-soft (retorna o que conseguir):
-    - Seções datadas `## [X.Y.Z]` em CHANGELOG.md (ignora `[Unreleased]`,
-      que não casa o padrão numérico).
+    Fonte de verdade tripla, fail-soft (retorna o que conseguir):
+    - Arquivos por-tag `.feat-memory/changelog/<X.Y.Z>.md` (layout novo, ADR-0042).
+    - Seções datadas `## [X.Y.Z]` num CHANGELOG.md legado (layout antigo).
     - Tags Git no formato `vX.Y.Z`.
 
     A união é o que `validate_release_status` confronta contra o campo
     `version` das features. ADR-0024.
     """
     versions: set[str] = set()
+
+    changelog_dir = root / ".feat-memory" / "changelog"
+    if changelog_dir.exists():
+        for p in changelog_dir.glob("*.md"):
+            m = re.match(r"^(\d+\.\d+\.\d+)\.md$", p.name)
+            if m:
+                versions.add(m.group(1))
 
     changelog = root / "CHANGELOG.md"
     if changelog.exists():
