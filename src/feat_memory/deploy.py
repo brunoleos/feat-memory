@@ -692,8 +692,8 @@ def run(args: argparse.Namespace) -> int:
     deploy_ideas(target)
     migrate_planned_to_proposed(target)
     from feat_memory.memory import changelog as _changelog
-    if _changelog.patch_agents_frontmatter(target):
-        print("AGENTS.md: frontmatter atualizado (references.state → unreleased)")
+    for _change in _changelog.patch_agents_frontmatter(target):
+        print(f"  AGENTS.md frontmatter: {_change}")
     print()
 
     deploy_gitattributes(target)

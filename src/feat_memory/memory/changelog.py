@@ -343,27 +343,45 @@ def _write_migrated_unreleased(root: Path, unreleased_body: str) -> None:
     unreleased_path(root).write_text("\n".join(parts) + "\n", encoding="utf-8")
 
 
-def patch_agents_frontmatter(root: Path) -> bool:
-    """Atualiza o frontmatter do AGENTS.md no cutover: `references.state`
-    (aponta para o STATE.md removido) → `unreleased`, e remove
-    `budgets.state_max_bytes`. Sem isso, o deploy só refresca o bloco entre
-    sentinelas e o frontmatter à mão fica mentindo. Edição textual cirúrgica
-    — preserva comentários e ordem do resto do arquivo.
+def patch_agents_frontmatter(root: Path) -> list[str]:
+    """Atualiza o frontmatter do AGENTS.md após o cutover. Cirúrgico e
+    **escopado ao frontmatter** (não toca o corpo). Retorna a lista das
+    mudanças **efetivamente aplicadas** (vazia = nada mudou) — o chamador loga
+    só o que de fato mudou, sem falso-positivo.
+
+    Trata: `references.state` (qualquer path `.../STATE.md`, incluindo o nome
+    de pasta legado `.agent-memory/`) → `unreleased`; remove
+    `budgets.state_max_bytes`; normaliza `.agent-memory/` → `.feat-memory/` nas
+    referências (rename ADR-0039 que o deploy não aplicava ao frontmatter).
     """
     agents = root / "AGENTS.md"
-    if not agents.exists():
-        return False
-    text = agents.read_text(encoding="utf-8")
-    new = re.sub(
-        r"^(\s*)state:\s*\.?/?\.feat-memory/STATE\.md\s*$",
+    if not agents.exists() or not (text := agents.read_text(encoding="utf-8")).startswith("---\n"):
+        return []
+    end = text.find("\n---\n", 4)
+    if end < 0:
+        return []
+    fm, rest = text[4:end], text[end:]
+    changes: list[str] = []
+
+    fm, n = re.subn(
+        r"^(\s*)state:[ \t]*\S*STATE\.md[ \t]*$",
         r"\1unreleased: ./.feat-memory/changelog/UNRELEASED.md",
-        text, count=1, flags=re.MULTILINE,
+        fm, count=1, flags=re.MULTILINE,
     )
-    new = re.sub(r"^[ \t]*state_max_bytes:.*\n", "", new, count=1, flags=re.MULTILINE)
-    if new != text:
-        agents.write_text(new, encoding="utf-8")
-        return True
-    return False
+    if n:
+        changes.append("references.state → unreleased")
+
+    fm, n = re.subn(r"^[ \t]*state_max_bytes:.*\n?", "", fm, count=1, flags=re.MULTILINE)
+    if n:
+        changes.append("removido budgets.state_max_bytes")
+
+    if ".agent-memory/" in fm:
+        fm = fm.replace(".agent-memory/", ".feat-memory/")
+        changes.append(".agent-memory/ → .feat-memory/ nas referências")
+
+    if changes:
+        agents.write_text("---\n" + fm + rest, encoding="utf-8")
+    return changes
 
 
 def migrate_to_changelog_folder(root: Path) -> tuple[bool, str]:
@@ -404,7 +422,7 @@ def migrate_to_changelog_folder(root: Path) -> tuple[bool, str]:
         changelog_md.unlink()
     _remove_legacy_state(root)
     patched = patch_agents_frontmatter(root)
-    extra = "; frontmatter do AGENTS.md atualizado" if patched else ""
+    extra = f"; frontmatter ({', '.join(patched)})" if patched else ""
     return True, f"{n} release(s) migrado(s); UNRELEASED criado; legados removidos{extra}"
 
 

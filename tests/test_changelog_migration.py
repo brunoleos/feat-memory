@@ -109,6 +109,31 @@ def test_migrate_patches_agents_frontmatter(legacy):
     assert "state_max_bytes" not in text
 
 
+def test_patch_frontmatter_handles_legacy_agent_memory_paths(tmp_path):
+    """O patcher casa o nome de pasta legado .agent-memory/ e retorna só o que
+    mudou — o defeito 2.2.1 (regex só casava .feat-memory/ + log falso-positivo)."""
+    agents = tmp_path / "AGENTS.md"
+    agents.write_text(
+        "---\nreferences:\n  manifest_index: ./.agent-memory/manifest/INDEX.md\n"
+        "  state: ./.agent-memory/STATE.md\nbudgets:\n  state_max_bytes: 4096\n---\n# c\n",
+        encoding="utf-8")
+    changes = changelog.patch_agents_frontmatter(tmp_path)
+    text = agents.read_text(encoding="utf-8")
+    assert "unreleased: ./.feat-memory/changelog/UNRELEASED.md" in text
+    assert ".agent-memory/" not in text     # normalizado (rename ADR-0039)
+    assert "state_max_bytes" not in text
+    assert len(changes) == 3                # 3 mudanças reais, não falso-positivo
+
+
+def test_patch_frontmatter_no_false_positive(tmp_path):
+    """Frontmatter já correto → retorna [] (sem log mentiroso)."""
+    agents = tmp_path / "AGENTS.md"
+    agents.write_text(
+        "---\nreferences:\n  unreleased: ./.feat-memory/changelog/UNRELEASED.md\n---\n# c\n",
+        encoding="utf-8")
+    assert changelog.patch_agents_frontmatter(tmp_path) == []
+
+
 def test_migrate_is_idempotent(legacy):
     changelog.migrate_to_changelog_folder(legacy)
     changed, msg = changelog.migrate_to_changelog_folder(legacy)
