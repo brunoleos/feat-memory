@@ -1,7 +1,7 @@
 ---
 id: F-0037
 name: changelog-layout-migration
-status: planned
+status: in_progress
 introduced: 2026-06-26
 version: 2.0.0
 user_value: Um comando migra o layout legado (CHANGELOG.md monolítico + STATE.md + checkpoints/) para o novo (changelog/ + UNRELEASED.md), idempotente e não-destrutivo.

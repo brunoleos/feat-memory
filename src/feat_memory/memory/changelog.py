@@ -256,6 +256,104 @@ def run_release(args: argparse.Namespace) -> int:
     return 0
 
 
+# --- migração do layout legado (F-0037, ADR-0042/0043) -------------------
+
+
+SECTION_RE = re.compile(
+    r"^## \[([^\]]+)\](?:\s*-\s*(\d{4}-\d{2}-\d{2}))?\s*$", re.MULTILINE
+)
+
+
+def _split_changelog(text: str) -> list[tuple[str, str | None, str]]:
+    """Quebra um CHANGELOG.md monolítico em (label, data, corpo) por seção."""
+    matches = list(SECTION_RE.finditer(text))
+    out: list[tuple[str, str | None, str]] = []
+    for i, m in enumerate(matches):
+        start = m.end()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+        out.append((m.group(1), m.group(2), text[start:end].strip("\n")))
+    return out
+
+
+def _state_active_seed(root: Path) -> str:
+    """Bullet com as refs ativas do STATE.md legado, p/ a derivação herdar."""
+    state = root / ".feat-memory" / "STATE.md"
+    if not state.exists():
+        return ""
+    try:
+        fm, _ = parse_frontmatter(state)
+    except ValueError:
+        return ""
+    refs = list(fm.get("active_features") or []) + list(fm.get("active_decisions") or [])
+    if not refs:
+        return ""
+    return "## Em andamento\n\n- Foco herdado do STATE: " + ", ".join(refs)
+
+
+def _remove_legacy_state(root: Path) -> None:
+    import shutil
+    state = root / ".feat-memory" / "STATE.md"
+    if state.exists():
+        state.unlink()
+    cp_dir = root / ".feat-memory" / "checkpoints"
+    if cp_dir.exists():
+        shutil.rmtree(cp_dir)
+
+
+def _write_migrated_unreleased(root: Path, unreleased_body: str) -> None:
+    seed = _state_active_seed(root)
+    body = unreleased_body.strip()
+    if not body and not seed:
+        unreleased_path(root).write_text(UNRELEASED_TEMPLATE, encoding="utf-8")
+        return
+    parts = ["---", "schema_version: 1", "---", "", "# Não-lançado", ""]
+    if seed:
+        parts += [seed, ""]
+    if body:
+        parts += [body, ""]
+    unreleased_path(root).write_text("\n".join(parts) + "\n", encoding="utf-8")
+
+
+def migrate_to_changelog_folder(root: Path) -> tuple[bool, str]:
+    """Migra o layout legado para o novo (F-0037). Idempotente: re-rodar
+    num layout já migrado é no-op.
+
+    Split do CHANGELOG.md por versão → changelog/<v>.md; [Unreleased] +
+    refs ativas do STATE → UNRELEASED.md; regenera INDEX; remove os legados
+    (CHANGELOG.md, STATE.md, checkpoints/).
+    """
+    if list_releases(root):
+        return False, "já migrado (changelog/ já tem releases)"
+    changelog_md = root / "CHANGELOG.md"
+    state_exists = (root / ".feat-memory" / "STATE.md").exists()
+    if not changelog_md.exists() and not state_exists:
+        return False, "nada a migrar (sem CHANGELOG.md nem STATE.md)"
+
+    legacy_text = changelog_md.read_text(encoding="utf-8") if changelog_md.exists() else ""
+    changelog_dir(root).mkdir(parents=True, exist_ok=True)
+    unreleased_body = ""
+    n = 0
+    for label, dt, body in _split_changelog(legacy_text):
+        if label.strip().lower() == "unreleased":
+            unreleased_body = body
+            continue
+        ver = label.strip()
+        if not SEMVER_RE.match(ver):
+            continue
+        date_str = dt or "?"
+        content = (f"---\nversion: {ver}\ndate: {date_str}\n---\n\n"
+                   f"# {ver} — {date_str}\n\n{body}\n")
+        release_path(root, ver).write_text(content, encoding="utf-8")
+        n += 1
+
+    _write_migrated_unreleased(root, unreleased_body)
+    write_index(root)
+    if changelog_md.exists():
+        changelog_md.unlink()
+    _remove_legacy_state(root)
+    return True, f"{n} release(s) migrado(s); UNRELEASED criado; legados removidos"
+
+
 def add_subparser(subparsers: argparse._SubParsersAction) -> None:
     p = subparsers.add_parser(
         "release",

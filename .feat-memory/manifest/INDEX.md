@@ -17,6 +17,6 @@
 | F-0034 | legacy-layout-migration | shipped | 1.3.0 | ADR-0039 | — |
 | F-0035 | changelog-folder | in_progress | 2.0.0 | ADR-0042,ADR-0045 | — |
 | F-0036 | unreleased-living-state | in_progress | 2.0.0 | ADR-0043 | F-0035 |
-| F-0037 | changelog-layout-migration | planned | 2.0.0 | ADR-0042,ADR-0043 | F-0035,F-0036 |
+| F-0037 | changelog-layout-migration | in_progress | 2.0.0 | ADR-0042,ADR-0043 | F-0035,F-0036 |
 
-_Gerado por `feat-memory audit` em 2026-06-26T03:56:45+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-26T04:04:27+00:00. Não edite manualmente._

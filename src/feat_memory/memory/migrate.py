@@ -112,6 +112,22 @@ def _run_to_checkpoints(root: Path | None = None) -> int:
     return 0
 
 
+def _run_to_changelog(root: Path | None = None) -> int:
+    """Migra o layout legado (CHANGELOG.md + STATE.md + checkpoints/) para
+    o novo (changelog/ + UNRELEASED.md). Idempotente (F-0037, ADR-0042/0043).
+    """
+    from feat_memory.shared import paths as _paths
+    from feat_memory.memory import changelog
+
+    _paths._init_paths(root)
+    changed, msg = changelog.migrate_to_changelog_folder(_paths.ROOT)
+    print(("✓ " if changed else "• ") + msg)
+    if changed:
+        print("\nLayout novo em .feat-memory/changelog/. Os legados "
+              "(CHANGELOG.md, STATE.md, checkpoints/) foram removidos.")
+    return 0
+
+
 def _extract_section(body: str, name: str) -> str | None:
     """Pega a primeira linha não-vazia da seção H2 indicada."""
     pattern = re.compile(rf"^##\s+{re.escape(name)}\s*$", re.MULTILINE)
@@ -325,10 +341,11 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
                    help="número de commits a examinar (padrão: 100)")
     p.add_argument("--json", action="store_true",
                    help="output em JSON")
-    p.add_argument("--to", choices=["checkpoints"], default=None,
-                   help="modo de migração explícita (ex: --to=checkpoints "
-                        "cria primeiro checkpoint a partir do STATE.md legado; "
-                        "ADR-0019)")
+    p.add_argument("--to", choices=["checkpoints", "changelog"], default=None,
+                   help="modo de migração explícita: --to=checkpoints cria o "
+                        "primeiro checkpoint do STATE.md legado (ADR-0019); "
+                        "--to=changelog migra o layout para changelog/ + "
+                        "UNRELEASED.md e remove os legados (F-0037, ADR-0042/0043)")
     p.set_defaults(func=run)
 
 
@@ -337,6 +354,9 @@ def run(args: argparse.Namespace) -> int:
 
     if getattr(args, "to", None) == "checkpoints":
         return _run_to_checkpoints(explicit)
+
+    if getattr(args, "to", None) == "changelog":
+        return _run_to_changelog(explicit)
 
     root = explicit if explicit is not None else find_project_root()
 
