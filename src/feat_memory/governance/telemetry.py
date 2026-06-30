@@ -237,7 +237,7 @@ def run_log(args: argparse.Namespace) -> int:
             with_state = summary["session_start_with_state_read"]
             ratio = summary["adherence_ratio"]
             ratio_str = f"{ratio:.0%}" if ratio is not None else "—"
-            print(f"  session_start: {total} (com STATE.md lido: {with_state}, "
+            print(f"  session_start: {total} (com contexto lido: {with_state}, "
                   f"adesão: {ratio_str})")
         return 0
 

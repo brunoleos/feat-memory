@@ -42,7 +42,7 @@ RUNTIME_DATA = [
     ("feat_memory.governance", "data/hooks/pre-commit"),
     ("feat_memory", "data/templates/AGENTS.md"),
     ("feat_memory", "data/templates/CLAUDE.md"),
-    ("feat_memory", "data/templates/STATE.md"),
+    ("feat_memory", "data/templates/ideas.md"),
     ("feat_memory", "data/templates/AGENTS.frontmatter-skeleton.md"),
     ("feat_memory", "data/templates/.gitattributes"),
 ]

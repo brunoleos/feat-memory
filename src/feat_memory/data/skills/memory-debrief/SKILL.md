@@ -53,8 +53,6 @@ O orçamento de retomada da próxima sessão é **derivado** dessas referências
 
 Ao lançar uma versão, `feat-memory release` congela o `UNRELEASED.md` em `changelog/<VERSION>.md`, commita e cria a tag `v<VERSION>` (ADR-0042/0045). O bump de `VERSION` continua per-commit; o `UNRELEASED` reinicia vazio.
 
-Projetos em layout legado (com `STATE.md`/`CHANGELOG.md`/`checkpoints/`): `feat-memory migrate --to=changelog` uma vez (idempotente) migra tudo para o layout novo.
-
 ### 4. Decida sobre ADR
 
 Critério: se um contribuidor lendo o commit em 6 meses precisaria de explicação para entender a escolha, é ADR. Se cabe na mensagem do commit, não é. Nunca para refactor mecânico, rename, ou fix óbvio.
@@ -186,3 +184,4 @@ O que decidiu e o porquê dominante. Embuta trade-offs aqui ("aceitamos custo X 
 - **Forçar ADR** para mudança mecânica.
 - **Promover drafts** de `decisions/proposals/` para `decisions/` sem revisão humana.
 - **Persistir specs / planos longos.** O registro durável de uma sessão é ADR + Feature, não um design doc paralelo; planejamento é efêmero (conversa/plan mode). Proponha ADRs e stubs de feature cedo, ambos como `proposed`, para a retomada não depender de plano efêmero (ADR-0041).
+- **Rename/remoção sem varredura exaustiva.** Ao renomear ou remover um artefato/comando, **não** enumere as referências de cabeça — faça `grep -rn` de todas as formas do símbolo em todo o repo (src/tests/skills/templates/hooks/docs) e leve a **zero** referências ativas (re-grep no fim). É o método contra o ponto-cego "stale-on-cutover" (ADR-0049).

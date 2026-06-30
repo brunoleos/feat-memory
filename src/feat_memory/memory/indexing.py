@@ -52,7 +52,7 @@ def gen_archive_index(features: list[dict]) -> str:
     """
     rows = [
         "# Índice de features arquivadas", "",
-        "Features `shipped` e fora de `STATE.md::active_features` movidas",
+        "Features `shipped` e não referenciadas no `changelog/UNRELEASED.md`, movidas",
         "por `feat-memory archive --apply`. IDs continuam resolvíveis pelo",
         "cross-check; mantenha aqui o registro histórico, sem onerar o INDEX",
         "principal.", "",

@@ -44,6 +44,23 @@ def _args(*, apply: bool = False) -> argparse.Namespace:
     return argparse.Namespace(apply=apply, cmd="archive", func=archive.run)
 
 
+def test_run_derives_active_from_unreleased(archive_repo, capsys):
+    """No 2.x o 'active' vem do changelog/UNRELEASED.md (não do STATE removido):
+    uma feature shipped referenciada lá NÃO é arquivada."""
+    feat_dir = archive_repo / ".feat-memory" / "manifest" / "features"
+    _write_feature(feat_dir, "F-0001", "f1", status="shipped")
+    _write_feature(feat_dir, "F-0002", "f2", status="shipped")
+    unrel = archive_repo / ".feat-memory" / "changelog" / "UNRELEASED.md"
+    unrel.parent.mkdir(parents=True, exist_ok=True)
+    unrel.write_text("# Não-lançado\n\n## Mudado\n\n- ainda mexendo (F-0001)\n",
+                     encoding="utf-8")
+    rc = archive.run(_args(apply=False))
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "F-0002" in out      # elegível (não referenciada no UNRELEASED)
+    assert "F-0001" not in out  # excluída (ativa via UNRELEASED)
+
+
 @pytest.fixture
 def archive_repo(tmp_project, monkeypatch):
     """Aponta os globals do audit para um tmp repo Git limpo."""

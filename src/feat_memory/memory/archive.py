@@ -4,7 +4,8 @@ Subcomando da CLI: `feat-memory archive [--apply]`. Default é dry-run
 (lista o que seria arquivado, sai sem mover). Política em ADR-0015.
 
 Critério de elegibilidade:
-    status == "shipped" E id ∉ STATE.md::active_features
+    status == "shipped" E id ∉ refs ativas (derivadas do changelog/UNRELEASED.md;
+    com fallback para STATE.md::active_features se um consumidor legado o tiver)
 
 Movimento:
     `git mv` quando em repo Git (preserva blame); fallback `shutil.move`.
@@ -124,19 +125,24 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
 def run(args: argparse.Namespace) -> int:
     _paths._init_paths()
 
-    state_fm: dict = {}
+    from feat_memory.memory import changelog
+    active = set(changelog.derive_active_refs(_paths.ROOT)["features"])
+    # Backward-compat: se um consumidor legado ainda tem STATE.md, soma o active dele.
     if _paths.STATE.exists():
         try:
-            state_fm, _ = parse_frontmatter(_paths.STATE)
+            legacy_fm, _ = parse_frontmatter(_paths.STATE)
+            active |= set(legacy_fm.get("active_features") or [])
         except ValueError as e:
-            print(f"ERRO ao ler STATE.md: {e}", file=sys.stderr)
+            print(f"ERRO ao ler STATE.md legado: {e}", file=sys.stderr)
             return 1
+    state_fm = {"active_features": sorted(active)}
 
     eligible = collect_eligible(_paths.FEATURES_DIR, state_fm)
 
     if not eligible:
         print("Nenhuma feature elegível ao arquivamento.")
-        print("(critério: status == 'shipped' E id ∉ STATE.md::active_features)")
+        print("(critério: status == 'shipped' E não referenciada no "
+              "changelog/UNRELEASED.md)")
         return 0
 
     print(f"{len(eligible)} feature(s) elegível(eis) ao arquivamento:")

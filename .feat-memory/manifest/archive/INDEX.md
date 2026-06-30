@@ -1,6 +1,6 @@
 # Índice de features arquivadas
 
-Features `shipped` e fora de `STATE.md::active_features` movidas
+Features `shipped` e não referenciadas no `changelog/UNRELEASED.md`, movidas
 por `feat-memory archive --apply`. IDs continuam resolvíveis pelo
 cross-check; mantenha aqui o registro histórico, sem onerar o INDEX
 principal.
@@ -28,4 +28,4 @@ principal.
 | F-0019 | superseded-decisions-folder | shipped | 0.9.0 | ADR-0023 | F-0011 |
 | F-0020 | audit-release-status | shipped | 0.10.0 | ADR-0024 | F-0011 |
 
-_Gerado por `feat-memory audit` em 2026-06-30T03:28:19+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-30T03:53:20+00:00. Não edite manualmente._

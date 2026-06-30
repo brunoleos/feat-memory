@@ -49,14 +49,18 @@ def render_schema_reference() -> str:
     w("- `budgets`: ver seção *Budgets* abaixo.")
     w("")
 
-    # STATE.md
-    w("## STATE.md (frontmatter)")
+    # changelog/UNRELEASED.md (substitui o STATE.md no layout 2.x)
+    w("## changelog/UNRELEASED.md (trabalho em voo)")
     w("")
-    w(f"- **Obrigatórios:** {_fields(S.STATE_REQUIRED)}")
-    w("- `active_features`/`active_decisions`: listas de IDs em foco. "
-      "`blocked_on`, `updated_by`: opcionais.")
-    w(f"- Tamanho **enforced**: `state_max_bytes` (default "
-      f"{S.DEFAULT_STATE_BUDGET}B); exceder é `error`.")
+    w("- Entradas-bullet no estilo Keep-a-Changelog (`Adicionado`/`Mudado`/"
+      "`Corrigido`), cada uma referenciando as `F-NNNN`/`ADR-NNNN` que toca.")
+    w("- O orçamento de retomada é **derivado** dessas referências (ADR-0043) — "
+      "não há lista `active_*` hand-maintained. Vazio = nada em voo.")
+    w("- Sem schema rígido; mantenha enxuto.")
+    w("")
+    w(f"> Layout legado: o `STATE.md` foi removido na 2.0.0. Se um repositório "
+      f"ainda o tiver, o audit valida o schema antigo (obrigatórios "
+      f"{_fields(S.STATE_REQUIRED)}; `state_max_bytes`) por retrocompatibilidade.")
     w("")
 
     # Feature
@@ -102,10 +106,10 @@ def render_schema_reference() -> str:
     # Budgets
     w("## Budgets (em `AGENTS.md::budgets`)")
     w("")
-    w(f"- `state_max_bytes` — **enforced** (default {S.DEFAULT_STATE_BUDGET}B): "
-      "STATE.md acima disso é `error` no audit.")
+    w(f"- `state_max_bytes` — **legado** (default {S.DEFAULT_STATE_BUDGET}B): "
+      "enforced só quando ainda existe um `STATE.md` legado (removido na 2.0.0).")
     w("- `resumption_max_bytes` — **advisory**: orçamento de contexto de retomada "
-      "que o agente respeita ao carregar STATE/features/ADRs; não há checagem "
+      "que o agente respeita ao carregar UNRELEASED/features/ADRs; não há checagem "
       "mecânica.")
     w("")
 

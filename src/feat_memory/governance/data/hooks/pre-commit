@@ -58,7 +58,7 @@ def main() -> int:
               file=sys.stderr)
 
     # Aviso soft (sempre exit 0) sobre commits que tocam código sem
-    # atualizar STATE.md. Roda independentemente do returncode do audit:
+    # registrar no changelog/UNRELEASED.md. Roda independente do returncode do audit:
     # o sinal é informativo, não condicional. ADR-0016, F-0013.
     subprocess.run(
         ["feat-memory", "check-staleness-staged"],
@@ -66,7 +66,7 @@ def main() -> int:
     )
 
     # Gate hard (exit 1): bloqueia commits que tocam código sem mover nenhum
-    # artefato de doc (.feat-memory/STATE.md, manifest/ ou decisions/). É o
+    # artefato de doc (.feat-memory/changelog/UNRELEASED.md, manifest/ ou decisions/). É o
     # complemento bloqueante do aviso soft acima — garante sincronia doc↔código.
     doc_sync = subprocess.run(
         ["feat-memory", "check-doc-sync-staged"],

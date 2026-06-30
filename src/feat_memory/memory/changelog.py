@@ -1,16 +1,14 @@
 """changelog.py — Histórico como pasta por-tag + UNRELEASED vivo.
 
-Substitui (em fases) o CHANGELOG.md monolítico — deprecando Keep-a-Changelog
-(ADR-0042) — e o STATE.md, dissolvido no UNRELEASED (ADR-0043). Cada release
-tagueada vira um arquivo imutável `.feat-memory/changelog/<X.Y.Z>.md`; o
-trabalho concluído-mas-não-lançado vive em `changelog/UNRELEASED.md`;
-`changelog/INDEX.md` é gerado.
+Substituiu o CHANGELOG.md monolítico — deprecando Keep-a-Changelog (ADR-0042) —
+e o STATE.md, dissolvido no UNRELEASED (ADR-0043). Cada release tagueada vira um
+arquivo imutável `.feat-memory/changelog/<X.Y.Z>.md`; o trabalho concluído-mas-
+não-lançado vive em `changelog/UNRELEASED.md`; `changelog/INDEX.md` é gerado.
 
 O orçamento de retomada é **derivado** das referências `F-NNNN`/`ADR-NNNN`
 nas entradas do UNRELEASED — sem lista `active_*` hand-maintained.
 
-Fase 1 (aditivo): o módulo coexiste com STATE.md/CHANGELOG.md até a migração
-(F-0037). Subcomando: `feat-memory release`.
+Subcomando: `feat-memory release`.
 """
 
 from __future__ import annotations

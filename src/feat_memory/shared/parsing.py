@@ -5,7 +5,7 @@
 
 ADR-0021: parte de `shared/`, sem dependências do projeto. Antes desta
 separação, viviam em `audit.py` mas eram chamados por archive, telemetry,
-checkpoints, propose-adr, migrate. Mover aqui quebra o acoplamento.
+changelog, propose-adr, migrate. Mover aqui quebra o acoplamento.
 """
 
 from __future__ import annotations

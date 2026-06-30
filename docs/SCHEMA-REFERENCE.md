@@ -9,11 +9,13 @@ Gerado de `feat_memory.memory.schemas` (fonte única). Não edite à mão — ro
 - `references`: mapa (`manifest_index`, `state`, `decisions_index`, `methodology`, `skills`).
 - `budgets`: ver seção *Budgets* abaixo.
 
-## STATE.md (frontmatter)
+## changelog/UNRELEASED.md (trabalho em voo)
 
-- **Obrigatórios:** `schema_version`, `updated_at`, `active_features`
-- `active_features`/`active_decisions`: listas de IDs em foco. `blocked_on`, `updated_by`: opcionais.
-- Tamanho **enforced**: `state_max_bytes` (default 4096B); exceder é `error`.
+- Entradas-bullet no estilo Keep-a-Changelog (`Adicionado`/`Mudado`/`Corrigido`), cada uma referenciando as `F-NNNN`/`ADR-NNNN` que toca.
+- O orçamento de retomada é **derivado** dessas referências (ADR-0043) — não há lista `active_*` hand-maintained. Vazio = nada em voo.
+- Sem schema rígido; mantenha enxuto.
+
+> Layout legado: o `STATE.md` foi removido na 2.0.0. Se um repositório ainda o tiver, o audit valida o schema antigo (obrigatórios `schema_version`, `updated_at`, `active_features`; `state_max_bytes`) por retrocompatibilidade.
 
 ## Feature (`.feat-memory/manifest/features/F-NNNN-slug.md`)
 
@@ -49,6 +51,6 @@ Cada item de `acceptance` tem um `pattern` e os campos exigidos por ele (além d
 
 ## Budgets (em `AGENTS.md::budgets`)
 
-- `state_max_bytes` — **enforced** (default 4096B): STATE.md acima disso é `error` no audit.
-- `resumption_max_bytes` — **advisory**: orçamento de contexto de retomada que o agente respeita ao carregar STATE/features/ADRs; não há checagem mecânica.
+- `state_max_bytes` — **legado** (default 4096B): enforced só quando ainda existe um `STATE.md` legado (removido na 2.0.0).
+- `resumption_max_bytes` — **advisory**: orçamento de contexto de retomada que o agente respeita ao carregar UNRELEASED/features/ADRs; não há checagem mecânica.
 

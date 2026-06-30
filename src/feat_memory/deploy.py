@@ -70,9 +70,8 @@ def _substitute_tokens(content: str) -> str:
     """Substitui placeholders de template (`{VERSION}`, `{DEPLOY_DATE}`).
 
     `{VERSION}` → versão atual do pacote (URLs ancoradas na tag da doutrina).
-    `{DEPLOY_DATE}` → instante UTC do deploy em ISO-8601, para que STATE.md
-    nasça com `updated_at` real em vez de uma data fixa que a auditoria
-    leria como semanas de drift no primeiro contato. Templates sem
+    `{DEPLOY_DATE}` → instante UTC do deploy em ISO-8601, disponível para
+    artefatos gerados que precisem de um timestamp real. Templates sem
     placeholders passam intactos.
     """
     from datetime import datetime, timezone
@@ -87,7 +86,7 @@ def _substitute_tokens(content: str) -> str:
 def _copy_template(src: Traversable, dst: Path) -> None:
     """Copia um template aplicando `_substitute_tokens`.
 
-    Usado para AGENTS.md/CLAUDE.md/STATE.md.
+    Usado para AGENTS.md/CLAUDE.md.
     """
     dst.write_text(_substitute_tokens(src.read_text(encoding="utf-8")),
                    encoding="utf-8")
