@@ -1,7 +1,7 @@
 ---
 id: F-0037
 name: changelog-layout-migration
-status: shipped
+status: deprecated
 introduced: 2026-06-26
 version: 2.0.0
 user_value: Um comando migra o layout legado (CHANGELOG.md monolítico + STATE.md + checkpoints/) para o novo (changelog/ + UNRELEASED.md), idempotente e não-destrutivo.
@@ -15,3 +15,5 @@ acceptance:
 depends_on: [F-0035, F-0036]
 decisions: [ADR-0042, ADR-0043]
 ---
+
+**Deprecada na 2.3.0.** A migração `migrate --to=changelog` era one-time (1.x→2.x) e não há mais projetos a migrar; `migrate_to_changelog_folder`, o `--to=changelog` e os auto-migrations do deploy (`migrate_planned_to_proposed`, `patch_agents_frontmatter`, rename `suggestions→ideas`) foram removidos. Os contracts acima apontam para código removido (sem drift por ser feature `deprecated`, ADR-0044). A migração de *folder* legado `.agent-memory/`→`.feat-memory/` (ADR-0039, `migrate_legacy_layout`) é separada e permanece.

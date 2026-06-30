@@ -213,7 +213,7 @@ def deploy_constitution(target: Path, force: bool, merge: bool) -> None:
                 print("  injetado: AGENTS.md (esqueleto de frontmatter — "
                       "preencha os campos TODO)")
         else:
-            print("  já contém: AGENTS.md (bloco feat-memory atualizado)")
+            print("  já em dia: AGENTS.md (bloco feat-memory sem mudanças)")
 
     src = _data_path("templates", "CLAUDE.md")
     dst = target / "CLAUDE.md"
@@ -313,55 +313,28 @@ def deploy_ideas(target: Path) -> None:
 
     O **cabeçalho** (descrição + tabela de triagem) é conteúdo de metodologia e
     é refrescado a cada deploy, como o bloco do AGENTS.md; as **entradas** do
-    usuário (`## ...`) são preservadas. Migra um `suggestions.md` legado (2.1.x)
-    preservando as entradas e trocando o header velho pelo novo (senão o arquivo
-    migrado se descreveria com o escopo antigo — contradição com as skills).
+    usuário (`## ...`) são preservadas.
     """
     print("Funil do futuro (.feat-memory/ideas.md):")
     fm_dir = target / ".feat-memory"
     fm_dir.mkdir(parents=True, exist_ok=True)
     dst = fm_dir / "ideas.md"
-    legacy = fm_dir / "suggestions.md"
 
     header = _substitute_tokens(
         _data_path("templates", "ideas.md").read_text(encoding="utf-8")
     ).rstrip("\n") + "\n"
-    source = dst if dst.exists() else (legacy if legacy.exists() else None)
-    entries = _ideas_entries(source.read_text(encoding="utf-8")) if source else ""
+    entries = _ideas_entries(dst.read_text(encoding="utf-8")) if dst.exists() else ""
     content = header + (f"\n{entries}\n" if entries else "")
 
-    migrated = legacy.exists() and not dst.exists()
     before = dst.read_text(encoding="utf-8") if dst.exists() else None
     if before != content:
         dst.write_text(content, encoding="utf-8")
-    if legacy.exists():
-        legacy.unlink()
-
-    if migrated:
-        print("  migrado: suggestions.md → ideas.md (header refrescado, entradas preservadas)")
-    elif before is None:
+    if before is None:
         print("  criado: .feat-memory/ideas.md")
     elif before != content:
         print("  header refrescado: .feat-memory/ideas.md (entradas preservadas)")
     else:
         print("  já atualizado: .feat-memory/ideas.md")
-
-
-def migrate_planned_to_proposed(target: Path) -> None:
-    """Renomeia features `status: planned` → `proposed` (ADR-0047). Idempotente."""
-    feat_dir = target / ".feat-memory" / "manifest" / "features"
-    if not feat_dir.exists():
-        return
-    n = 0
-    for fp in feat_dir.glob("F-*.md"):
-        text = fp.read_text(encoding="utf-8")
-        new = re.sub(r"^status:[ \t]*planned[ \t]*$", "status: proposed",
-                     text, count=1, flags=re.MULTILINE)
-        if new != text:
-            fp.write_text(new, encoding="utf-8")
-            n += 1
-    if n:
-        print(f"Status: {n} feature(s) planned → proposed (ADR-0047)")
 
 
 def deploy_gitattributes(target: Path) -> None:
@@ -382,7 +355,7 @@ def deploy_gitattributes(target: Path) -> None:
         verb = "atualizado" if existing else "criado"
         print(f"  {verb}: .gitattributes (bloco feat-memory)")
     else:
-        print("  já contém: .gitattributes (bloco feat-memory atualizado)")
+        print("  já em dia: .gitattributes (bloco feat-memory sem mudanças)")
 
     if (target / ".git").exists():
         try:
@@ -690,10 +663,6 @@ def run(args: argparse.Namespace) -> int:
     print()
 
     deploy_ideas(target)
-    migrate_planned_to_proposed(target)
-    from feat_memory.memory import changelog as _changelog
-    for _change in _changelog.patch_agents_frontmatter(target):
-        print(f"  AGENTS.md frontmatter: {_change}")
     print()
 
     deploy_gitattributes(target)

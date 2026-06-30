@@ -17,8 +17,8 @@
 | F-0034 | legacy-layout-migration | shipped | 1.3.0 | ADR-0039 | — |
 | F-0035 | changelog-folder | shipped | 2.0.0 | ADR-0042,ADR-0045 | — |
 | F-0036 | unreleased-living-state | shipped | 2.0.0 | ADR-0043 | F-0035 |
-| F-0037 | changelog-layout-migration | shipped | 2.0.0 | ADR-0042,ADR-0043 | F-0035,F-0036 |
+| F-0037 | changelog-layout-migration | deprecated | 2.0.0 | ADR-0042,ADR-0043 | F-0035,F-0036 |
 | F-0038 | ideas-funnel | shipped | 2.2.0 | ADR-0047 | F-0036 |
 | F-0039 | debrief-retrospective | shipped | 2.1.0 | ADR-0048 | F-0038 |
 
-_Gerado por `feat-memory audit` em 2026-06-26T21:22:43+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-30T03:15:06+00:00. Não edite manualmente._
