@@ -1,8 +1,8 @@
 """Testes do `feat-memory check-doc-sync-staged` — gate hard de drift (B1).
 
-Diferença do `check-staleness-staged` (soft, só STATE): este BLOQUEIA (exit 1)
-quando há código staged sem que NENHUM artefato de doc — STATE.md, manifest/**
-ou decisions/** — esteja no mesmo staging.
+Diferença do `check-staleness-staged` (soft): este BLOQUEIA (exit 1) quando há
+código staged sem que NENHUM artefato de doc — changelog/UNRELEASED.md,
+manifest/** ou decisions/** — esteja no mesmo staging.
 """
 
 from __future__ import annotations
@@ -38,10 +38,21 @@ def test_blocks_when_code_without_any_doc(tmp_project):
     assert ".feat-memory" in reason
 
 
-def test_silent_when_state_staged(tmp_project):
+def test_silent_when_unreleased_staged(tmp_project):
+    """Registrar o trabalho no changelog/UNRELEASED.md satisfaz o gate (2.x)."""
     _stage(tmp_project, {
         "src/foo.py": "x = 1\n",
-        ".feat-memory/STATE.md": "# state\n",
+        ".feat-memory/changelog/UNRELEASED.md": "# em voo\n",
+    })
+    assert check_doc_sync.staged_block_reason(tmp_project) is None
+
+
+def test_silent_when_agents_md_and_ideas_only(tmp_project):
+    """Commit docs-only (AGENTS.md constituição + ideas.md backlog) não bloqueia
+    — nenhum é código-fonte (regressão do bug do tensegrams 2.2.x)."""
+    _stage(tmp_project, {
+        "AGENTS.md": "# constituição\n",
+        ".feat-memory/ideas.md": "# ideias\n",
     })
     assert check_doc_sync.staged_block_reason(tmp_project) is None
 

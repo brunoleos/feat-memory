@@ -32,7 +32,7 @@ def test_crosscheck_flags_orphan_feature(audit_with_tmp_root):
     assert len(issues) == 1
     assert issues[0].severity == "error"
     assert "F-0099" in issues[0].message
-    assert "active_features" in issues[0].message
+    assert issues[0].artifact == "changelog/UNRELEASED.md"
 
 
 def test_crosscheck_flags_orphan_decision(audit_with_tmp_root):
@@ -41,7 +41,7 @@ def test_crosscheck_flags_orphan_decision(audit_with_tmp_root):
     assert len(issues) == 1
     assert issues[0].severity == "error"
     assert "ADR-0099" in issues[0].message
-    assert "active_decisions" in issues[0].message
+    assert issues[0].artifact == "changelog/UNRELEASED.md"
 
 
 def test_crosscheck_resolves_archived_feature_via_merged_list(audit_with_tmp_root):
@@ -77,9 +77,10 @@ def test_freshness_no_commits_returns_no_warning(tmp_project):
     assert issues == []
 
 
-def test_freshness_state_was_touched_returns_no_warning(tmp_project):
+def test_freshness_unreleased_was_touched_returns_no_warning(tmp_project):
     _commit(tmp_project, {"src/foo.py": "x = 1\n"}, "feat: code")
-    _commit(tmp_project, {".feat-memory/STATE.md": "# state\n"}, "chore: state")
+    _commit(tmp_project, {".feat-memory/changelog/UNRELEASED.md": "# em voo\n"},
+            "chore: unreleased")
     issues = audit.validate_state_freshness(tmp_project, days=7)
     assert issues == []
 
@@ -96,7 +97,7 @@ def test_freshness_code_touched_no_state_returns_warning(tmp_project):
     issues = audit.validate_state_freshness(tmp_project, days=7)
     assert len(issues) == 1
     assert issues[0].severity == "warning"
-    assert "STATE.md" in issues[0].artifact
+    assert "UNRELEASED" in issues[0].artifact
     assert "memory-debrief" in issues[0].message
 
 

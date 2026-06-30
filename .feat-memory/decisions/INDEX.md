@@ -45,4 +45,4 @@
 | ADR-0047 | 2026-06-26 | accepted | future,ideas,lifecycle,methodology | F-0038 |
 | ADR-0048 | 2026-06-26 | accepted | debrief,retrospective,methodology | F-0039 |
 
-_Gerado por `feat-memory audit` em 2026-06-30T03:15:06+00:00. Não edite manualmente._
+_Gerado por `feat-memory audit` em 2026-06-30T03:28:19+00:00. Não edite manualmente._

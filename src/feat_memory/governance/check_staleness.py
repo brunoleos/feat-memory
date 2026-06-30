@@ -2,8 +2,8 @@
 
 Subcomando da CLI: `feat-memory check-staleness-staged`. Inspeciona o
 índice via `git diff --cached --name-only` e emite warning na stderr
-se há paths de código sem update simultâneo de STATE.md. Sempre exit 0
-(fail-open por ADR-0008, soft por ADR-0016).
+se há paths de código sem registro simultâneo no changelog/UNRELEASED.md.
+Sempre exit 0 (fail-open por ADR-0008, soft por ADR-0016).
 
 Reusa a heurística `_is_code_path` de audit.py para coerência com o
 check de --check-staleness (F-0011, ADR-0014). Diferença é o ponto
@@ -22,7 +22,7 @@ from feat_memory.governance import audit
 
 
 WARNING_TEXT = (
-    "feat-memory: commit toca código sem atualizar STATE.md "
+    "feat-memory: commit toca código sem registrar no changelog/UNRELEASED.md "
     "— considere /memory-debrief"
 )
 WARNING_PREFIX = "⚠ "
@@ -50,8 +50,8 @@ def staged_warning(root: Path) -> str | None:
     if not paths:
         return None
 
-    state_relpath = ".feat-memory/STATE.md"
-    if any(p.replace("\\", "/") == state_relpath for p in paths):
+    unreleased_relpath = ".feat-memory/changelog/UNRELEASED.md"
+    if any(p.replace("\\", "/") == unreleased_relpath for p in paths):
         return None
 
     has_code = any(audit._is_code_path(p) for p in paths)
@@ -64,8 +64,8 @@ def staged_warning(root: Path) -> str | None:
 def add_subparser(subparsers: argparse._SubParsersAction) -> None:
     p = subparsers.add_parser(
         "check-staleness-staged",
-        help="Avisa se o staging toca código sem atualizar STATE.md "
-             "(soft, sempre exit 0; usado pelo pre-commit hook)",
+        help="Avisa se o staging toca código sem registrar no "
+             "changelog/UNRELEASED.md (soft, sempre exit 0; pre-commit hook)",
     )
     p.set_defaults(func=run)
 

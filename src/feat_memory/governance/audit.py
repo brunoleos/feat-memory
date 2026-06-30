@@ -6,7 +6,7 @@ governança: cross-check de IDs ativos (F-0011), staleness check
 opt-in (F-0011), collision detection pré-merge, métricas de saúde.
 
 Subcomando da CLI: `feat-memory audit`. AGENTS.md fica na raiz do
-project root; STATE.md, manifest/ e decisions/ ficam em .feat-memory/.
+project root; changelog/, manifest/ e decisions/ ficam em .feat-memory/.
 
 Uso:
     feat-memory audit                       # relatório + índices
@@ -92,8 +92,8 @@ def validate_state_crosscheck(state_fm: dict,
     """Verifica que cada ID em active_features/active_decisions existe.
 
     Não detecta drift de contracts (isso é responsabilidade de
-    `validate_feature`); aqui o foco é "memória mentirosa" — STATE.md
-    citando IDs que não têm arquivo correspondente. ADR-0014.
+    `validate_feature`); aqui o foco é "memória mentirosa" — o changelog/
+    UNRELEASED.md citando IDs que não têm arquivo correspondente. ADR-0014.
 
     `features` deve ser a lista combinada de features ativas e
     arquivadas (run_audit faz a união antes de chamar). Cobertura
@@ -106,16 +106,16 @@ def validate_state_crosscheck(state_fm: dict,
     for fid in state_fm.get("active_features") or []:
         if fid not in feature_ids:
             issues.append(Issue(
-                "STATE.md", "error",
-                f"active_features cita {fid} mas nenhum arquivo "
+                "changelog/UNRELEASED.md", "error",
+                f"entrada cita {fid} mas nenhum arquivo "
                 f"F-NNNN-*.md existe em manifest/features/ ou archive/",
             ))
 
     for did in state_fm.get("active_decisions") or []:
         if did not in decision_ids:
             issues.append(Issue(
-                "STATE.md", "error",
-                f"active_decisions cita {did} mas nenhum arquivo "
+                "changelog/UNRELEASED.md", "error",
+                f"entrada cita {did} mas nenhum arquivo "
                 f"NNNN-*.md existe em decisions/",
             ))
 
@@ -201,7 +201,7 @@ def validate_release_status(features: list[dict],
 # código (ADR-0014). Lista deliberadamente conservadora.
 STALENESS_NONCODE_PREFIXES = (".feat-memory/", "tests/", "docs/", ".claude/")
 STALENESS_NONCODE_EXACT = {
-    "README.md", "CHANGELOG.md", "METHODOLOGY.md",
+    "AGENTS.md", "README.md", "METHODOLOGY.md",
     "USER_GUIDE.md", "FUTURE_IMPROVEMENTS.md", "LICENSE",
     ".gitignore", ".gitattributes",
 }
@@ -215,7 +215,7 @@ def _is_code_path(path: str) -> bool:
 
 
 def validate_state_freshness(root: Path, days: int = 7) -> list[Issue]:
-    """Detecta sessões que tocaram código sem atualizar STATE.md.
+    """Detecta sessões que tocaram código sem registrar no changelog/UNRELEASED.md.
 
     Opt-in via `feat-memory audit --check-staleness[=N]`. Heurística
     descrita em ADR-0014. Fail-soft: sem git ou sem commits no período,
@@ -234,11 +234,11 @@ def validate_state_freshness(root: Path, days: int = 7) -> list[Issue]:
     if not touched:
         return []
 
-    state_relpath = ".feat-memory/STATE.md"
-    state_was_touched = any(
-        p.replace("\\", "/") == state_relpath for p in touched
+    unreleased_relpath = ".feat-memory/changelog/UNRELEASED.md"
+    unreleased_was_touched = any(
+        p.replace("\\", "/") == unreleased_relpath for p in touched
     )
-    if state_was_touched:
+    if unreleased_was_touched:
         return []
 
     code_files = [p for p in touched if _is_code_path(p)]
@@ -246,8 +246,8 @@ def validate_state_freshness(root: Path, days: int = 7) -> list[Issue]:
         return []
 
     return [Issue(
-        "STATE.md", "warning",
-        f"sem update há {days}+ dia(s) enquanto código foi commitado "
+        "changelog/UNRELEASED.md", "warning",
+        f"sem registro há {days}+ dia(s) enquanto código foi commitado "
         f"({len(code_files)} arquivo(s) tocado(s) — ex: "
         f"{sorted(code_files)[0]}); considere /memory-debrief",
     )]
@@ -610,7 +610,7 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
     p.add_argument("--check-staleness", nargs="?", const=7, type=int,
                    metavar="DAYS",
                    help="warning se commits dos últimos N dias (default 7) "
-                   "tocaram código sem atualizar STATE.md (ADR-0014)")
+                   "tocaram código sem registrar no changelog/UNRELEASED.md (ADR-0014)")
     p.set_defaults(func=run)
 
 

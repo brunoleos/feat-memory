@@ -3,13 +3,13 @@
 Subcomando da CLI: `feat-memory check-doc-sync-staged`. Inspeciona o índice
 via `git diff --cached --name-only` e **bloqueia** (exit 1) quando há paths de
 código staged sem que NENHUM artefato de documentação esteja no mesmo staging —
-ou seja, código mudando sem o Manifest/decisões/STATE acompanhar.
+ou seja, código mudando sem o Manifest/decisões/UNRELEASED acompanhar.
 
 Relação com `check_staleness` (F-0013, ADR-0016): o staleness-check é **soft**
-(sempre exit 0) e só olha `STATE.md` — um nudge. Este é **hard** (exit 1) e
-aceita qualquer um de `STATE.md`, `manifest/**` ou `decisions/**` como prova de
-que a doc se moveu. O soft nudga para o STATE; o hard garante que algo de doc
-acompanhou o código. Fail-soft sem git (a fail-open de binário-ausente é no hook).
+(sempre exit 0) — um nudge. Este é **hard** (exit 1) e aceita qualquer um de
+`changelog/UNRELEASED.md`, `manifest/**` ou `decisions/**` como prova de que a
+doc se moveu. O hard garante que algo de doc acompanhou o código. Fail-soft sem
+git (a fail-open de binário-ausente é no hook).
 
 Reusa `_is_code_path` de audit.py (mesma heurística do staleness) e `_staged_paths`
 de check_staleness.py (mesma leitura do índice).
@@ -30,7 +30,7 @@ MEMORY_DIR = ".feat-memory"
 
 BLOCK_TEXT = (
     "feat-memory: o commit toca código sem mover nenhum artefato de doc em "
-    f"{MEMORY_DIR}/ (STATE.md, manifest/ ou decisions/). "
+    f"{MEMORY_DIR}/ (changelog/UNRELEASED.md, manifest/ ou decisions/). "
     "Rode /memory-debrief antes de commitar, ou contorne com "
     "`git commit --no-verify`."
 )
@@ -38,10 +38,14 @@ BLOCK_PREFIX = "✗ "
 
 
 def _is_doc_path(path: str) -> bool:
-    """True se o path é um artefato de doc cujo update satisfaz o gate."""
+    """True se o path é um artefato de doc cujo update satisfaz o gate.
+
+    No layout 2.x o registro do trabalho vive no `changelog/UNRELEASED.md`
+    (não mais no STATE.md, removido); manifest/ e decisions/ seguem valendo.
+    """
     p = path.replace("\\", "/")
     return (
-        p == f"{MEMORY_DIR}/STATE.md"
+        p == f"{MEMORY_DIR}/changelog/UNRELEASED.md"
         or p.startswith(f"{MEMORY_DIR}/manifest/")
         or p.startswith(f"{MEMORY_DIR}/decisions/")
     )
@@ -69,7 +73,8 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
     p = subparsers.add_parser(
         "check-doc-sync-staged",
         help="Bloqueia (exit 1) se o staging toca código sem mover doc em "
-             f"{MEMORY_DIR}/ (STATE/manifest/decisions); usado pelo pre-commit hook",
+             f"{MEMORY_DIR}/ (changelog/UNRELEASED.md, manifest/ ou decisions/); "
+             "usado pelo pre-commit hook",
     )
     p.set_defaults(func=run)
 

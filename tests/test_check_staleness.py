@@ -30,14 +30,14 @@ def test_staged_warning_returns_text_when_code_no_state(tmp_project):
     _stage(tmp_project, {"src/foo.py": "x = 1\n"})
     msg = check_staleness.staged_warning(tmp_project)
     assert msg is not None
-    assert "STATE.md" in msg
+    assert "UNRELEASED" in msg
     assert "memory-debrief" in msg
 
 
-def test_staged_warning_silent_when_state_in_staging(tmp_project):
+def test_staged_warning_silent_when_unreleased_in_staging(tmp_project):
     _stage(tmp_project, {
         "src/foo.py": "x = 1\n",
-        ".feat-memory/STATE.md": "# state\n",
+        ".feat-memory/changelog/UNRELEASED.md": "# em voo\n",
     })
     msg = check_staleness.staged_warning(tmp_project)
     assert msg is None
@@ -85,7 +85,7 @@ def test_run_always_exits_zero_with_warning(tmp_project, capsys, monkeypatch):
 def test_run_exits_zero_silent_when_clean(tmp_project, capsys, monkeypatch):
     monkeypatch.setattr(_paths, "ROOT", None, raising=False)
     monkeypatch.chdir(tmp_project)
-    _stage(tmp_project, {".feat-memory/STATE.md": "# state\n"})
+    _stage(tmp_project, {".feat-memory/changelog/UNRELEASED.md": "# em voo\n"})
 
     rc = check_staleness.run(argparse.Namespace())
 
